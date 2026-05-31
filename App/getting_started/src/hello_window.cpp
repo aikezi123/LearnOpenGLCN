@@ -1,6 +1,7 @@
 #include <iostream>
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
+#include "hello_window.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 {
@@ -19,7 +20,7 @@ void processInput(GLFWwindow *window)
     }
 }
 
-int main()
+int hello_window()
 {
     // 初始化GLFW库
     glfwInit();

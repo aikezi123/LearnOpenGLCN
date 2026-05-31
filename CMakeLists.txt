@@ -26,4 +26,4 @@ add_subdirectory(third_party/glfw)
 
 # 把 src 子目录加入构建系统
 # 这个子目录负责生成最终的 HelloWindow.exe
-add_subdirectory(src)
+add_subdirectory(app)
