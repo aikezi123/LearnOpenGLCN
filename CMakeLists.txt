@@ -1,0 +1,29 @@
+# 指定 CMake 最低版本
+# 低于 3.21 的 CMake 不允许配置这个项目
+cmake_minimum_required(VERSION 3.21)
+
+# 定义项目名称
+# LANGUAGES C CXX 表示项目同时启用 C 和 C++ 两种语言
+# C   用来编译 glad.c
+# CXX 用来编译 main.cpp
+project(LearnOpenGL_Window LANGUAGES C CXX)
+
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# MSVC 使用 UTF-8，避免中文注释或字符串导致 C4819
+if (MSVC)
+    add_compile_options(/utf-8)
+endif()
+
+# 把 third_party/glad 子目录加入构建系统
+# 这个子目录负责定义 glad 这个库
+add_subdirectory(third_party/glad)
+
+# 把 third_party/glfw 子目录加入构建系统
+# 这个子目录负责导入已经下载好的 glfw3.lib
+add_subdirectory(third_party/glfw)
+
+# 把 src 子目录加入构建系统
+# 这个子目录负责生成最终的 HelloWindow.exe
+add_subdirectory(src)

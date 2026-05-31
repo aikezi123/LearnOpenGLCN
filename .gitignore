@@ -1,0 +1,58 @@
+# =========================
+# Build outputs
+# =========================
+out/
+build/
+cmake-build-*/
+CMakeFiles/
+CMakeCache.txt
+cmake_install.cmake
+install_manifest.txt
+compile_commands.json
+
+# =========================
+# CMake user/local presets
+# =========================
+CMakeUserPresets.json
+
+# =========================
+# VSCode local settings
+# =========================
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+
+# 如果 settings.json 里有个人路径，也改成忽略：
+# .vscode/settings.json
+
+# =========================
+# Visual Studio files
+# =========================
+.vs/
+*.sln
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+
+# =========================
+# Compiled binaries
+# =========================
+*.exe
+*.dll
+*.lib
+*.obj
+*.pdb
+*.ilk
+*.exp
+
+# =========================
+# Logs
+# =========================
+*.log
+
+# =========================
+# OS files
+# =========================
+.DS_Store
+Thumbs.db
+desktop.ini
