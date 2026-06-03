@@ -3,22 +3,25 @@
 #include <GLFW/glfw3.h>
 #include "hello_window.h"
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // OpenGL 需要知道你想在窗口的哪一部分进行绘制。
-    // glViewport(x, y, width, height) 告诉 OpenGL：“请把我渲染出来的画面，映射到从窗口左下角 (0, 0) 开始，宽为 width、高为 height 的区域内。"
-    // 如果没有这行代码，当你拉伸窗口时，里面的 3D 画面比例就不会跟着变化，或者只能在一个固定的小角落里渲染。
-    glViewport(0, 0, width, height);
-}
+namespace {
+    void framebuffer_size_callback(GLFWwindow* window, int width, int height)
+    {
+        // OpenGL 需要知道你想在窗口的哪一部分进行绘制。
+        // glViewport(x, y, width, height) 告诉 OpenGL：“请把我渲染出来的画面，映射到从窗口左下角 (0, 0) 开始，宽为 width、高为 height 的区域内。"
+        // 如果没有这行代码，当你拉伸窗口时，里面的 3D 画面比例就不会跟着变化，或者只能在一个固定的小角落里渲染。
+        glViewport(0, 0, width, height);
+    }
 
-void processInput(GLFWwindow *window)
-{
-    // 主动向系统查询——“此时此刻，ESC 键（GLFW_KEY_ESCAPE）是不是正处于被按下的状态（GLFW_PRESS）？”
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        // 如果检测到按下了 ESC 键，就给当前的窗口打上一个“该关门了”的标记（设置为 true）。
-            glfwSetWindowShouldClose(window, true);
+    void processInput(GLFWwindow *window)
+    {
+        // 主动向系统查询——“此时此刻，ESC 键（GLFW_KEY_ESCAPE）是不是正处于被按下的状态（GLFW_PRESS）？”
+        if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            // 如果检测到按下了 ESC 键，就给当前的窗口打上一个“该关门了”的标记（设置为 true）。
+                glfwSetWindowShouldClose(window, true);
+        }
     }
 }
+
 
 int hello_window()
 {
