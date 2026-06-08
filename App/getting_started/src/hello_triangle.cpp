@@ -45,108 +45,130 @@
 
 int hello_triangle()
 {
-// —————————— 1. 创建 GLFW 窗口和 OpenGL Context ————————————
-//
-// GLFW 的作用：
-//   GLFW 不是用来直接绘制三角形的。
-//   它主要负责：
-//     1. 创建操作系统窗口；
-//     2. 创建 OpenGL Context；
-//     3. 处理键盘、鼠标、窗口关闭、窗口大小变化等事件；
-//     4. 管理前后缓冲区交换，让 OpenGL 画出来的内容显示到屏幕上。
-//
-// OpenGL 的作用：
-//   OpenGL 才是真正执行渲染的图形 API。
-//   后面的 glClear、glUseProgram、glBindVertexArray、glDrawArrays
-//   都是 OpenGL 的绘制相关操作。
-//
-// 整个关系可以理解为：
-//   GLFW 创建窗口
-//        ↓
-//   GLFW 创建并绑定 OpenGL Context
-//        ↓
-//   OpenGL 在这个 Context 对应的 framebuffer 中绘制
-//        ↓
-//   GLFW 通过 glfwSwapBuffers 把绘制结果显示到窗口上
+    // —————————— 1. 创建 GLFW 窗口和 OpenGL Context ————————————
+    //
+    // GLFW 的作用：
+    //   GLFW 不是用来直接绘制三角形的。
+    //   它主要负责：
+    //     1. 创建操作系统窗口；
+    //     2. 创建 OpenGL Context；
+    //     3. 处理键盘、鼠标、窗口关闭、窗口大小变化等事件；
+    //     4. 管理前后缓冲区交换，让 OpenGL 画出来的内容显示到屏幕上。
+    //
+    // OpenGL 的作用：
+    //   OpenGL 才是真正执行渲染的图形 API。
+    //   后面的 glClear、glUseProgram、glBindVertexArray、glDrawArrays
+    //   都是 OpenGL 的绘制相关操作。
+    //
+    // 整个关系可以理解为：
+    //   GLFW 创建窗口
+    //        ↓
+    //   GLFW 创建并绑定 OpenGL Context
+    //        ↓
+    //   OpenGL 在这个 Context 对应的 framebuffer 中绘制
+    //        ↓
+    //   GLFW 通过 glfwSwapBuffers 把绘制结果显示到窗口上
 
-// 初始化 GLFW 库。
-// 在使用 glfwCreateWindow、glfwWindowHint 等 GLFW 函数之前，必须先初始化 GLFW。
-glfwInit();
+    // 初始化 GLFW 库。
+    // 在使用 glfwCreateWindow、glfwWindowHint 等 GLFW 函数之前，必须先初始化 GLFW。
+    glfwInit();
 
-// 设置 OpenGL Context 的主版本号。
-// 这里指定主版本号为 3。
-glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
+    // 设置 OpenGL Context 的主版本号。
+    // 这里指定主版本号为 3。
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 
-// 设置 OpenGL Context 的次版本号。
-// 主版本 3 + 次版本 3，表示希望创建 OpenGL 3.3 Context。
-glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+    // 设置 OpenGL Context 的次版本号。
+    // 主版本 3 + 次版本 3，表示希望创建 OpenGL 3.3 Context。
+    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 
-// 设置使用 OpenGL Core Profile。
-// Core Profile 表示使用现代 OpenGL，移除旧版固定管线功能。
-glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
+    // 设置使用 OpenGL Core Profile。
+    // Core Profile 表示使用现代 OpenGL，移除旧版固定管线功能。
+    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-// 创建一个窗口，同时创建与这个窗口关联的 OpenGL Context。
-// glfwCreateWindow(width, height, title, monitor, share)
-// 参数 1：1920。窗口宽度。
-// 参数 2：1080。窗口高度。
-// 参数 3："LearnOpenGL"。窗口标题。
-// 参数 4：NULL。表示创建普通窗口。如果传入 monitor，则会创建全屏窗口。
-// 参数 5：NULL。表示不和其他 OpenGL Context 共享资源。
-// 返回值：成功返回 GLFWwindow*。失败返回 NULL。
-GLFWwindow *window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
+    // 创建一个窗口，同时创建与这个窗口关联的 OpenGL Context。
+    // glfwCreateWindow(width, height, title, monitor, share)
+    // 参数 1：1920。窗口宽度。
+    // 参数 2：1080。窗口高度。
+    // 参数 3："LearnOpenGL"。窗口标题。
+    // 参数 4：NULL。表示创建普通窗口。如果传入 monitor，则会创建全屏窗口。
+    // 参数 5：NULL。表示不和其他 OpenGL Context 共享资源。
+    // 返回值：成功返回 GLFWwindow*。失败返回 NULL。
+    GLFWwindow *window = glfwCreateWindow(1920, 1080, "LearnOpenGL", NULL, NULL);
 
-if (window == NULL) {
-    std::cout << "Failed to create GLFW window" << std::endl;
+    if (window == NULL) {
+        std::cout << "Failed to create GLFW window" << std::endl;
 
-    // 创建窗口失败时，终止 GLFW，释放 GLFW 已经分配的资源。
-    glfwTerminate();
+        // 创建窗口失败时，终止 GLFW，释放 GLFW 已经分配的资源。
+        glfwTerminate();
 
-    return -1;
-}
+        return -1;
+    }
 
-// 将当前窗口的 OpenGL Context 设置为当前线程正在使用的 Context。
-// 这一步非常关键。
-// 后面所有 OpenGL 函数调用，例如 glCreateShader、glGenBuffers、glDrawArrays，
-// 都会作用在当前这个 Context 上。
-// 如果没有当前 Context，很多 OpenGL 函数不能正常工作。
-glfwMakeContextCurrent(window);
+    // 将当前窗口的 OpenGL Context 设置为当前线程正在使用的 Context。
+    // 这一步非常关键。
+    // 后面所有 OpenGL 函数调用，例如 glCreateShader、glGenBuffers、glDrawArrays，
+    // 都会作用在当前这个 Context 上。
+    // 如果没有当前 Context，很多 OpenGL 函数不能正常工作。
+    glfwMakeContextCurrent(window);
 
-// 设置窗口 framebuffer 大小变化时的回调函数。
-// 当窗口大小变化时，GLFW 会调用这个 lambda 函数。
-// 函数内部调用 glViewport，告诉 OpenGL：
-//   渲染结果应该映射到窗口 framebuffer 的哪一块区域。
-glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
-    // glViewport(x, y, width, height)
-    // 参数 1：0。视口左下角 x 坐标。
-    // 参数 2：0。视口左下角 y 坐标。
-    // 参数 3：width。视口宽度，使用窗口新的 framebuffer 宽度。
-    // 参数 4：height。视口高度，使用窗口新的 framebuffer 高度。
-    // 作用：
-    //   告诉 OpenGL 把标准化设备坐标转换到 framebuffer 的哪个区域。
-    //   简单理解：OpenGL 最终画出来的东西要铺满当前窗口。
-    glViewport(0, 0, width, height);
-});
+    // 设置窗口 framebuffer 大小变化时的回调函数。
+    // 当窗口大小变化时，GLFW 会调用这个 lambda 函数。
+    // 函数内部调用 glViewport，告诉 OpenGL：
+    //   渲染结果应该映射到窗口 framebuffer 的哪一块区域。
+    glfwSetFramebufferSizeCallback(window, [](GLFWwindow *window, int width, int height) {
+        // glViewport(x, y, width, height)
+        // 参数 1：0。视口左下角 x 坐标。
+        // 参数 2：0。视口左下角 y 坐标。
+        // 参数 3：width。视口宽度，使用窗口新的 framebuffer 宽度。
+        // 参数 4：height。视口高度，使用窗口新的 framebuffer 高度。
+        // 作用：
+        //   告诉 OpenGL 把标准化设备坐标转换到 framebuffer 的哪个区域。
+        //   简单理解：OpenGL 最终画出来的东西要铺满当前窗口。
+        glViewport(0, 0, width, height);
+    });
 
-// 初始化 GLAD。
-// GLAD 的作用：
-//   加载当前 OpenGL Context 中可用的 OpenGL 函数地址。
-//   比如 glCreateShader、glGenBuffers、glBindVertexArray 等函数地址。
-// 注意：
-//   gladLoadGLLoader 必须在 glfwMakeContextCurrent 之后调用。
-//   因为只有 OpenGL Context 当前有效后，GLAD 才能查询 OpenGL 函数地址。
-if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
-    std::cout << "Failed to initialize GLAD" << std::endl;
-    return -1;
-}
+    // 初始化 GLAD。
+    // GLAD 的作用：
+    //   加载当前 OpenGL Context 中可用的 OpenGL 函数地址。
+    //   比如 glCreateShader、glGenBuffers、glBindVertexArray 等函数地址。
+    // 注意：
+    //   gladLoadGLLoader 必须在 glfwMakeContextCurrent 之后调用。
+    //   因为只有 OpenGL Context 当前有效后，GLAD 才能查询 OpenGL 函数地址。
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
 
 
-    // —————————— 2. CPU内存中那个创建顶点坐标 ————————————
+    // —————————— 2. CPU 内存中创建顶点坐标和索引数据 ————————————
+    //
+    // vertices：顶点坐标数据。
+    // 这里定义了 4 个顶点，每个顶点由 3 个 float 组成：x、y、z。
+    //
+    // 这 4 个顶点本身只是矩形的四个角。
+    // 真正如何组成三角形，由下面的 indices 索引数组决定。
     float vertices[] = {
-        -0.5f, -0.5f, 0.0f,
-        0.5f, -0.5f, 0.0f,
-        0.0f,  0.5f, 0.0f
+         0.5f,  0.5f, 0.0f,  // 顶点 0：右上角
+         0.5f, -0.5f, 0.0f,  // 顶点 1：右下角
+        -0.5f, -0.5f, 0.0f,  // 顶点 2：左下角
+        -0.5f,  0.5f, 0.0f   // 顶点 3：左上角
     };
 
+    // indices：索引数据。
+    // EBO 会存储这些索引。
+    // OpenGL 绘制时不是直接按 vertices 的顺序画，
+    // 而是按照 indices 指定的顺序去取顶点。
+    //
+    // 一个矩形可以拆成两个三角形：
+    // 第一个三角形：0, 1, 3
+    //   使用 顶点0右上、顶点1右下、顶点3左上
+    // 第二个三角形：1, 2, 3
+    //   使用 顶点1右下、顶点2左下、顶点3左上
+    // 这样 4 个顶点就能组成 2 个三角形，最终显示为一个矩形。
+    unsigned int indices[] = {
+        0, 1, 3,
+        1, 2, 3
+    };
 
 
     // —————————— 3. 创建并编译顶点着色器 ————————————
@@ -369,6 +391,7 @@ if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 
     unsigned int VAO;
     unsigned int VBO;
+    unsigned int EBO;
 
     // 创建 1 个 VAO。
     // VAO 用来保存后面的顶点属性配置规则。
@@ -377,6 +400,12 @@ if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     // 创建 1 个 VBO。
     // VBO 用来保存真正的顶点数据。
     glGenBuffers(1, &VBO);
+
+    // 创建 1 个 EBO。
+    // EBO：Element Buffer Object，元素缓冲对象，也叫索引缓冲对象。
+    // 它负责保存 indices 索引数据。
+    // 后面 glDrawElements 会根据 EBO 中的索引去复用 VBO 中的顶点。
+    glGenBuffers(1, &EBO);
 
 
     // —————————— 7. 绑定 VAO，指定当前要保存规则的 VAO ——————————
@@ -413,7 +442,26 @@ if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
 
-    // ———————————— 9. 写入并保存顶点属性解释规则 ————————————
+    // —————————— 9. 绑定 EBO，并把 CPU 索引数据上传到 EBO ——————————
+    //
+    // EBO 保存索引数据。
+    // 它告诉 OpenGL：绘制时应该按照什么顺序从 VBO 中取顶点。
+    //
+    // GL_ELEMENT_ARRAY_BUFFER 表示：
+    //   当前用于索引数据的缓冲对象绑定点。
+    //
+    // 注意：
+    //   当前绑定着 VAO，所以这个 EBO 绑定关系会被 VAO 记录下来。
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+
+    // 把 CPU 中的 indices 索引数据复制到当前绑定的 EBO 中。
+    // 参数 1：GL_ELEMENT_ARRAY_BUFFER。操作当前绑定的索引缓冲，也就是 EBO。
+    // 参数 2：sizeof(indices)。要上传的索引数据大小，单位是字节。
+    // 参数 3：indices。CPU 内存中索引数组的首地址。
+    // 参数 4：GL_STATIC_DRAW。使用提示，表示索引数据基本不变，并且主要用于绘制。
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // ———————————— 10. 写入并保存顶点属性解释规则 ————————————
     // 前面我们已经把 vertices 数组上传到了 VBO 中。
     // 但是 VBO 里本质上只是一段连续的 float 数据：
     //   -0.5, -0.5, 0.0,   0.5, -0.5, 0.0,   0.0, 0.5, 0.0
@@ -477,34 +525,31 @@ if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
     glEnableVertexAttribArray(0);
 
 
-    // —————————— 10. 可选解绑 ——————————
-    // 解绑 GL_ARRAY_BUFFER。
-    // 参数：id = 0，表示绑定到默认对象或者表示取消当前绑定。
-    // 这是允许的，因为 glVertexAttribPointer 已经把：
-    //   当前 VBO + location = 0 的解析规则
-    // 保存到了当前 VAO 中。
+    // —————————— 11. 可选解绑 ——————————
     //
-    // 注意：
-    //   解绑 GL_ARRAY_BUFFER 不会删除 VBO，
-    //   也不会清空已经上传到 VBO 里的顶点数据。
+    // 解绑 GL_ARRAY_BUFFER 是允许的。
+    // 因为 glVertexAttribPointer 已经把当前 VBO 和 location = 0 的读取规则
+    // 保存到了当前绑定的 VAO 中。
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 
+    // 注意：
+    //   不要在 VAO 还绑定时解绑 GL_ELEMENT_ARRAY_BUFFER。
+    //   因为 EBO 的绑定关系会被 VAO 记录。
+    //   如果这里写 glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0)，
+    //   就可能把 VAO 中记录的 EBO 解绑掉。
+    //
+    // 所以这里不要写：
+    //   glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
+
     // 解绑 VAO。
-    //
-    // 这样后续其他 VAO/VBO 操作不会意外修改当前 VAO。
-    //
-    // 后面绘制时，只需要重新：
-    //   glBindVertexArray(VAO);
-    //
-    // OpenGL 就会恢复这个 VAO 里保存的规则：
-    //   location = 0 从哪个 VBO 读取；
-    //   每次读取几个 float；
-    //   stride 和 offset 是多少；
-    //   location = 0 是否启用。
+    // 后面绘制时重新 glBindVertexArray(VAO)，
+    // 就会同时恢复：
+    //   1. 顶点属性读取规则；
+    //   2. EBO 索引缓冲绑定关系。
     glBindVertexArray(0);
 
     
-// —————————— 11. 绘制三角形 ————————————
+// —————————— 12. 绘制三角形 ————————————
 //
 // 到这里为止，前面的准备工作已经完成：
 //
@@ -543,134 +588,160 @@ if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
 //     - 执行顶点着色器和片段着色器；
 //     - 把三角形颜色写入 framebuffer。
 
-while(!glfwWindowShouldClose(window)) {
-    // glfwWindowShouldClose(window)
-    //
-    // 参数：window：当前 GLFW 窗口。
-    // 返回值：true  ：窗口应该关闭，退出循环。false ：窗口继续运行。
-    // 这个循环会一直运行，直到用户关闭窗口，或者我们主动设置窗口关闭标记。
+    while(!glfwWindowShouldClose(window)) {
+        // glfwWindowShouldClose(window)
+        //
+        // 参数：window：当前 GLFW 窗口。
+        // 返回值：true  ：窗口应该关闭，退出循环。false ：窗口继续运行。
+        // 这个循环会一直运行，直到用户关闭窗口，或者我们主动设置窗口关闭标记。
 
-    // —————— 11.1 处理输入 ——————
-    // glfwGetKey(window, GLFW_KEY_ESCAPE)
-    // 作用：
-    //   查询当前窗口中 ESC 键的状态。
-    // 如果 ESC 键被按下，就调用 glfwSetWindowShouldClose(window, true)，
-    // 告诉 GLFW 当前窗口应该关闭。
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
-        glfwSetWindowShouldClose(window, true);
+        // —————— 11.1 处理输入 ——————
+        // glfwGetKey(window, GLFW_KEY_ESCAPE)
+        // 作用：
+        //   查询当前窗口中 ESC 键的状态。
+        // 如果 ESC 键被按下，就调用 glfwSetWindowShouldClose(window, true)，
+        // 告诉 GLFW 当前窗口应该关闭。
+        if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
+            glfwSetWindowShouldClose(window, true);
+        }
+
+        // —————— 11.2 清空上一帧画面 ——————
+        //
+        // glClearColor(r, g, b, a)
+        // 作用：
+        //   设置清屏颜色。
+        //   这里只是设置颜色，不会立刻清屏。
+        // 参数：
+        //   r = 0.2f
+        //   g = 0.3f
+        //   b = 0.3f
+        //   a = 1.0f
+        // 这个颜色会作为背景色。
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+
+        // glClear(GL_COLOR_BUFFER_BIT)
+        // 作用：
+        //   清空颜色缓冲区。
+        //   也就是用刚才 glClearColor 设置的颜色填充当前 framebuffer。
+        //
+        // 简单理解：
+        //   每一帧开始前，先把窗口画面清成背景色。
+        glClear(GL_COLOR_BUFFER_BIT);
+
+        // —————— 11.3 使用着色器程序 ——————
+        //
+        // glUseProgram(shaderProgramID)
+        //
+        // 作用：
+        //   把 shaderProgramID 设置为当前 OpenGL Context 使用的 shader program。
+        //
+        // 后面的 glDrawArrays 会使用这个 program：
+        //   顶点着色器负责处理顶点位置；
+        //   片段着色器负责输出三角形颜色。
+        //
+        // 注意：
+        //   这句不是直接绘制。
+        //   它只是告诉 OpenGL：接下来的绘制使用这套 GPU 程序。
+        glUseProgram(shaderProgramID);
+
+        // —————— 11.4 绑定 VAO ——————
+        //
+        // glBindVertexArray(VAO)
+        //
+        // 作用：
+        //   绑定之前配置好的 VAO。
+        //
+        // VAO 中记录了：
+        //   location = 0 从哪个 VBO 读取；
+        //   每次读取 3 个 float；
+        //   stride 是多少；
+        //   offset 是多少；
+        //   location = 0 是否启用。
+        //
+        // 绑定 VAO 后，OpenGL 才知道如何从 VBO 中取出顶点数据，
+        // 并把它传给顶点着色器中的：
+        //
+        //   layout(location = 0) in vec3 aPos;
+        glBindVertexArray(VAO);
+
+        // —————— 11.5 发起绘制命令 ——————
+        //
+        // glDrawArrays(mode, first, count)
+        // 参数 1：GL_TRIANGLES绘制模式。表示每 3 个顶点组成一个三角形。
+        // 参数 2：0。从第 0 个顶点开始读取。
+        // 参数 3：3。一共读取 3 个顶点。
+        // 执行后发生的事情：
+        //   1. OpenGL 查看当前绑定的 VAO；
+        //   2. VAO 告诉 OpenGL 从哪个 VBO 读取顶点数据；
+        //   3. 每次读取 3 个 float，作为一个 vec3 aPos；
+        //   4. GPU 对 3 个顶点分别执行顶点着色器；
+        //   5. OpenGL 把 3 个顶点组装成一个三角形；
+        //   6. 光栅化阶段把三角形转换成很多片段；
+        //   7. GPU 对每个片段执行片段着色器；
+        //   8. 片段着色器输出颜色；
+        //   9. 颜色写入当前 framebuffer。
+        //
+        // 这句才是真正让 GPU 开始绘制三角形的命令。
+        // glDrawArrays(GL_TRIANGLES, 0, 3);
+
+
+        // 使用 EBO 绘制。
+        // glDrawElements(mode, count, type, indices)
+        // 参数 1：GL_TRIANGLES。绘制模式，表示每 3 个索引组成一个三角形。
+        // 参数 2：6。要使用的索引数量。indices 里一共有 6 个索引：0, 1, 3, 1, 2, 3
+        // 参数 3：GL_UNSIGNED_INT。索引的数据类型。因为 indices 是 unsigned int[]，所以这里写 GL_UNSIGNED_INT。
+        // 参数 4：0。索引数据在 EBO 中的偏移量。这里从 EBO 开头开始读取，所以写 0。
+        // 这句执行后：
+        //   OpenGL 会根据当前 VAO 找到 EBO；
+        //   从 EBO 里读取 6 个索引；
+        //   再根据这些索引去 VBO 里取顶点；
+        //   最终绘制两个三角形，组成一个矩形。
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+
+        // —————— 11.6 交换前后缓冲 ——————
+        // GLFW 默认使用双缓冲：
+        //   前缓冲 front buffer：
+        //     当前正在屏幕上显示的画面。
+        //   后缓冲 back buffer：
+        //     OpenGL 当前正在绘制的新一帧画面。
+        // OpenGL 通常先把三角形画到后缓冲。
+        // 调用 glfwSwapBuffers(window) 后，前后缓冲交换，
+        // 后缓冲中的新画面才会显示到窗口上。
+        // 所以：
+        //   OpenGL 负责把三角形画到 framebuffer；
+        //   GLFW 负责把画好的 framebuffer 内容显示到窗口。
+        glfwSwapBuffers(window);
+
+        // —————— 11.7 处理窗口事件 ——————
+        //
+        // glfwPollEvents()
+        //
+        // 作用：
+        //   处理操作系统发送给窗口的事件。
+        //
+        // 包括：
+        //   键盘输入；
+        //   鼠标移动；
+        //   鼠标点击；
+        //   窗口关闭；
+        //   窗口大小变化。
+        //
+        // 如果不调用它，窗口可能无法响应输入和关闭操作。
+        glfwPollEvents();
     }
 
-    // —————— 11.2 清空上一帧画面 ——————
-    //
-    // glClearColor(r, g, b, a)
-    // 作用：
-    //   设置清屏颜色。
-    //   这里只是设置颜色，不会立刻清屏。
-    // 参数：
-    //   r = 0.2f
-    //   g = 0.3f
-    //   b = 0.3f
-    //   a = 1.0f
-    // 这个颜色会作为背景色。
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-
-    // glClear(GL_COLOR_BUFFER_BIT)
-    // 作用：
-    //   清空颜色缓冲区。
-    //   也就是用刚才 glClearColor 设置的颜色填充当前 framebuffer。
-    //
-    // 简单理解：
-    //   每一帧开始前，先把窗口画面清成背景色。
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    // —————— 11.3 使用着色器程序 ——————
-    //
-    // glUseProgram(shaderProgramID)
-    //
-    // 作用：
-    //   把 shaderProgramID 设置为当前 OpenGL Context 使用的 shader program。
-    //
-    // 后面的 glDrawArrays 会使用这个 program：
-    //   顶点着色器负责处理顶点位置；
-    //   片段着色器负责输出三角形颜色。
-    //
-    // 注意：
-    //   这句不是直接绘制。
-    //   它只是告诉 OpenGL：接下来的绘制使用这套 GPU 程序。
-    glUseProgram(shaderProgramID);
-
-    // —————— 11.4 绑定 VAO ——————
-    //
-    // glBindVertexArray(VAO)
-    //
-    // 作用：
-    //   绑定之前配置好的 VAO。
-    //
-    // VAO 中记录了：
-    //   location = 0 从哪个 VBO 读取；
-    //   每次读取 3 个 float；
-    //   stride 是多少；
-    //   offset 是多少；
-    //   location = 0 是否启用。
-    //
-    // 绑定 VAO 后，OpenGL 才知道如何从 VBO 中取出顶点数据，
-    // 并把它传给顶点着色器中的：
-    //
-    //   layout(location = 0) in vec3 aPos;
-    glBindVertexArray(VAO);
-
-    // —————— 11.5 发起绘制命令 ——————
-    //
-    // glDrawArrays(mode, first, count)
-    // 参数 1：GL_TRIANGLES绘制模式。表示每 3 个顶点组成一个三角形。
-    // 参数 2：0。从第 0 个顶点开始读取。
-    // 参数 3：3。一共读取 3 个顶点。
-    // 执行后发生的事情：
-    //   1. OpenGL 查看当前绑定的 VAO；
-    //   2. VAO 告诉 OpenGL 从哪个 VBO 读取顶点数据；
-    //   3. 每次读取 3 个 float，作为一个 vec3 aPos；
-    //   4. GPU 对 3 个顶点分别执行顶点着色器；
-    //   5. OpenGL 把 3 个顶点组装成一个三角形；
-    //   6. 光栅化阶段把三角形转换成很多片段；
-    //   7. GPU 对每个片段执行片段着色器；
-    //   8. 片段着色器输出颜色；
-    //   9. 颜色写入当前 framebuffer。
-    //
-    // 这句才是真正让 GPU 开始绘制三角形的命令。
-    glDrawArrays(GL_TRIANGLES, 0, 3);
-
-    // —————— 11.6 交换前后缓冲 ——————
-    //
-    // GLFW 默认使用双缓冲：
-    //   前缓冲 front buffer：
-    //     当前正在屏幕上显示的画面。
-    //   后缓冲 back buffer：
-    //     OpenGL 当前正在绘制的新一帧画面。
-    // OpenGL 通常先把三角形画到后缓冲。
-    // 调用 glfwSwapBuffers(window) 后，前后缓冲交换，
-    // 后缓冲中的新画面才会显示到窗口上。
-    // 所以：
-    //   OpenGL 负责把三角形画到 framebuffer；
-    //   GLFW 负责把画好的 framebuffer 内容显示到窗口。
-    glfwSwapBuffers(window);
-
-    // —————— 11.7 处理窗口事件 ——————
-    //
-    // glfwPollEvents()
-    //
-    // 作用：
-    //   处理操作系统发送给窗口的事件。
-    //
-    // 包括：
-    //   键盘输入；
-    //   鼠标移动；
-    //   鼠标点击；
-    //   窗口关闭；
-    //   窗口大小变化。
-    //
-    // 如果不调用它，窗口可能无法响应输入和关闭操作。
-    glfwPollEvents();
-}
+    // —————————— 12. 释放资源 ————————————
+    // 删除 VAO。
+    glDeleteVertexArrays(1, &VAO);
+    
+    // 删除 VBO。
+    glDeleteBuffers(1, &VBO);
+    
+    // 删除 EBO。
+    glDeleteBuffers(1, &EBO);
+    
+    // 删除 shader program。
+    glDeleteProgram(shaderProgramID);
 
     return 0;
 }
