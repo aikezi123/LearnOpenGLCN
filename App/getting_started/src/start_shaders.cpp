@@ -174,12 +174,13 @@ int start_shaders() {
     glBindVertexArray(VAO);
 
     // ———————————— 7.2 ourColor版本VAO、VBO ————————————
-        unsigned int VBO2, VAO2;
-    glGenVertexArrays(1, &VAO2);
+    unsigned int VBO2, VAO2;
     glGenBuffers(1, &VBO2);
-    glBindVertexArray(VAO2);
     glBindBuffer(GL_ARRAY_BUFFER, VBO2);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertics2), vertics2, GL_STATIC_DRAW);
+    glGenVertexArrays(1, &VAO2);
+    glBindVertexArray(VAO2);
+
 
     // 位置信息分配
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
