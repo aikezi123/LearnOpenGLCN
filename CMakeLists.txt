@@ -24,6 +24,10 @@ add_subdirectory(third_party/glad)
 # 这个子目录负责导入已经下载好的 glfw3.lib
 add_subdirectory(third_party/glfw)
 
-# 把 src 子目录加入构建系统
-# 这个子目录负责生成最终的 HelloWindow.exe
+add_subdirectory(infrastructure)
+
+# LearnOpenGL示例代码
+add_subdirectory(lessons)
+
+# 程序入口层
 add_subdirectory(app)
