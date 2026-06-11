@@ -34,9 +34,9 @@ target_include_directories(infrastructure PUBLIC
 )
 
 # 链接库
-target_link_libraries(infrastructure
+target_link_libraries(infrastructure PUBLIC
     glad
-    glfw
+    glfw3
     OpenGL::GL
 )
 

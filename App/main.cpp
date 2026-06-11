@@ -1,12 +1,12 @@
 #include <iostream>
 #include "start_shaders.h"
-
+#include "shader_exercise.h"
 
 
 
 int main()
 {
-    start_shaders();
+    learnopengl::getting_started::runShaderExercise();
     return 0;
 }
 

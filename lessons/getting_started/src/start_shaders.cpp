@@ -369,4 +369,6 @@ int start_shaders() {
     glDeleteBuffers(1, &VBO2);
     glDeleteProgram(shaderProgramID2);
     glfwTerminate();
+    
+    return 0;
 }

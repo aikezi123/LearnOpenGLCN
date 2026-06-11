@@ -27,6 +27,7 @@ add_subdirectory(third_party/glfw)
 add_subdirectory(infrastructure)
 
 # LearnOpenGL示例代码
+# lessons依赖infrastructure，因此要放在add_subdirectory(infrastructure)后面
 add_subdirectory(lessons)
 
 # 程序入口层
