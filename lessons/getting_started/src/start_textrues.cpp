@@ -5,6 +5,267 @@
 #include <iostream>
 #include "Shader.hpp"
 
+
+/*
+ * ==================== OpenGL 双纹理绘制流程 ====================
+ *
+ * 本程序的目标：
+ *
+ * 1. 加载 container.jpg 和 awesomeface.png 两张图片；
+ * 2. 将两张图片分别上传到两个 OpenGL 纹理对象；
+ * 3. 将两个纹理对象绑定到不同的纹理单元；
+ * 4. 在片段着色器中同时采样两张纹理；
+ * 5. 使用 mix() 将两张纹理混合；
+ * 6. 将最终渲染结果显示在 GLFW 创建的窗口中。
+ *
+ *
+ * 一、GLFW 的作用
+ *
+ * GLFW 主要负责：
+ *
+ * - 创建操作系统窗口；
+ * - 创建 OpenGL Context；
+ * - 接收键盘、鼠标和窗口事件；
+ * - 通过 glfwSwapBuffers() 把 OpenGL 渲染好的画面显示出来。
+ *
+ * GLFW 本身不负责加载、保存或采样纹理。
+ * 纹理处理和图形绘制由 OpenGL 完成。
+ *
+ *
+ * 二、图片是怎样进入 GPU 的
+ *
+ * 硬盘中的 JPG、PNG 文件是压缩图片，不能直接交给 OpenGL 使用。
+ *
+ * 第一步：stb_image 将图片解码到 CPU 内存
+ *
+ *     unsigned char* data = stbi_load(...);
+ *
+ * 数据流：
+ *
+ *     container.jpg / awesomeface.png
+ *                  ↓ stbi_load
+ *        CPU 内存中的原始像素数组 data
+ *
+ * 第二步：创建 OpenGL 纹理对象
+ *
+ *     glGenTextures(1, &textureID);
+ *
+ * textureID 是纹理对象的编号，可以理解为 GPU 纹理资源的句柄。
+ *
+ * 第三步：绑定纹理对象
+ *
+ *     glBindTexture(GL_TEXTURE_2D, textureID);
+ *
+ * 绑定后，接下来的 glTexParameteri()、glTexImage2D()、
+ * glGenerateMipmap() 都会操作当前绑定的纹理对象。
+ *
+ * 第四步：将 CPU 像素上传到 GPU 纹理对象
+ *
+ *     glTexImage2D(..., data);
+ *
+ * 数据流：
+ *
+ *     CPU 像素数组 data
+ *              ↓ glTexImage2D
+ *     GPU 中的纹理对象 textureID
+ *
+ * 上传完成后，图片数据已经复制到 GPU，
+ * 因此可以调用：
+ *
+ *     stbi_image_free(data);
+ *
+ * 释放 CPU 端的图片数据。
+ *
+ *
+ * 三、纹理对象和纹理单元的区别
+ *
+ * 纹理对象：
+ *
+ *     textureID1
+ *     textureID2
+ *
+ * 真正保存图片像素、尺寸、过滤方式、环绕方式和 Mipmap 数据。
+ *
+ * 纹理单元：
+ *
+ *     GL_TEXTURE0
+ *     GL_TEXTURE1
+ *     GL_TEXTURE2
+ *     ...
+ *
+ * 纹理单元不永久保存图片。
+ * 它是绘制时让着色器访问纹理对象的“中间插槽”。
+ *
+ * 例如：
+ *
+ *     glActiveTexture(GL_TEXTURE0);
+ *     glBindTexture(GL_TEXTURE_2D, textureID1);
+ *
+ * 表示：
+ *
+ *     将 textureID1 绑定到纹理单元 0 的二维纹理位置。
+ *
+ * 再例如：
+ *
+ *     glActiveTexture(GL_TEXTURE1);
+ *     glBindTexture(GL_TEXTURE_2D, textureID2);
+ *
+ * 表示：
+ *
+ *     将 textureID2 绑定到纹理单元 1 的二维纹理位置。
+ *
+ *
+ * 四、片段着色器中的 sampler2D 是什么
+ *
+ * 片段着色器中：
+ *
+ *     uniform sampler2D texture1;
+ *     uniform sampler2D texture2;
+ *
+ * sampler2D 本身不保存图片，也不保存 textureID。
+ *
+ * sampler2D 保存的是“纹理单元索引”。
+ *
+ * CPU 代码：
+ *
+ *     myShader.use();
+ *     myShader.setInt("texture1", 0);
+ *     myShader.setInt("texture2", 1);
+ *
+ * 表示：
+ *
+ *     texture1 的值为 0 → 使用纹理单元 GL_TEXTURE0
+ *     texture2 的值为 1 → 使用纹理单元 GL_TEXTURE1
+ *
+ * 注意：
+ *
+ *     这里传入的是纹理单元索引 0、1，
+ *     不是 textureID1、textureID2，
+ *     也不是 GL_TEXTURE0、GL_TEXTURE1 枚举值。
+ *
+ *
+ * 五、两张图片与片段着色器的完整关联关系
+ *
+ * 第一张纹理：
+ *
+ *     container.jpg
+ *          ↓ stbi_load
+ *     CPU 像素数据
+ *          ↓ glTexImage2D
+ *     textureID1
+ *          ↓ glBindTexture
+ *     GL_TEXTURE0
+ *          ↑
+ *     sampler2D texture1 的值为 0
+ *
+ * 第二张纹理：
+ *
+ *     awesomeface.png
+ *          ↓ stbi_load
+ *     CPU 像素数据
+ *          ↓ glTexImage2D
+ *     textureID2
+ *          ↓ glBindTexture
+ *     GL_TEXTURE1
+ *          ↑
+ *     sampler2D texture2 的值为 1
+ *
+ *
+ * 六、片段着色器怎样读取纹理
+ *
+ * 片段着色器中：
+ *
+ *     texture(texture1, TexCoord)
+ *
+ * GPU 的查找过程：
+ *
+ * 1. texture1 的值是 0；
+ * 2. 找到纹理单元 GL_TEXTURE0；
+ * 3. sampler 类型是 sampler2D；
+ * 4. 找到 GL_TEXTURE0 上绑定的二维纹理 textureID1；
+ * 5. 根据 TexCoord 从 textureID1 中采样颜色。
+ *
+ * 第二张纹理同理：
+ *
+ *     texture(texture2, TexCoord)
+ *
+ * 会通过纹理单元 GL_TEXTURE1 找到 textureID2。
+ *
+ *
+ * 七、两张纹理如何混合
+ *
+ * 片段着色器：
+ *
+ *     FragColor = mix(
+ *         texture(texture1, TexCoord),
+ *         texture(texture2, TexCoord),
+ *         0.2
+ *     );
+ *
+ * mix(a, b, 0.2) 的含义是：
+ *
+ *     最终颜色 = a * 80% + b * 20%
+ *
+ * 因此：
+ *
+ *     container.jpg 占 80%
+ *     awesomeface.png 占 20%
+ *
+ * 这个混合结果不会生成新的图片文件，
+ * 而是在每个片段执行片段着色器时实时计算，
+ * 然后写入 OpenGL 帧缓冲。
+ *
+ *
+ * 八、最终怎样显示到窗口
+ *
+ *     glDrawElements(...)
+ *
+ * 启动完整图形渲染管线：
+ *
+ *     顶点数据
+ *         ↓
+ *     顶点着色器
+ *         ↓
+ *     三角形组装
+ *         ↓
+ *     光栅化
+ *         ↓
+ *     插值纹理坐标
+ *         ↓
+ *     片段着色器采样并混合两张纹理
+ *         ↓
+ *     结果写入后缓冲
+ *
+ * 最后：
+ *
+ *     glfwSwapBuffers(window);
+ *
+ * 将 OpenGL 已经渲染好的后缓冲切换到前台，
+ * 从而显示在 GLFW 窗口中。
+ *
+ *
+ * 九、整个过程的简化总结
+ *
+ *     图片文件
+ *         ↓ stb_image 解码
+ *     CPU 像素数据
+ *         ↓ glTexImage2D
+ *     OpenGL 纹理对象
+ *         ↓ glBindTexture
+ *     纹理单元
+ *         ↑ sampler2D 保存纹理单元索引
+ *     片段着色器采样纹理
+ *         ↓
+ *     glDrawElements 生成最终画面
+ *         ↓
+ *     glfwSwapBuffers 显示到窗口
+ *
+ * ==============================================================
+ */
+
+
+
+
 int start_textures() {
 
     // ———————————— 1. 初始化glfw和glad库 ————————————
@@ -145,8 +406,12 @@ int start_textures() {
     std::string vertexShaderPath = shaderPath + "/texture.vert";
     std::string fragShaderPath = shaderPath + "/texture.frag";
     learnopengl::infrastructure::Shader myShader(vertexShaderPath.c_str(), fragShaderPath.c_str());
+
     myShader.use();
+
+    // 设置纹理单元索引。texture1 的值是 0 → 使用纹理单元 GL_TEXTURE0
     myShader.setInt("texture1", 0);
+    // 设置纹理单元索引。texture2 的值是 1 → 使用纹理单元 GL_TEXTURE1
     myShader.setInt("texture2", 1);
 
     while (!glfwWindowShouldClose(window)) {
@@ -157,9 +422,11 @@ int start_textures() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
+        // 绘制前把纹理对象绑定到纹理单元
+        // GL_TEXTURE0 的二维纹理绑定位置 → textureID1
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, textureID1);
-
+        // GL_TEXTURE1 的二维纹理绑定位置 → textureID2
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textureID2);
 
