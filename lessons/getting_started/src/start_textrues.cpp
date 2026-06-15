@@ -71,10 +71,11 @@ int start_textures() {
 
 
     // ———————————— 4. 绑定纹理 ————————————
+    // ———————————— 4.1 纹理1 —————————————
     // 1. 生成纹理
-    unsigned int textureID;
-    glGenTextures(1, &textureID);
-    glBindTexture(GL_TEXTURE_2D, textureID);
+    unsigned int textureID1;
+    glGenTextures(1, &textureID1);
+    glBindTexture(GL_TEXTURE_2D, textureID1);
 
     // 2. 设置当前绑定的纹理对象设置环绕、过滤方式
     // s轴(横坐标)的纹理环绕方式。设置为重复纹理图像。
@@ -87,12 +88,8 @@ int start_textures() {
     // 2. 在每个层级内部做线性过滤；
     // 3. 在两个相邻 Mipmap 层级之间也做线性混合。
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    // 决定放大时的采样方式。设置为三线性过滤。
-    // 纹理放大时：
-    // 1. 根据纹理在屏幕上的大小选择合适的 Mipmap 层级；
-    // 2. 在每个层级内部做线性过滤；
-    // 3. 在两个相邻 Mipmap 层级之间也做线性混合。
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    // 决定放大时的采样方式。设置为线性过滤。Mipmap只用于缩小，不用于放大。
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     // 3. 加载纹理图片
     int width, height, nrChannels;
@@ -122,12 +119,36 @@ int start_textures() {
     // 释放图像内存
     stbi_image_free(data);
 
+    // ———————————— 4.2 纹理2 ——————————————
+    unsigned int textureID2;
+    glGenTextures(1, &textureID2);
+    glBindTexture(GL_TEXTURE_2D, textureID2);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    stbi_set_flip_vertically_on_load(true);
+    std::string tex2Path = LEARNOPENGL_ASSET_DIR + std::string("/textures/getting_started/texture_texture/awesomeface.png");
+    data = stbi_load(tex2Path.c_str(), &width, &height, &nrChannels, 0);
+    if (data) {
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+    } else {
+        std::cout << "Failed to load texture" << std::endl;
+    }
+    stbi_image_free(data);
     
     // ———————————— 5. 绘制图像 ———————————————
     std::string shaderPath = LEARNOPENGL_ASSET_DIR + std::string("/shaders/getting_started/shader_texture");
     std::string vertexShaderPath = shaderPath + "/texture.vert";
     std::string fragShaderPath = shaderPath + "/texture.frag";
     learnopengl::infrastructure::Shader myShader(vertexShaderPath.c_str(), fragShaderPath.c_str());
+    myShader.use();
+    myShader.setInt("texture1", 0);
+    myShader.setInt("texture2", 1);
+
     while (!glfwWindowShouldClose(window)) {
         if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS) {
             glfwSetWindowShouldClose(window, true);
@@ -136,7 +157,11 @@ int start_textures() {
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glBindTexture(GL_TEXTURE_2D, textureID);
+        glActiveTexture(GL_TEXTURE0);
+        glBindTexture(GL_TEXTURE_2D, textureID1);
+
+        glActiveTexture(GL_TEXTURE1);
+        glBindTexture(GL_TEXTURE_2D, textureID2);
 
         myShader.use();
 

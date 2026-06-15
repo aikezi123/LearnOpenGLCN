@@ -87,7 +87,7 @@ namespace learnopengl::infrastructure {
     }
 
     void Shader::setInt(const std::string &name, int value) const {
-        glUniform1f(
+        glUniform1i(
             glGetUniformLocation(m_ID, name.c_str()),
             value
         );
