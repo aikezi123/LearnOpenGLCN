@@ -24,6 +24,9 @@ add_subdirectory(third_party/glad)
 # 这个子目录负责导入已经下载好的 glfw3.lib
 add_subdirectory(third_party/glfw)
 
+# 把 third_party/stb 子目录加入构建系统
+add_subdirectory(third_party/stb)
+
 add_subdirectory(infrastructure)
 
 # LearnOpenGL示例代码

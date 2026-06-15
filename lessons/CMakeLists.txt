@@ -36,4 +36,5 @@ target_compile_definitions(lessons PUBLIC
 # infrastructure 已经负责链接 glad / glfw / OpenGL
 target_link_libraries(lessons PUBLIC
     infrastructure
+    stb_image
 )
