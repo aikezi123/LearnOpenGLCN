@@ -38,5 +38,6 @@ target_link_libraries(infrastructure PUBLIC
     glad
     glfw3
     OpenGL::GL
+    glm::glm
 )
 

@@ -27,6 +27,9 @@ add_subdirectory(third_party/glfw)
 # 把 third_party/stb 子目录加入构建系统
 add_subdirectory(third_party/stb)
 
+# 把 third_party/glm 子目录加入构建系统
+add_subdirectory(third_party/glm)
+
 add_subdirectory(infrastructure)
 
 # LearnOpenGL示例代码
