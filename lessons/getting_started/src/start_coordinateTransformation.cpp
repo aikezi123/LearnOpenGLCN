@@ -17,7 +17,7 @@ int transform() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow * window = glfwCreateWindow(1920, 1080, "LearnOpenGLCN", nullptr, nullptr);
+    GLFWwindow * window = glfwCreateWindow(800, 600, "LearnOpenGLCN", nullptr, nullptr);
 
     if (window == nullptr) {
         std::cout << "faile to create GLFW window" << std::endl;
@@ -147,9 +147,9 @@ int transform() {
     stbi_image_free(data);
     
     // ———————————— 5. 绘制图像 ———————————————
-    std::string shaderPath = LEARNOPENGL_ASSET_DIR + std::string("/shaders/getting_started/shader_texture");
-    std::string vertexShaderPath = shaderPath + "/texture.vert";
-    std::string fragShaderPath = shaderPath + "/texture.frag";
+    std::string shaderPath = LEARNOPENGL_ASSET_DIR + std::string("/shaders/getting_started/shader_transform");
+    std::string vertexShaderPath = shaderPath + "/transform.vert";
+    std::string fragShaderPath = shaderPath + "/transform.frag";
     learnopengl::infrastructure::Shader myShader(vertexShaderPath.c_str(), fragShaderPath.c_str());
 
     myShader.use();
@@ -175,8 +175,16 @@ int transform() {
         glActiveTexture(GL_TEXTURE1);
         glBindTexture(GL_TEXTURE_2D, textureID2);
 
+        // create transformations
+        glm::mat4 transform = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        transform = glm::translate(transform, glm::vec3(0.2f, -0.2f, 0.0f));
+        transform = glm::rotate(transform, (float)glfwGetTime(), glm::vec3(0.0f, 0.0f, 1.0f));
+        transform = glm::scale(transform, glm::vec3(0.5, 0.5, 0.5));
 
         myShader.use();
+
+        unsigned int transformLoc = glGetUniformLocation(myShader.m_ID, "transform");
+        glUniformMatrix4fv(transformLoc, 1, GL_FALSE, glm::value_ptr(transform));
 
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
