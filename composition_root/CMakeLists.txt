@@ -7,6 +7,7 @@ add_executable(LearnOpenGLCN
 # 真正的 OpenGL示例放在lessons里
 target_link_libraries(LearnOpenGLCN PRIVATE
     lessons
+    learnopengl_ui
 )
 
 target_compile_features(LearnOpenGLCN PRIVATE

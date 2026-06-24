@@ -36,5 +36,7 @@ add_subdirectory(infrastructure)
 # lessons依赖infrastructure，因此要放在add_subdirectory(infrastructure)后面
 add_subdirectory(lessons)
 
+add_subdirectory(ui)
+
 # 程序入口层
-add_subdirectory(app)
+add_subdirectory(composition_root)
