@@ -28,6 +28,10 @@ function Write-WarningMessage($Message) {
     Write-Host "[qt-ui-watch] $Message" -ForegroundColor Yellow
 }
 
+function Join-DisplayPaths($Paths) {
+    return ($Paths | ForEach-Object { Get-RepoRelativePath $_ }) -join ", "
+}
+
 function Test-IsIgnoredPath($Path) {
     $fullPath = [System.IO.Path]::GetFullPath($Path)
 
@@ -39,6 +43,14 @@ function Test-IsIgnoredPath($Path) {
     }
 
     return $false
+}
+
+function Find-ExistingClassFiles($ClassName) {
+    $classFileNames = @("$ClassName.h", "$ClassName.cpp")
+
+    return Get-ChildItem -LiteralPath $WatchRootDir -File -Recurse | Where-Object {
+        ($classFileNames -contains $_.Name) -and (-not (Test-IsIgnoredPath $_.FullName))
+    } | Select-Object -ExpandProperty FullName
 }
 
 function Get-UiXml($Path) {
@@ -184,6 +196,18 @@ function New-QtClassFromUi($Path) {
 
     $headerPath = Join-Path $dir "$className.h"
     $sourcePath = Join-Path $dir "$className.cpp"
+    $existingClassFiles = @(Find-ExistingClassFiles $className)
+
+    if ($existingClassFiles.Count -gt 0) {
+        $sameDirectoryFiles = @($existingClassFiles | Where-Object {
+            (Split-Path -Parent ([System.IO.Path]::GetFullPath($_))).Equals($dir, [System.StringComparison]::OrdinalIgnoreCase)
+        })
+
+        if ($sameDirectoryFiles.Count -lt $existingClassFiles.Count) {
+            Write-Info "Skip generating ${className}: class files already exist at $(Join-DisplayPaths $existingClassFiles)"
+            return
+        }
+    }
 
     if (-not (Test-Path -LiteralPath $headerPath)) {
         Set-Content -LiteralPath $headerPath -Value (Get-HeaderContent $className $baseClass) -Encoding UTF8

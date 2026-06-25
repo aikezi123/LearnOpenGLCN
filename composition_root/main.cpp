@@ -1,13 +1,21 @@
-#include <iostream>
-#include "start_shaders.h"
-#include "shader_exercise.h"
-#include "start_textrues.h"
-#include "start_coordinateTransformation.h"
+#include <QApplication>
+#include <QSurfaceFormat>
 
+#include "MainWindow.h"
 
-int main()
+int main(int argc, char* argv[])
 {
-    transform();
-    return 0;
+    QSurfaceFormat format;
+    format.setVersion(3, 3);
+    format.setProfile(QSurfaceFormat::CoreProfile);
+    format.setDepthBufferSize(24);
+    QSurfaceFormat::setDefaultFormat(format);
+
+    QApplication app(argc, argv);
+
+    learnopengl::ui::MainWindow window;
+    window.show();
+
+    return app.exec();
 }
 
