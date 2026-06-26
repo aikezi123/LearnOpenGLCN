@@ -3,6 +3,7 @@
 #include <QOpenGLFunctions_3_3_Core>
 #include <QOpenGLWidget>
 
+
 // 双重继承，QOpenGLFunctions_3_3_Core为openGL的函数加载库
 class DisplayOpenGLImage
     : public QOpenGLWidget
@@ -28,11 +29,15 @@ private:
     void initializeShader();
     // 初始化集合资源。准备顶点数据及索引数据，创建、配置VAO、VBO、EBO对象。
     void initializeGeometry();
+    // 初始化纹理对象
+    void initializeTexture();
+    // 清理对象
     void cleanup();
 
 private:
     unsigned int m_vao = 0;
     unsigned int m_vbo = 0;
     unsigned int m_ebo = 0;
+    unsigned int m_texture = 0;
     unsigned int m_shaderProgram = 0;
 };

@@ -1,5 +1,7 @@
 #include <DisplayOpenGLImage.h>
 
+#include <QCoreApplication>
+#include <stb_image.h>
 #include <array>
 #include <iostream>
 
@@ -39,18 +41,22 @@ GLuint compileShader(QOpenGLFunctions_3_3_Core& gl, GLenum type, const char* sou
 DisplayOpenGLImage::DisplayOpenGLImage(QWidget *parent) : QOpenGLWidget(parent) {
 }
 
-DisplayOpenGLImage::~DisplayOpenGLImage() {
-    makeCurrent();
-    cleanup();
-    doneCurrent();
+DisplayOpenGLImage::~DisplayOpenGLImage()
+{
+    if (context() != nullptr) {
+        makeCurrent();
+        cleanup();
+        doneCurrent();
+    }
 }
 
 void DisplayOpenGLImage::initializeGL()
 {
-    initializeOpenGLFunctions();
+    initializeOpenGLFunctions();   // 初始化opengl函数库
 
-    initializeShader();
-    initializeGeometry();
+    initializeShader();            // 初始化着色器
+    initializeGeometry();          // 初始化几何对象
+    initializeTexture();           // 初始化纹理
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 }
@@ -60,17 +66,28 @@ void DisplayOpenGLImage::resizeGL(int width, int height) {
     glViewport(0, 0, width, height);
 }
 
-void DisplayOpenGLImage::paintGL() {
-    // 它清空当前 QOpenGLWidget 的颜色缓冲区framebuffer
+void DisplayOpenGLImage::paintGL()
+{
     glClear(GL_COLOR_BUFFER_BIT);
-    // 使用指定的 Shader Program
+
+    if (m_shaderProgram == 0 || m_texture == 0 || m_vao == 0) {
+        return;
+    }
+    
     glUseProgram(m_shaderProgram);
-    // 把 m_vao 设置为当前 OpenGL Context 中的“当前 VAO”。
+
+    // 激活纹理单元 0。
+    glActiveTexture(GL_TEXTURE0);
+
+    // 把 m_texture 绑定到当前 GL_TEXTURE_2D。
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+
     glBindVertexArray(m_vao);
-    // 根据当前绑定的 VAO 和 VAO 中记录的 EBO，用索引方式绘制图元。
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
-    // 解绑当前 VAO。9代表解绑，而不是绑定location 0。
     glBindVertexArray(0);
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glUseProgram(0);
 }
 
 void DisplayOpenGLImage::initializeShader()
@@ -95,18 +112,32 @@ void DisplayOpenGLImage::initializeShader()
     // 顶点着色器
     const char *vertexShaderSource = R"(
         #version 330 core
+        
         layout(location = 0) in vec3 aPos;
-        void main() {
+        layout(location = 1) in vec2 aTexCoord;
+        
+        out vec2 TexCoord;
+        
+        void main()
+        {
             gl_Position = vec4(aPos, 1.0);
+            TexCoord = aTexCoord;
         }
     )";
 
     // 片段着色器
     const char *fragShaderSource = R"(
         #version 330 core
+
+        in vec2 TexCoord;
+
         layout(location = 0) out vec4 fragColor;
-        void main() {
-            fragColor = vec4(1.0, 0.5, 0.2, 1.0);
+
+        uniform sampler2D uTexture;
+
+        void main()
+        {
+            fragColor = texture(uTexture, TexCoord);
         }
     )";
 
@@ -114,6 +145,16 @@ void DisplayOpenGLImage::initializeShader()
     unsigned int vertexShaderID = compileShader(*this, GL_VERTEX_SHADER, vertexShaderSource);
     // 编译片段着色器
     unsigned int fragShaderID = compileShader(*this, GL_FRAGMENT_SHADER, fragShaderSource);
+
+    if (vertexShaderID == 0 || fragShaderID == 0) {
+        if (vertexShaderID != 0) {
+            glDeleteShader(vertexShaderID);
+        }
+        if (fragShaderID != 0) {
+            glDeleteShader(fragShaderID);
+        }
+        return;
+    }
     // 创建着色器程序
     m_shaderProgram = glCreateProgram();
     // 将着色器连接到程序中
@@ -134,6 +175,18 @@ void DisplayOpenGLImage::initializeShader()
         // 删除着色器程序
         glDeleteProgram(m_shaderProgram);
         m_shaderProgram = 0;
+    }
+    else {
+        glUseProgram(m_shaderProgram);
+
+        const GLint textureLocation =
+            glGetUniformLocation(m_shaderProgram, "uTexture");
+
+        if (textureLocation != -1) {
+            glUniform1i(textureLocation, 0);
+        }
+
+        glUseProgram(0);
     }
 
     // link 成功后，m_shaderProgram 已经保存了完整的链接结果。
@@ -213,11 +266,12 @@ void DisplayOpenGLImage::initializeGeometry()
     //
     // GPU:
     //     暂时没有变化。
-    const std::array<float, 12> vertices{
-         0.5F,  0.5F, 0.0F,
-         0.5F, -0.5F, 0.0F,
-        -0.5F, -0.5F, 0.0F,
-        -0.5F,  0.5F, 0.0F
+    const std::array<float, 20> vertices{
+        // positions          // texture coordinates
+         1.0F,  1.0F, 0.0F,   1.0F, 1.0F,
+         1.0F, -1.0F, 0.0F,   1.0F, 0.0F,
+        -1.0F, -1.0F, 0.0F,   0.0F, 0.0F,
+        -1.0F,  1.0F, 0.0F,   0.0F, 1.0F
     };
 
     /*
@@ -681,7 +735,7 @@ void DisplayOpenGLImage::initializeGeometry()
         3,
         GL_FLOAT,
         GL_FALSE,
-        3 * static_cast<GLsizei>(sizeof(float)),
+        5 * static_cast<GLsizei>(sizeof(float)),
         nullptr
     );
 
@@ -732,6 +786,16 @@ void DisplayOpenGLImage::initializeGeometry()
     // GPU:
     //     暂时没有绘制动作。
     glEnableVertexAttribArray(0);
+
+    glVertexAttribPointer(
+        1,
+        2,
+        GL_FLOAT,
+        GL_FALSE,
+        5 * static_cast<GLsizei>(sizeof(float)),
+        reinterpret_cast<void*>(3 * sizeof(float))
+    );
+    glEnableVertexAttribArray(1);
 
     /*
         当前 OpenGL Context 概念状态表：
@@ -905,8 +969,86 @@ void DisplayOpenGLImage::initializeGeometry()
 
 }
 
+void DisplayOpenGLImage::initializeTexture()
+{
+    // 注意：
+    // 这里不用 QString / QImage / QOpenGLTexture。
+    // stb_image 直接从文件路径读取图片，返回 CPU 内存中的像素数据。
+
+    const char* texturePath = "../../../../assets/textures/ui/display_image.png";
+
+    // OpenGL 的纹理坐标通常认为 (0, 0) 是左下角；
+    // 普通图片文件通常是左上角开始存储。
+    // 设置 true 后，stb 加载时会把图片上下翻转，方便和 OpenGL 纹理坐标对应。
+    stbi_set_flip_vertically_on_load(true);
+
+    int width = 0;
+    int height = 0;
+    int channels = 0;
+
+    // 强制加载为 4 通道 RGBA。
+    // 这样无论原图是 RGB / RGBA，都统一按照 GL_RGBA 上传。
+    unsigned char* data = stbi_load(
+        texturePath,
+        &width,
+        &height,
+        &channels,
+        STBI_rgb_alpha
+    );
+
+    if (data == nullptr) {
+        std::cerr << "Failed to load texture: "
+                  << texturePath
+                  << "\nReason: "
+                  << stbi_failure_reason()
+                  << std::endl;
+        return;
+    }
+
+    glGenTextures(1, &m_texture);
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+
+    // 纹理环绕方式。
+    // 超出 [0, 1] 的纹理坐标时，使用边缘颜色。
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+
+    // 纹理过滤方式。
+    // 缩小时、放大时都使用线性过滤。
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    // 按 1 字节对齐读取 CPU 图像数据。
+    // 对 RGBA 来说通常不是必须，但保留这个设置更稳。
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    // 把 CPU 端图片数据上传到当前绑定的 OpenGL Texture Object。
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA8,
+        width,
+        height,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        data
+    );
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // 释放 stb_image 分配的 CPU 端图片内存。
+    // 注意：这不会影响 OpenGL Texture，因为 glTexImage2D 已经把数据交给 OpenGL 了。
+    stbi_image_free(data);
+}
+
 void DisplayOpenGLImage::cleanup()
 {
+    if (m_texture != 0) {
+        glDeleteTextures(1, &m_texture);
+        m_texture = 0;
+    }
+
     if (m_vao != 0) {
         glDeleteVertexArrays(1, &m_vao);
         m_vao = 0;

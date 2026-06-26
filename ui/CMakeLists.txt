@@ -43,6 +43,7 @@ target_link_libraries(learnopengl_ui
     PUBLIC
         Qt6::Widgets
         Qt6::OpenGLWidgets
+        stb_image
     PRIVATE
         Qt6::OpenGL
         glad
