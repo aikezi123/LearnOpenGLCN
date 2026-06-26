@@ -24,9 +24,9 @@ protected:
     void paintGL() override;
 
 private:
-    // 创建、编译、链接 OpenGL 着色器程序，并把最终可用于绘制的 Program ID 保存到 m_shaderProgram。
+    // 初始化着色器。创建、编译、链接 OpenGL 着色器程序，并把最终可用于绘制的 Program ID 保存到 m_shaderProgram。
     void initializeShader();
-    // 
+    // 初始化集合资源。准备顶点数据及索引数据，创建、配置VAO、VBO、EBO对象。
     void initializeGeometry();
     void cleanup();
 
