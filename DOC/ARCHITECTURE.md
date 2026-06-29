@@ -1,5 +1,17 @@
 # 代码架构与依赖关系
 
+## 0. 长期目标与阶段策略
+
+LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的全部内容。课程代码首先要保持可运行、可对照教程、可逐步实验。
+
+在学习过程中，项目会选择部分分支能力扩展为更接近工程应用的功能模块，例如：
+
+- 工业相机图像显示：大恒、海康等相机 SDK 获取实时图像，使用 OpenGL 纹理上传与 Qt 窗口显示，目标帧率至少满足 30 FPS 以上。
+- 三维轨迹与点云显示：将轨迹点、点云或空间测量数据转换为 OpenGL 可绘制数据，并通过 Qt 界面进行交互展示。
+- 教程知识点复用：把 Shader、Texture、Buffer、VAO/VBO/EBO、Camera、Transform 等教程内容逐步沉淀成可复用能力。
+
+长期方向采用整洁架构，但前期允许先在 `ui` 层完成 Qt/OpenGL 原型。原型跑通后再把稳定业务规则、用例编排和技术适配分别迁移到 domain、application、infrastructure、ui 和 app 层。文档必须区分“当前原型做法”和“目标分层做法”。
+
 ## 1. 架构目标
 
 工程计划采用整洁架构。核心目标不是增加目录数量，而是让依赖始终指向更稳定的内层，使领域和应用逻辑不依赖 GLFW、OpenGL、文件系统等外部技术细节。
@@ -20,7 +32,7 @@
               ▼                  ▼                  ▼
        ┌────────────┐   ┌────────────────┐   ┌────────────┐
        │ ui         │   │ infrastructure │   │ lessons    │
-       │ GLFW/Input │   │ OpenGL/stb/FS  │   │ 功能模块   │
+       │ Qt/GLFW UI │   │ OpenGL/stb/FS  │   │ 教程/功能  │
        └──────┬─────┘   └───────┬────────┘   └─────┬──────┘
               │                 │                  │
               └─────────────────┼──────────────────┘
@@ -50,25 +62,43 @@
 4. `third_party/glm`
 5. `infrastructure`
 6. `lessons`
-7. `app`
+7. `ui`
+8. `composition_root`
 
 当前目标及依赖为：
 
 | Target | 类型 | 主要职责 | 直接依赖 |
 | --- | --- | --- | --- |
-| `LearnOpenGLCN` | Executable | 程序入口，选择要运行的课程 | `lessons` |
+| `LearnOpenGLCN_Lessons` | Executable | LearnOpenGL 课程代码入口 | `lessons` |
+| `LearnOpenGLCN_Qt` | Executable | Qt/OpenGL 工程原型入口 | `learnopengl_ui` |
 | `lessons` | Static | 收集并编译所有课程示例 | `infrastructure`、`stb_image` |
+| `learnopengl_ui` | Static | 当前 Qt/OpenGL 显示原型与 UI 类 | Qt6 Widgets/OpenGLWidgets、Qt6 OpenGL、GLAD、OpenGL、stb_image |
 | `infrastructure` | Static | 提供 Shader 等公共技术能力 | GLAD、GLFW、OpenGL、GLM |
 | `glad` | Static | 加载 OpenGL 函数地址 | 无项目内依赖 |
 | `glfw3` | Imported Static | 窗口、上下文和输入 | Windows 系统库 |
 | `stb_image` | Static | 图片解码 | 无项目内依赖 |
 | `glm::glm` | Interface | 数学类型和矩阵运算 | 无项目内依赖 |
 
-`app/main.cpp` 当前通过直接调用某个课程函数选择运行内容。所有课程源码被编入同一个 `lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
+`composition_root/qt_main.cpp` 负责启动 Qt 应用并显示 UI 窗口。`composition_root/lesson_main.cpp` 负责选择并运行 LearnOpenGL 课程入口。所有课程源码仍被编入同一个 `lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
+
+当前已经拆成两个 executable：`LearnOpenGLCN_Lessons` 和 `LearnOpenGLCN_Qt`。教程入口和 Qt 工程入口不再共享同一个 `main.cpp`，避免手动改入口来切换运行内容。
+
+`ui/` 目前包含 Qt Widgets 与 `QOpenGLWidget` 原型。该阶段允许把纹理加载、Shader 编译和绘制流程暂时集中在 UI 类中，以便理解 Qt 替代 GLFW 后的渲染流程。稳定后应拆分出 OpenGL 资源、图像加载和业务用例，避免长期把功能堆在 UI 层。
 
 ### 2.2 当前运行流程
 
-以坐标变换课程为例，运行过程为：
+当前 `LearnOpenGLCN_Qt` 的运行流程是 Qt 原型入口：
+
+```text
+main()
+  ├── 设置 QSurfaceFormat，要求 OpenGL 3.3 Core Profile
+  ├── 创建 QApplication
+  ├── 创建 learnopengl::ui::MainWindow
+  ├── 显示主窗口
+  └── 进入 Qt 事件循环 app.exec()
+```
+
+当前 `LearnOpenGLCN_Lessons` 通过命令行参数选择课程。未传参数时默认运行 `start_textures`。以坐标变换课程为例，典型 GLFW 课程流程是：
 
 ```text
 main()
@@ -84,6 +114,33 @@ main()
 ```
 
 这是一种适合教学的完整示例结构，但窗口、渲染循环和 GPU 资源管理会在多个课程中重复。
+
+Qt 原型和 GLFW 课程使用不同的事件循环和窗口/context 管理方式。因此当前用两个 executable 隔离入口：Qt 入口只负责 Qt 事件循环，课程入口只负责课程选择和调用。
+
+### 2.3 当前入口拆分
+
+当前 `composition_root/` 中有两个独立入口：
+
+| Executable | 职责 | 建议依赖 | 说明 |
+| --- | --- | --- | --- |
+| `LearnOpenGLCN_Lessons` | 运行 LearnOpenGL 教程代码 | `lessons` | 面向课程学习，允许使用 GLFW 教学式完整流程。 |
+| `LearnOpenGLCN_Qt` | 运行 Qt/OpenGL 工程原型 | `learnopengl_ui` | 面向相机图像、点云、轨迹等 Qt 显示模块。 |
+
+拆分后不再需要为了切换运行内容频繁修改同一个 `main.cpp`。两个入口都属于 `composition_root` 层，并保持很薄：
+
+- lesson 入口只负责通过课程名选择课程、调用课程函数、返回进程结果。
+- Qt 入口只负责设置 Qt/OpenGL 格式、创建 `QApplication`、显示顶层窗口、进入事件循环。
+- 两个入口都不能放 Shader 编译、纹理加载、相机采集、点云处理等业务或渲染细节。
+
+当前 lesson 入口已支持简单命令行选择：
+
+```powershell
+LearnOpenGLCN_Lessons.exe
+LearnOpenGLCN_Lessons.exe transform
+LearnOpenGLCN_Lessons.exe --list
+```
+
+后续课程数量变多后，再考虑独立课程注册表、配置文件或 Qt 列表选择课程。
 
 ## 3. 目标分层职责与边界
 
@@ -151,12 +208,14 @@ main()
 - 读取键盘、鼠标及窗口事件。
 - 将平台事件转换为 application 能理解的输入。
 - 后续可承载课程选择界面或调试 UI。
+- 当前 Qt 原型阶段可使用 `QApplication`、`QWidget`、`QOpenGLWidget`、Qt Designer `.ui` 文件和 Qt 事件循环。
 
 边界要求：
 
-- GLFW 类型不得进入 domain。
+- Qt/GLFW 类型不得进入 domain 或 application。
 - UI 不直接实现领域规则。
 - UI 触发 application 用例，而不是反向控制 application 内部状态。
+- 前期为了跑通功能允许在 UI 层临时实现完整渲染流程，但该代码应被视为原型；当流程稳定、重复或需要复用时，拆分到 application/infrastructure。
 
 ### 3.5 lessons
 
@@ -183,6 +242,8 @@ main()
 - 控制进程级启动和退出。
 
 `app` 可以知道所有外层具体类型，但其他层不得依赖 `app`。
+
+当前入口目录名为 `composition_root/`，承担 app/Composition Root 角色。不要在 `main.cpp` 中堆积业务逻辑、Shader 编译、纹理加载或相机采集流程。
 
 ### 3.7 assets
 
@@ -220,8 +281,10 @@ learnopengl::application
 learnopengl::opengl
 learnopengl::image
 learnopengl::ui_glfw
+learnopengl::ui
 learnopengl::lessons
-LearnOpenGLCN
+LearnOpenGLCN_Lessons
+LearnOpenGLCN_Qt
 ```
 
 建议依赖关系：
@@ -246,15 +309,21 @@ target_link_libraries(learnopengl_ui_glfw
     PRIVATE glfw3
 )
 
-target_link_libraries(LearnOpenGLCN PRIVATE
+target_link_libraries(LearnOpenGLCN_Lessons PRIVATE
     learnopengl::lessons
     learnopengl::opengl
     learnopengl::image
     learnopengl::ui_glfw
 )
+
+target_link_libraries(LearnOpenGLCN_Qt PRIVATE
+    learnopengl::ui
+)
 ```
 
 实际使用 `PUBLIC` 还是 `PRIVATE` 必须根据公共头文件是否暴露依赖决定，不能机械照抄示例。
+
+当前工程已经完成入口拆分。`composition_root/qt_main.cpp` 生成 `LearnOpenGLCN_Qt`，`composition_root/lesson_main.cpp` 生成 `LearnOpenGLCN_Lessons`，两个 executable 都输出到同一个 `bin` 目录。
 
 ## 5. CMake 边界规则
 
@@ -270,9 +339,9 @@ target_link_libraries(LearnOpenGLCN PRIVATE
 
 ## 6. 已知架构债务
 
-- `domain`、`application`、`ui` 仍为空，尚未形成真实依赖层。
+- `domain`、`application` 仍未形成稳定 target；`ui` 已有 Qt 原型 target，但尚未完成与 application/infrastructure 的清晰拆分。
 - 所有课程被收集进单一 `lessons` 静态库。
-- 切换课程需要手动修改 `main.cpp`。
+- `lesson_main.cpp` 当前直接包含各课程头文件并维护课程列表，尚未形成独立课程注册系统。
 - lessons 和 infrastructure 的 include 目录由递归扫描产生，边界过宽。
 - 部分课程使用 `"Shader.hpp"`，依赖泄漏的 include 搜索路径。
 - Shader 的 OpenGL Program ID 对外公开，且尚未完整实现 RAII 和移动语义。
@@ -280,4 +349,3 @@ target_link_libraries(LearnOpenGLCN PRIVATE
 - 资源路径目前通过编译期绝对路径宏传入，不利于产物搬迁。
 
 这些问题应采用纵向切片逐步迁移，不建议一次性重写全部课程。
-

@@ -1,7 +1,7 @@
+#include "MainWindow.h"
+
 #include <QApplication>
 #include <QSurfaceFormat>
-
-#include "MainWindow.h"
 
 int main(int argc, char* argv[])
 {
@@ -18,4 +18,3 @@ int main(int argc, char* argv[])
 
     return app.exec();
 }
-

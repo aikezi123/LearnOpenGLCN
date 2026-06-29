@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.21)
 # 定义项目名称
 # LANGUAGES C CXX 表示项目同时启用 C 和 C++ 两种语言
 # C   用来编译 glad.c
-# CXX 用来编译 main.cpp
+# CXX 用来编译项目中的 C++ 源文件和入口文件
 project(LearnOpenGL_Window LANGUAGES C CXX)
 
 set(CMAKE_CXX_STANDARD 17)

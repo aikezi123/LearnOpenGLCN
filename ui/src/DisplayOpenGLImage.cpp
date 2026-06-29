@@ -1,11 +1,39 @@
 #include <DisplayOpenGLImage.h>
 
+#include <QByteArray>
 #include <QCoreApplication>
+#include <QDir>
+#include <QFileInfo>
 #include <stb_image.h>
+
 #include <array>
 #include <iostream>
+#include <string>
 
 namespace {
+
+std::string findTexturePath()
+{
+    const QString relativePath = QStringLiteral("assets/textures/ui/display_image.png");
+    const QDir currentDir = QDir::current();
+    const QDir appDir = QDir(QCoreApplication::applicationDirPath());
+
+    const std::array<QString, 3> candidates{
+        currentDir.absoluteFilePath(relativePath),
+        appDir.absoluteFilePath(QStringLiteral("../../../../") + relativePath),
+        appDir.absoluteFilePath(QStringLiteral("../") + relativePath)
+    };
+
+    for (const QString& candidate : candidates) {
+        const QString cleanPath = QDir::cleanPath(candidate);
+        if (QFileInfo::exists(cleanPath)) {
+            const QByteArray encodedPath = QDir::toNativeSeparators(cleanPath).toLocal8Bit();
+            return std::string(encodedPath.constData(), static_cast<size_t>(encodedPath.size()));
+        }
+    }
+
+    return {};
+}
 
 // 编译着色器，返回着色器ID
 GLuint compileShader(QOpenGLFunctions_3_3_Core& gl, GLenum type, const char* source)
@@ -972,10 +1000,17 @@ void DisplayOpenGLImage::initializeGeometry()
 void DisplayOpenGLImage::initializeTexture()
 {
     // 注意：
-    // 这里不用 QString / QImage / QOpenGLTexture。
-    // stb_image 直接从文件路径读取图片，返回 CPU 内存中的像素数据。
+    // 这里不使用 QImage / QOpenGLTexture 解码和创建纹理。
+    // stb_image 直接读取图片，返回 CPU 内存中的像素数据，再交给原生 OpenGL Texture。
 
-    const char* texturePath = "../../../../assets/textures/ui/display_image.png";
+    const std::string texturePath = findTexturePath();
+    if (texturePath.empty()) {
+        std::cerr
+            << "Texture file not found. Please save the image as: "
+            << "assets/textures/ui/display_image.png"
+            << std::endl;
+        return;
+    }
 
     // OpenGL 的纹理坐标通常认为 (0, 0) 是左下角；
     // 普通图片文件通常是左上角开始存储。
@@ -989,7 +1024,7 @@ void DisplayOpenGLImage::initializeTexture()
     // 强制加载为 4 通道 RGBA。
     // 这样无论原图是 RGB / RGBA，都统一按照 GL_RGBA 上传。
     unsigned char* data = stbi_load(
-        texturePath,
+        texturePath.c_str(),
         &width,
         &height,
         &channels,
@@ -1005,7 +1040,26 @@ void DisplayOpenGLImage::initializeTexture()
         return;
     }
 
+    if (width <= 0 || height <= 0) {
+        std::cerr << "Texture image has invalid size: "
+                  << texturePath
+                  << std::endl;
+        stbi_image_free(data);
+        return;
+    }
+
+    if (m_texture != 0) {
+        glDeleteTextures(1, &m_texture);
+        m_texture = 0;
+    }
+
     glGenTextures(1, &m_texture);
+    if (m_texture == 0) {
+        std::cerr << "Failed to create OpenGL texture object." << std::endl;
+        stbi_image_free(data);
+        return;
+    }
+
     glBindTexture(GL_TEXTURE_2D, m_texture);
 
     // 纹理环绕方式。
@@ -1020,6 +1074,8 @@ void DisplayOpenGLImage::initializeTexture()
 
     // 按 1 字节对齐读取 CPU 图像数据。
     // 对 RGBA 来说通常不是必须，但保留这个设置更稳。
+    GLint previousUnpackAlignment = 4;
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &previousUnpackAlignment);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
     // 把 CPU 端图片数据上传到当前绑定的 OpenGL Texture Object。
@@ -1034,6 +1090,8 @@ void DisplayOpenGLImage::initializeTexture()
         GL_UNSIGNED_BYTE,
         data
     );
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
 
     glBindTexture(GL_TEXTURE_2D, 0);
 

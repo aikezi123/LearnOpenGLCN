@@ -7,6 +7,7 @@
 - 新代码遵守模块边界，不通过增加 include path 绕过依赖问题。
 - GPU、窗口、文件等资源必须体现所有权和生命周期。
 - 优先完成一个清晰的小抽象，不提前设计尚未出现的扩展点。
+- 当前 Qt/OpenGL 功能原型允许先在 `ui` 层跑通完整流程，但应明确标记为阶段性实现；稳定后再迁移到 application/infrastructure/domain 的合适位置。
 
 ## 2. C++ 版本与文件
 
@@ -131,6 +132,18 @@ private:
 - 变换矩阵明确记录乘法顺序。对于 `T * R * S * position`，顶点实际依次经历缩放、旋转和平移。
 - 上传纹理时根据通道数选择正确格式，并考虑 `GL_UNPACK_ALIGNMENT`。
 - 退出 Context 前释放依赖 Context 的 GPU 资源。
+- 在 `QOpenGLWidget` 中创建和释放 OpenGL 资源时，必须确认当前对象的 context 有效；析构中需要 `makeCurrent()` 后再删除 GL 资源，随后 `doneCurrent()`。
+- 用于相机图像或实时帧更新的纹理，优先采用“初始化时 `glTexImage2D` 分配存储，每帧 `glTexSubImage2D` 更新内容”的方式，避免每帧重新创建纹理对象。
+
+## 8.1 Qt 使用约定
+
+- Qt 类型只允许出现在 UI 层或明确的外层适配器中。
+- `QWidget`、`QOpenGLWidget`、Qt Designer `.ui`、信号槽和 Qt 事件循环不得进入 domain/application。
+- application 不返回 `QImage`、`QString`、`QWidget`、`QOpenGLWidget` 等 Qt 类型。
+- `composition_root/qt_main.cpp` 只负责创建 `QApplication`、设置必要的 OpenGL 格式、装配顶层窗口并进入事件循环。
+- `composition_root/lesson_main.cpp` 只负责选择和调用课程入口，不放课程内部渲染逻辑。
+- 原型阶段可以让 `QOpenGLWidget` 直接管理 Shader、VAO/VBO/EBO、Texture；当逻辑稳定或被多处复用时，应抽到 infrastructure 的 OpenGL 资源封装中。
+- 不同时运行 GLFW 主循环和 Qt 主事件循环。迁移 GLFW 示例到 Qt 时，应明确哪个系统拥有窗口、事件循环和 OpenGL Context。
 
 ## 9. 资源与 Shader
 
@@ -140,6 +153,8 @@ private:
 - GLSL 版本与创建的 OpenGL Context 版本保持一致。
 - Shader 的 attribute、uniform、输入输出变量是代码契约，修改时同步更新 C++ 调用方。
 - 图片加载后及时释放 CPU 侧像素数据；GPU Texture 由 RAII 对象负责释放。
+- 使用 stb_image 加载纹理时，明确是否调用 `stbi_set_flip_vertically_on_load()`，并保持纹理坐标与图像翻转策略一致。
+- 若强制加载为 RGBA，例如 `STBI_rgb_alpha`，上传格式应与之匹配为 `GL_RGBA`/`GL_RGBA8`。
 
 ## 10. CMake 规范
 
@@ -168,4 +183,3 @@ private:
 - 没有新增跨层反向依赖。
 - GPU 和系统资源在所有返回路径上都能正确释放。
 - 新增公开接口具有最小必要文档。
-

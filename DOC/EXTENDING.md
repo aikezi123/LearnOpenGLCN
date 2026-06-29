@@ -4,6 +4,13 @@
 
 工程扩展以“保持可运行的小步迁移”为原则：一次迁移一条完整功能链路，完成后再处理下一课程。不要先创建大量抽象接口，再等待未来代码填充。
 
+本项目有两类扩展：
+
+1. LearnOpenGLCN 教程学习扩展：按章节继续实现网站中的课程与练习。
+2. 工程功能扩展：从某个 OpenGL 知识点出发，扩展为实际功能模块，例如相机实时图像显示、三维轨迹或点云绘制。
+
+前期允许在 `ui` 层先做完整 Qt/OpenGL 原型，尤其是需要理解 Qt 事件循环、`QOpenGLWidget` 生命周期和渲染流程时。原型跑通后再把稳定逻辑拆分到 application/infrastructure/domain。不要把“先跑通”的临时代码误写成最终分层方案。
+
 每次扩展应回答三个问题：
 
 1. 新代码属于稳定业务规则，还是外部技术细节？
@@ -38,7 +45,7 @@ assets/
 1. 创建课程公开入口头文件。
 2. 在 `.cpp` 中实现窗口初始化、资源创建、渲染循环和清理。
 3. 资源路径以 `assets` 为根组织，不依赖当前工作目录。
-4. 在 `app/main.cpp` 中临时选择该课程入口。
+4. 在 `composition_root/lesson_main.cpp` 的课程列表中加入该课程入口。
 5. 使用 Debug 配置完整构建并运行。
 6. 检查窗口缩放、ESC 退出、Shader/纹理加载失败等路径。
 
@@ -71,11 +78,11 @@ add_library(learnopengl::lesson_coordinate_transform
 
 如果课程直接教授 OpenGL API，允许它私有依赖 OpenGL 适配器；如果课程只表达用例，则只依赖 application。
 
-课程应通过注册表或命令行参数选择，而不是持续修改 `main.cpp`：
+课程应通过课程入口列表或命令行参数选择，而不是持续修改 Qt 入口：
 
 ```text
-LearnOpenGLCN --lesson coordinate-transform
-LearnOpenGLCN --list-lessons
+LearnOpenGLCN_Lessons.exe transform
+LearnOpenGLCN_Lessons.exe --list
 ```
 
 注册信息至少包含：
@@ -99,6 +106,18 @@ LearnOpenGLCN --list-lessons
 6. 对不需要图形上下文的应用逻辑增加单元测试。
 
 接口应从实际用例抽取。例如，用例只需要读取时间时，定义 `IClock::elapsedSeconds()`，不要直接把整个 GLFW API 包装成一个巨型接口。
+
+## 4.1 从 UI 原型迁移到分层实现
+
+当一个功能先在 `ui` 层跑通后，按以下顺序拆分：
+
+1. 保留 `ui` 对窗口、控件、事件和 `QOpenGLWidget` 生命周期的管理。
+2. 把稳定的流程编排提取为 application 用例，例如“接收一帧图像并请求显示”或“提交一批轨迹点并请求绘制”。
+3. 把外部技术实现放入 infrastructure，例如相机 SDK 适配器、stb_image 加载器、OpenGL Texture/Buffer 封装。
+4. 把与 UI/API 无关的数据模型放入 domain，例如帧尺寸、像素格式、点云点、轨迹段、相机内参等。
+5. `composition_root` 负责把 Qt UI、OpenGL 适配器、相机适配器和 application 用例装配起来。
+
+拆分过程中保持每一步可构建、可运行，不一次性重写全部原型。
 
 ## 5. 新增 infrastructure 适配器
 
@@ -124,6 +143,37 @@ infrastructure/
 6. 在 app 组合根完成实例化。
 
 对于 OpenGL RAII 对象，要特别保证对象析构发生在 GLFW Context 销毁之前。
+
+对于 Qt 场景，OpenGL 资源的创建和销毁必须发生在 `QOpenGLWidget` 的有效 context 中。可以先让 UI 持有资源；稳定后再把资源类型提取到 infrastructure，但 context 所有权和线程要求必须在接口或调用约定中写清楚。
+
+## 5.1 相机图像显示模块
+
+相机显示的推荐演进路线：
+
+1. 原型阶段：在 `QOpenGLWidget` 中使用一张本地图片验证纹理显示。
+2. 单帧阶段：使用 stb_image 或模拟相机数据上传到 OpenGL Texture。
+3. 实时阶段：接入大恒/海康 SDK，基础设施层将相机回调或拉流数据转换为统一帧数据。
+4. 渲染阶段：首次创建纹理时用 `glTexImage2D` 分配存储，后续每帧用 `glTexSubImage2D` 更新。
+5. 分层阶段：application 定义帧流端口，infrastructure 实现具体相机，ui 只显示结果和处理交互。
+
+注意：
+
+- domain/application 不依赖大恒、海康、Qt、OpenGL 或 stb_image。
+- 相机 SDK 类型不得穿透到 application/domain 公共接口。
+- 帧格式、宽高、stride、通道顺序、线程和缓冲区所有权必须明确。
+- 目标帧率至少满足 30 FPS，避免每帧重复创建纹理或 Program。
+
+## 5.2 三维轨迹与点云显示模块
+
+轨迹和点云显示的推荐演进路线：
+
+1. 原型阶段：在 `QOpenGLWidget` 中直接绘制点、线或简单 VAO/VBO。
+2. 数据模型阶段：将点、颜色、时间戳、轨迹段等与 OpenGL 无关的数据放入 domain。
+3. 用例阶段：application 负责接收数据、选择显示策略、控制更新节奏。
+4. 渲染适配阶段：infrastructure 将点云或轨迹数据上传到 OpenGL Buffer。
+5. UI 阶段：Qt 负责视图控制、交互、缩放、旋转、选择和调试面板。
+
+不要让 domain 保存 OpenGL Buffer ID，也不要让 application 创建 QWidget 或调用 `glXXX`。
 
 ## 6. 新增第三方依赖
 
@@ -190,7 +240,7 @@ assets/
 
 - 每个课程或章节建立独立 target。
 - 增加课程注册表和命令行选择。
-- 移除 `main.cpp` 对所有课程头文件的直接包含。
+- 移除 `lesson_main.cpp` 对所有课程头文件的直接包含，改为更明确的课程注册机制。
 
 验收结果：一个课程损坏不会阻止无关课程被单独构建和测试。
 
@@ -213,4 +263,3 @@ assets/
 - 失败路径提供可定位的错误信息。
 - 新增目录、模块或架构决策已同步到 `DOC/`。
 - 没有为了当前功能顺便重写无关课程。
-
