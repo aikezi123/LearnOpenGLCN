@@ -1002,6 +1002,21 @@ void DisplayOpenGLImage::initializeTexture()
     // 注意：
     // 这里不使用 QImage / QOpenGLTexture 解码和创建纹理。
     // stb_image 直接读取图片，返回 CPU 内存中的像素数据，再交给原生 OpenGL Texture。
+    //
+    // 本函数必须在有效 OpenGL Context 中调用。
+    // 在当前工程中，它由 initializeGL() 调用，Qt 会在调用 initializeGL() 前
+    // 自动让当前 QOpenGLWidget 的 OpenGL Context 成为当前线程的 current context。
+    //
+    // 当前 OpenGL Context 概念状态表：
+    //
+    // 对象表：
+    //     m_texture 可能为 0，也可能是之前遗留的 Texture Object ID。
+    //
+    // 当前绑定状态：
+    //     active texture unit = 之前遗留状态
+    //     当前纹理单元的 GL_TEXTURE_2D = 之前遗留状态
+    //     current VAO = 不受本函数影响
+    //     current shader program = 不受本函数影响
 
     const std::string texturePath = findTexturePath();
     if (texturePath.empty()) {
@@ -1015,6 +1030,10 @@ void DisplayOpenGLImage::initializeTexture()
     // OpenGL 的纹理坐标通常认为 (0, 0) 是左下角；
     // 普通图片文件通常是左上角开始存储。
     // 设置 true 后，stb 加载时会把图片上下翻转，方便和 OpenGL 纹理坐标对应。
+    //
+    // 注意：
+    //     这是 stb_image 的图片加载策略，不是 OpenGL Context 状态。
+    //     它只影响后续 stbi_load() 返回的 CPU 像素数据排列方式。
     stbi_set_flip_vertically_on_load(true);
 
     int width = 0;
@@ -1030,6 +1049,24 @@ void DisplayOpenGLImage::initializeTexture()
         &channels,
         STBI_rgb_alpha
     );
+
+    /*
+        当前阶段：
+
+        CPU:
+            如果 data != nullptr：
+                data 指向 stb_image 分配的 CPU 像素数组。
+                width / height 保存图片宽高。
+                channels 保存原始图片通道数。
+                因为指定了 STBI_rgb_alpha，data 实际按 RGBA 4 通道排列。
+
+        OpenGL Context:
+            还没有创建或修改 Texture Object。
+            还没有上传像素到 GPU。
+
+        GPU:
+            暂时没有这张图片的纹理数据。
+    */
 
     if (data == nullptr) {
         std::cerr << "Failed to load texture: "
@@ -1048,11 +1085,39 @@ void DisplayOpenGLImage::initializeTexture()
         return;
     }
 
+    // 如果 m_texture 之前已经持有一个 OpenGL Texture Object，
+    // 先删除旧对象，避免泄漏 GPU/驱动资源。
+    //
+    // CPU:
+    //     m_texture 是一个 GLuint ID。
+    //
+    // OpenGL Context:
+    //     如果 m_texture != 0，glDeleteTextures 会把该 ID 对应的 Texture Object 标记为删除。
+    //     若它当前仍绑定在某个纹理单元上，OpenGL 会根据规范处理其生命周期；
+    //     本函数随后会重新创建并绑定新的纹理对象。
     if (m_texture != 0) {
         glDeleteTextures(1, &m_texture);
         m_texture = 0;
     }
 
+    /*
+        当前 OpenGL Context 概念状态表：
+
+        对象表：
+            旧的 Texture Object 已不再由 m_texture 持有。
+            m_texture = 0。
+
+        当前绑定状态：
+            active texture unit = 之前遗留状态
+            当前纹理单元的 GL_TEXTURE_2D = 之前遗留状态
+            current VAO = 不受本函数影响
+            current shader program = 不受本函数影响
+    */
+
+    // 创建1个纹理对象，并将纹理ID返回给m_texture
+    //
+    // glGenTextures 只生成纹理对象名称/ID。
+    // 它还没有指定纹理类型，也还没有上传图片像素。
     glGenTextures(1, &m_texture);
     if (m_texture == 0) {
         std::cerr << "Failed to create OpenGL texture object." << std::endl;
@@ -1060,10 +1125,54 @@ void DisplayOpenGLImage::initializeTexture()
         return;
     }
 
+    /*
+        当前 OpenGL Context 概念状态表：
+
+        对象表：
+            Texture ID m_texture -> Texture Object
+                target 类型：尚未由本函数绑定确定
+                图像存储：尚未分配
+                wrap / filter 参数：尚未由本函数设置
+
+        当前绑定状态：
+            active texture unit = 之前遗留状态
+            当前纹理单元的 GL_TEXTURE_2D = 之前遗留状态
+            current VAO = 不受本函数影响
+            current shader program = 不受本函数影响
+    */
+
+    // 将这个纹理对象绑定到OpenGL Context的当前绑定状态中的GL_Texture
+    //
+    // 注意：
+    //     glBindTexture 操作的是“当前 active texture unit”。
+    //     如果之前没有显式调用 glActiveTexture，默认通常是 GL_TEXTURE0。
+    //
+    // 从这句开始，后续 glTexParameteri / glTexImage2D 都会作用于 m_texture。
     glBindTexture(GL_TEXTURE_2D, m_texture);
+
+    /*
+        当前 OpenGL Context 概念状态表：
+
+        对象表：
+            Texture ID m_texture -> Texture Object
+                target 类型：GL_TEXTURE_2D
+                图像存储：尚未分配
+                wrap / filter 参数：尚未由本函数设置
+
+        当前绑定状态：
+            active texture unit = 之前遗留状态，通常是 GL_TEXTURE0
+            当前 active texture unit 的 GL_TEXTURE_2D = m_texture
+            current VAO = 不受本函数影响
+            current shader program = 不受本函数影响
+
+        重要区别：
+            纹理绑定不是 VAO 状态。
+            后续绘制前仍需要在 paintGL() 中绑定纹理到纹理单元。
+    */
 
     // 纹理环绕方式。
     // 超出 [0, 1] 的纹理坐标时，使用边缘颜色。
+    // s轴是纹理坐标系的横坐标、t轴是纹理坐标系的纵坐标
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
 
@@ -1072,13 +1181,72 @@ void DisplayOpenGLImage::initializeTexture()
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    /*
+        当前 OpenGL Context 概念状态表：
+
+        对象表：
+            Texture ID m_texture -> Texture Object
+                target 类型：GL_TEXTURE_2D
+                图像存储：尚未分配
+                wrap S = GL_CLAMP_TO_EDGE
+                wrap T = GL_CLAMP_TO_EDGE
+                min filter = GL_LINEAR
+                mag filter = GL_LINEAR
+
+        当前绑定状态：
+            当前 active texture unit 的 GL_TEXTURE_2D = m_texture
+    */
+
     // 按 1 字节对齐读取 CPU 图像数据。
     // 对 RGBA 来说通常不是必须，但保留这个设置更稳。
+    //
+    // GL_UNPACK_ALIGNMENT 是 OpenGL Context 的像素解包状态，
+    // 不是 Texture Object 自己的属性。
+    // 它会影响 glTexImage2D 从 CPU data 读取每一行像素时如何处理字节对齐。
+    //
+    // 这里先保存旧值，上传完成后再恢复，避免影响后续其他纹理上传。
     GLint previousUnpackAlignment = 4;
     glGetIntegerv(GL_UNPACK_ALIGNMENT, &previousUnpackAlignment);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+    /*
+        当前 OpenGL Context 概念状态表：
+
+        对象表：
+            Texture ID m_texture -> Texture Object
+                图像存储：尚未分配
+                wrap / filter 参数：已设置
+
+        当前绑定状态：
+            当前 active texture unit 的 GL_TEXTURE_2D = m_texture
+            GL_UNPACK_ALIGNMENT = 1
+    */
+
     // 把 CPU 端图片数据上传到当前绑定的 OpenGL Texture Object。
+    //
+    // 因为前面已经：
+    //     glBindTexture(GL_TEXTURE_2D, m_texture);
+    //
+    // 所以这里实际定义并上传的是 m_texture 的第 0 级二维纹理图像。
+    //
+    // 参数含义：
+    //     GL_TEXTURE_2D:
+    //         操作当前纹理单元的二维纹理绑定点。
+    //
+    //     0:
+    //         Mipmap level 0，也就是原始最高分辨率图像。
+    //
+    //     GL_RGBA8:
+    //         GPU 内部存储格式，表示每个像素按 8-bit RGBA 保存。
+    //
+    //     width / height:
+    //         纹理图像尺寸。
+    //
+    //     GL_RGBA / GL_UNSIGNED_BYTE:
+    //         CPU data 的像素排列格式和分量类型。
+    //
+    //     data:
+    //         stb_image 返回的 CPU 像素数组。
     glTexImage2D(
         GL_TEXTURE_2D,
         0,
@@ -1091,13 +1259,116 @@ void DisplayOpenGLImage::initializeTexture()
         data
     );
 
+    /*
+        当前 OpenGL Context 概念状态表：
+
+        对象表：
+            Texture ID m_texture -> Texture Object
+                target 类型：GL_TEXTURE_2D
+                level 0 图像存储：
+                    internal format = GL_RGBA8
+                    size = width x height
+                    source format = GL_RGBA
+                    source type = GL_UNSIGNED_BYTE
+                wrap S = GL_CLAMP_TO_EDGE
+                wrap T = GL_CLAMP_TO_EDGE
+                min filter = GL_LINEAR
+                mag filter = GL_LINEAR
+
+        当前绑定状态：
+            当前 active texture unit 的 GL_TEXTURE_2D = m_texture
+            GL_UNPACK_ALIGNMENT = 1
+
+        GPU / Driver:
+            data 指向的 CPU 像素内容已经交给 OpenGL。
+            驱动负责把它放到合适的 GPU 可访问存储中。
+    */
+
+    // 恢复进入本函数前的像素解包对齐状态。
+    //
+    // CPU:
+    //     previousUnpackAlignment 保存旧状态值。
+    //
+    // OpenGL Context:
+    //     GL_UNPACK_ALIGNMENT 恢复为旧值，避免污染后续 OpenGL 调用。
     glPixelStorei(GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
 
+    /*
+        当前 OpenGL Context 概念状态表：
+
+        对象表：
+            Texture ID m_texture -> Texture Object
+                level 0 图像数据已经存在
+                wrap / filter 参数已经存在
+
+        当前绑定状态：
+            当前 active texture unit 的 GL_TEXTURE_2D = m_texture
+            GL_UNPACK_ALIGNMENT = previousUnpackAlignment
+    */
+
+    // 解绑当前纹理单元上的 GL_TEXTURE_2D。
+    //
+    // 这只是清空当前绑定点：
+    //
+    //     当前 active texture unit 的 GL_TEXTURE_2D = 0
+    //
+    // 它不会删除 m_texture，也不会清除已经上传到 m_texture 的图像数据。
     glBindTexture(GL_TEXTURE_2D, 0);
+
+    /*
+        当前 OpenGL Context 概念状态表：
+
+        对象表：
+            Texture ID m_texture -> Texture Object
+                level 0 图像数据已经存在
+                wrap / filter 参数已经存在
+
+        当前绑定状态：
+            当前 active texture unit 的 GL_TEXTURE_2D = 0
+            GL_UNPACK_ALIGNMENT = previousUnpackAlignment
+
+        后续 paintGL() 绘制前会重新执行：
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, m_texture);
+
+        这样片段着色器中的 sampler2D uTexture 才能通过纹理单元 0 找到 m_texture。
+    */
 
     // 释放 stb_image 分配的 CPU 端图片内存。
     // 注意：这不会影响 OpenGL Texture，因为 glTexImage2D 已经把数据交给 OpenGL 了。
     stbi_image_free(data);
+
+    /*
+        initializeTexture() 完成后的结果：
+
+        CPU：
+            stb_image 分配的 data 已释放。
+            m_texture 保存 OpenGL Texture Object ID。
+
+        OpenGL Context 对象表：
+            Texture ID m_texture -> Texture Object
+                保存 display_image.png 上传后的 RGBA8 像素数据。
+                保存 wrap / filter 参数。
+
+        OpenGL Context 当前绑定状态：
+            当前 active texture unit 的 GL_TEXTURE_2D = 0
+            current VAO = 不受本函数影响
+            current shader program = 不受本函数影响
+
+        后续绘制关系：
+            paintGL()
+                -> glUseProgram(m_shaderProgram)
+                -> glActiveTexture(GL_TEXTURE0)
+                -> glBindTexture(GL_TEXTURE_2D, m_texture)
+                -> glBindVertexArray(m_vao)
+                -> glDrawElements(...)
+
+            片段着色器：
+                sampler2D uTexture = 0
+                    -> 纹理单元 GL_TEXTURE0
+                    -> GL_TEXTURE0 的 GL_TEXTURE_2D 绑定 m_texture
+                    -> texture(uTexture, TexCoord) 从 m_texture 采样颜色
+    */
 }
 
 void DisplayOpenGLImage::cleanup()
