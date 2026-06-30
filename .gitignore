@@ -1,8 +1,11 @@
 # =========================
 # Build outputs
 # =========================
-out/
-build/
+out/**
+!out/
+!out/build/
+!out/build/*/
+/build/
 cmake-build-*/
 CMakeFiles/
 CMakeCache.txt
@@ -44,6 +47,20 @@ CMakeUserPresets.json
 *.pdb
 *.ilk
 *.exp
+
+# =========================
+# Runtime bin artifacts
+# =========================
+# Only keep runnable artifacts from out/build/<preset>/bin.
+# CMake/Ninja intermediate files, .obj, .lib and .ilk stay ignored.
+!out/build/*/bin/
+!out/build/*/bin/**/
+!out/build/*/bin/*.exe
+!out/build/*/bin/*.dll
+!out/build/*/bin/*.pdb
+!out/build/*/bin/**/*.exe
+!out/build/*/bin/**/*.dll
+!out/build/*/bin/**/*.pdb
 
 # =========================
 # Logs
