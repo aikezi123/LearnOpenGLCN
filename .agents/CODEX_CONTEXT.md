@@ -50,6 +50,7 @@ composition_root/app
 - UI 层大杂烩只是原型，不是最终架构。
 - 当功能稳定、重复或需要复用时，应拆分到 application/infrastructure/domain。
 - 不要把临时原型写成长期推荐架构。
+- 不添加与当前功能无关的预留宏、开关、接口或抽象；只有当前收益明确、后续使用位置清楚时才提前加入。
 
 ## 4. Qt 与 OpenGL 当前决策
 
@@ -75,6 +76,10 @@ stb_image
 assets/textures/ui/display_image.png
 ```
 
+当前已新增 `ui/include/GalaxyCameraController.h` 与 `ui/src/GalaxyCameraController.cpp`，作为大恒相机最小控制器原型。它负责初始化 Galaxy SDK、打开第一台相机或指定 UserID 相机、启动/停止采集，并在 SDK 回调中把图像转换为 RGB24 后通过 `std::function<void(GalaxyCameraFrame)>` 交给上层。该回调发生在大恒 SDK 采集线程中，不能直接调用 OpenGL。
+
+当前相机显示链路已集中到 `CameraImageCaptureView`：该窗口拥有 `GalaxyCameraController`，通过 Qt queued invoke 把 SDK 线程中的 RGB24 帧投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。`DisplayOpenGLImage` 在 `paintGL()` 中上传待处理帧，首次或尺寸变化时使用 `glTexImage2D`，后续同尺寸帧使用 `glTexSubImage2D`。`MainWindow` 只负责创建并嵌入 `CameraImageCaptureView`，不直接处理相机 SDK 或 OpenGL 上传细节。
+
 相机实时显示的下一阶段建议：
 
 - 首次创建纹理时使用 `glTexImage2D` 分配存储。
@@ -92,7 +97,7 @@ assets/textures/ui/display_image.png
 - `infrastructure/`：现有 OpenGL Shader 等基础设施。
 - `domain/`、`application/`：目标分层目录，当前尚未形成稳定 target。
 - `third_party/`：GLAD、GLFW、GLM、stb_image 等第三方依赖。
-- `third_party/Galaxy/`：大恒 Galaxy SDK 的第三方依赖包装目录，当前 CMake target 为 `Galaxy::SDK`。现有文件覆盖 VC/C API 的 `GxIAPI`、`DxImageProc`，以及 C++ SDK 的 `GalaxyIncludes.h`、`GxIAPICPPEx.lib`；运行时 DLL 需要位于系统 `PATH` 或 `third_party/Galaxy/bin/x64`。
+- `third_party/Galaxy/`：大恒 Galaxy SDK 的第三方依赖包装目录，当前 CMake target 为 `Galaxy::SDK`。现有文件覆盖 VC/C API 的 `GxIAPI`、`DxImageProc`，以及 C++ SDK 的 `GalaxyIncludes.h`、`GxIAPICPPEx.lib`；运行时 DLL 直接放在 `out/build/<preset>/bin`，随 exe/pdb 一起提交。
 - `assets/`：Shader、纹理和后续模型资源。
 
 当前构建入口：

@@ -11,10 +11,6 @@ target_compile_features(LearnOpenGLCN_Qt PRIVATE
     cxx_std_17
 )
 
-if(COMMAND galaxy_copy_runtime_dlls)
-    galaxy_copy_runtime_dlls(LearnOpenGLCN_Qt)
-endif()
-
 # LearnOpenGL 课程代码入口
 add_executable(LearnOpenGLCN_Lessons
     lesson_main.cpp

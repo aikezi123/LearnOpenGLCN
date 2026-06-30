@@ -16,19 +16,11 @@
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <widget class="DisplayOpenGLImage" name="widget"/>
+     <widget class="QWidget" name="widget" native="true"/>
     </item>
    </layout>
   </widget>
  </widget>
- <customwidgets>
-  <customwidget>
-   <class>DisplayOpenGLImage</class>
-   <extends>QWidget</extends>
-   <header location="global">DisplayOpenGLImage.h</header>
-   <container>1</container>
-  </customwidget>
- </customwidgets>
  <resources/>
  <connections/>
 </ui>

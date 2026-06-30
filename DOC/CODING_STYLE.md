@@ -7,6 +7,7 @@
 - 新代码遵守模块边界，不通过增加 include path 绕过依赖问题。
 - GPU、窗口、文件等资源必须体现所有权和生命周期。
 - 优先完成一个清晰的小抽象，不提前设计尚未出现的扩展点。
+- 不添加未被当前源码消费的预留宏、feature flag、配置项或接口；除非当前收益明确，并且后续使用位置已经清楚。
 - 当前 Qt/OpenGL 功能原型允许先在 `ui` 层跑通完整流程，但应明确标记为阶段性实现；稳定后再迁移到 application/infrastructure/domain 的合适位置。
 
 ## 2. C++ 版本与文件
@@ -163,6 +164,7 @@ private:
 - `PRIVATE`、`PUBLIC`、`INTERFACE` 必须反映真实使用需求。
 - 公共 include 路径只暴露模块的 `include` 根目录。
 - 第三方依赖尽可能包装为稳定 target，不在多个模块重复硬编码库路径。
+- 不为第三方 target 添加当前没有调用点的编译宏或 CMake option；等代码确实需要区分构建能力时再添加。
 - 新增 target 后提供 `learnopengl::name` 别名。
 - 平台相关链接放在对应适配器或 third_party target 中。
 - 不把生成文件写入源码目录，统一放在 `out/`。

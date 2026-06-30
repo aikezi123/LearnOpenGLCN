@@ -81,7 +81,7 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 | `glm::glm` | Interface | 数学类型和矩阵运算 | 无项目内依赖 |
 | `Galaxy::SDK` | Interface | 大恒 Galaxy SDK 的 CMake 包装 target | `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib` |
 
-`third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。运行时 DLL 不会由 `.lib` 自动提供：若 DLL 未安装到系统 `PATH`，应放到 `third_party/Galaxy/bin/x64`，构建 `LearnOpenGLCN_Qt` 后由 CMake 复制到 executable 输出目录。
+`third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。大恒运行时 DLL 不再由 CMake 查找或复制，而是直接放在 `out/build/<preset>/bin`，随 exe、pdb 等运行产物一起提交。
 
 `composition_root/qt_main.cpp` 负责启动 Qt 应用并显示 UI 窗口。`composition_root/lesson_main.cpp` 负责选择并运行 LearnOpenGL 课程入口。所有课程源码仍被编入同一个 `lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
 

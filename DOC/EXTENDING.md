@@ -4,6 +4,8 @@
 
 工程扩展以“保持可运行的小步迁移”为原则：一次迁移一条完整功能链路，完成后再处理下一课程。不要先创建大量抽象接口，再等待未来代码填充。
 
+扩展时优先实现当前功能真正需要的代码。不要添加未被当前业务路径使用的预留宏、feature flag、CMake option、接口或包装层；只有当前收益明确、后续使用位置清楚时，才提前加入这类扩展点。
+
 本项目有两类扩展：
 
 1. LearnOpenGLCN 教程学习扩展：按章节继续实现网站中的课程与练习。
@@ -163,6 +165,8 @@ infrastructure/
 - 帧格式、宽高、stride、通道顺序、线程和缓冲区所有权必须明确。
 - 目标帧率至少满足 30 FPS，避免每帧重复创建纹理或 Program。
 
+当前原型已有 `learnopengl::ui::GalaxyCameraController`，只负责大恒 SDK 初始化、开关相机和输出 RGB24 帧回调。OpenGL 上传仍应放在 `QOpenGLWidget` 的有效 context 中完成，不在相机 SDK 回调线程中直接调用 `glXXX`。
+
 ## 5.2 三维轨迹与点云显示模块
 
 轨迹和点云显示的推荐演进路线：
@@ -186,6 +190,7 @@ infrastructure/
 - 预编译库使用 `IMPORTED` target，并显式记录平台和工具链约束。
 - 项目模块链接 target，不直接引用 `.lib`、`.dll` 或 include 绝对路径。
 - 提供命名空间别名，例如 `vendor::name`。
+- 不为第三方依赖添加当前没有源码消费点的编译宏或配置开关。
 - 更新 `DOC/ARCHITECTURE.md` 中的依赖说明。
 - 检查许可证及再分发要求。
 
@@ -206,13 +211,9 @@ third_party/Galaxy/
 │   │   └── DxImageProc.lib
 │   └── VC++_Lib/
 │       └── GxIAPICPPEx.lib
-└── bin/x64/
-    ├── GxIAPI.dll              # 若系统 PATH 已包含，可不放
-    ├── DxImageProc.dll
-    └── GxIAPICPPEx.dll
 ```
 
-现阶段 `Galaxy::SDK` 同时暴露大恒 VC/C API 和 C++ SDK 头文件，并链接 `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib`。`.lib` 只解决链接，运行时仍必须保证对应 DLL 可被系统加载。
+现阶段 `Galaxy::SDK` 同时暴露大恒 VC/C API 和 C++ SDK 头文件，并链接 `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib`。`.lib` 只解决链接；运行时 DLL 直接放在 `out/build/<preset>/bin`，不再通过环境变量或 CMake 复制逻辑定位。
 
 ## 7. 新增资源
 

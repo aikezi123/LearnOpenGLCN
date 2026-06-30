@@ -3,6 +3,8 @@
 #include <QOpenGLFunctions_3_3_Core>
 #include <QOpenGLWidget>
 
+#include <vector>
+
 
 // 双重继承，QOpenGLFunctions_3_3_Core为openGL的函数加载库
 class DisplayOpenGLImage
@@ -14,6 +16,9 @@ class DisplayOpenGLImage
 public:
     explicit DisplayOpenGLImage(QWidget* parent = nullptr);
     ~DisplayOpenGLImage() override;
+
+    // 接收相机 RGB24 帧。该函数应在 UI 线程调用；真正的 OpenGL 上传发生在 paintGL()。
+    void setRgb24Frame(int width, int height, std::vector<unsigned char> pixels);
 
 protected:
     // —————— ——Qt的回调函数重写。调用时自动会将当前QOpenGLWidget的上下文绑定到当前线程的context槽中，不需要手动makeCurrent(); ——————
@@ -31,6 +36,8 @@ private:
     void initializeGeometry();
     // 初始化纹理对象
     void initializeTexture();
+    // 如果有新的相机帧，在当前 OpenGL context 中上传到 m_texture。
+    void uploadPendingCameraFrame();
     // 清理对象
     void cleanup();
 
@@ -40,4 +47,12 @@ private:
     unsigned int m_ebo = 0;
     unsigned int m_texture = 0;
     unsigned int m_shaderProgram = 0;
+
+    std::vector<unsigned char> m_pendingRgb24Frame;
+    int m_pendingFrameWidth = 0;
+    int m_pendingFrameHeight = 0;
+    int m_textureWidth = 0;
+    int m_textureHeight = 0;
+    bool m_hasPendingCameraFrame = false;
+    bool m_cameraTextureAllocated = false;
 };

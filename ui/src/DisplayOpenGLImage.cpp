@@ -9,6 +9,7 @@
 #include <array>
 #include <iostream>
 #include <string>
+#include <utility>
 
 namespace {
 
@@ -78,6 +79,20 @@ DisplayOpenGLImage::~DisplayOpenGLImage()
     }
 }
 
+void DisplayOpenGLImage::setRgb24Frame(int width, int height, std::vector<unsigned char> pixels)
+{
+    if (width <= 0 || height <= 0 || pixels.empty()) {
+        return;
+    }
+
+    m_pendingFrameWidth = width;
+    m_pendingFrameHeight = height;
+    m_pendingRgb24Frame = std::move(pixels);
+    m_hasPendingCameraFrame = true;
+
+    update();
+}
+
 void DisplayOpenGLImage::initializeGL()
 {
     initializeOpenGLFunctions();   // 初始化opengl函数库
@@ -97,6 +112,8 @@ void DisplayOpenGLImage::resizeGL(int width, int height) {
 void DisplayOpenGLImage::paintGL()
 {
     glClear(GL_COLOR_BUFFER_BIT);
+
+    uploadPendingCameraFrame();
 
     if (m_shaderProgram == 0 || m_texture == 0 || m_vao == 0) {
         return;
@@ -1369,6 +1386,82 @@ void DisplayOpenGLImage::initializeTexture()
                     -> GL_TEXTURE0 的 GL_TEXTURE_2D 绑定 m_texture
                     -> texture(uTexture, TexCoord) 从 m_texture 采样颜色
     */
+
+    m_textureWidth = width;
+    m_textureHeight = height;
+    m_cameraTextureAllocated = false;
+}
+
+void DisplayOpenGLImage::uploadPendingCameraFrame()
+{
+    if (!m_hasPendingCameraFrame) {
+        return;
+    }
+
+    if (m_pendingFrameWidth <= 0 || m_pendingFrameHeight <= 0 || m_pendingRgb24Frame.empty()) {
+        m_hasPendingCameraFrame = false;
+        return;
+    }
+
+    if (m_texture == 0) {
+        glGenTextures(1, &m_texture);
+        if (m_texture == 0) {
+            std::cerr << "Failed to create camera texture object." << std::endl;
+            return;
+        }
+    }
+
+    glBindTexture(GL_TEXTURE_2D, m_texture);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    GLint previousUnpackAlignment = 4;
+    glGetIntegerv(GL_UNPACK_ALIGNMENT, &previousUnpackAlignment);
+    glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+
+    const bool needAllocate =
+        !m_cameraTextureAllocated
+        || m_textureWidth != m_pendingFrameWidth
+        || m_textureHeight != m_pendingFrameHeight;
+
+    if (needAllocate) {
+        glTexImage2D(
+            GL_TEXTURE_2D,
+            0,
+            GL_RGB8,
+            m_pendingFrameWidth,
+            m_pendingFrameHeight,
+            0,
+            GL_RGB,
+            GL_UNSIGNED_BYTE,
+            m_pendingRgb24Frame.data()
+        );
+
+        m_textureWidth = m_pendingFrameWidth;
+        m_textureHeight = m_pendingFrameHeight;
+        m_cameraTextureAllocated = true;
+    }
+    else {
+        glTexSubImage2D(
+            GL_TEXTURE_2D,
+            0,
+            0,
+            0,
+            m_pendingFrameWidth,
+            m_pendingFrameHeight,
+            GL_RGB,
+            GL_UNSIGNED_BYTE,
+            m_pendingRgb24Frame.data()
+        );
+    }
+
+    glPixelStorei(GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    m_pendingRgb24Frame.clear();
+    m_hasPendingCameraFrame = false;
 }
 
 void DisplayOpenGLImage::cleanup()

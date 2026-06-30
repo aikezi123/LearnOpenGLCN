@@ -42,7 +42,7 @@ LearnOpenGLCN_Qt (executable)
 
 `ui/` 已形成 `learnopengl_ui` target，并承载当前 Qt/OpenGL 显示原型。`domain/` 与 `application/` 已建立目录，但尚未形成对应 CMake target。它们是后续整洁架构迁移的目标位置，不代表当前已经完成分层。
 
-当前 `third_party/Galaxy` 已包装出 `Galaxy::SDK`。现有目录包含大恒 VC/C API 与 C++ SDK 的头文件和 import library，可支持 `GxIAPI`、`DxImageProc`、`GalaxyIncludes.h`、`IGXFactory`、`CGXDevicePointer` 等接口。运行时 DLL 仍需要放入系统 `PATH`，或放入 `third_party/Galaxy/bin/x64` 让 CMake 复制到 exe 目录。
+当前 `third_party/Galaxy` 已包装出 `Galaxy::SDK`。现有目录包含大恒 VC/C API 与 C++ SDK 的头文件和 import library，可支持 `GxIAPI`、`DxImageProc`、`GalaxyIncludes.h`、`IGXFactory`、`CGXDevicePointer` 等接口。大恒运行时 DLL 直接放在 `out/build/<preset>/bin`，和 exe 一起提交运行。
 
 ## 构建入口
 
