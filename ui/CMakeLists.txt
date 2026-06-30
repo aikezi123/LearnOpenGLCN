@@ -45,6 +45,7 @@ target_link_libraries(learnopengl_ui
         Qt6::OpenGLWidgets
     PRIVATE
         Qt6::OpenGL
+        Galaxy::SDK
         stb_image
         glad
         OpenGL::GL

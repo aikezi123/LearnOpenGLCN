@@ -15,7 +15,7 @@
 
 ## 当前工程状态
 
-当前工程使用 CMake 3.21+、C++17、Ninja 和 MSVC 构建，主要依赖 OpenGL、GLFW、GLAD、GLM、stb_image 与 Qt Widgets/OpenGLWidgets。
+当前工程使用 CMake 3.21+、C++17、Ninja 和 MSVC 构建，主要依赖 OpenGL、GLFW、GLAD、GLM、stb_image、Qt Widgets/OpenGLWidgets，并已为大恒 Galaxy SDK 建立第三方 CMake target。
 
 现有主要构建链路为：
 
@@ -34,12 +34,15 @@ LearnOpenGLCN_Qt (executable)
         ├── Qt6::Widgets
         ├── Qt6::OpenGLWidgets
         ├── Qt6::OpenGL
+        ├── Galaxy::SDK
         ├── glad
         ├── OpenGL::GL
         └── stb_image
 ```
 
 `ui/` 已形成 `learnopengl_ui` target，并承载当前 Qt/OpenGL 显示原型。`domain/` 与 `application/` 已建立目录，但尚未形成对应 CMake target。它们是后续整洁架构迁移的目标位置，不代表当前已经完成分层。
+
+当前 `third_party/Galaxy` 已包装出 `Galaxy::SDK`。现有目录包含大恒 VC/C API 与 C++ SDK 的头文件和 import library，可支持 `GxIAPI`、`DxImageProc`、`GalaxyIncludes.h`、`IGXFactory`、`CGXDevicePointer` 等接口。运行时 DLL 仍需要放入系统 `PATH`，或放入 `third_party/Galaxy/bin/x64` 让 CMake 复制到 exe 目录。
 
 ## 构建入口
 

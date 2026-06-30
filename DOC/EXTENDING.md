@@ -189,6 +189,31 @@ infrastructure/
 - 更新 `DOC/ARCHITECTURE.md` 中的依赖说明。
 - 检查许可证及再分发要求。
 
+当前大恒 Galaxy SDK 采用 `third_party/Galaxy/CMakeLists.txt` 包装为 `Galaxy::SDK`。推荐目录为：
+
+```text
+third_party/Galaxy/
+├── CMakeLists.txt
+├── include/
+│   ├── VC_SDK/
+│   │   ├── GxIAPI.h
+│   │   └── DxImageProc.h
+│   └── C++_SDK/
+│       └── GalaxyIncludes.h
+├── libs/
+│   ├── VC_Lib/
+│   │   ├── GxIAPI.lib
+│   │   └── DxImageProc.lib
+│   └── VC++_Lib/
+│       └── GxIAPICPPEx.lib
+└── bin/x64/
+    ├── GxIAPI.dll              # 若系统 PATH 已包含，可不放
+    ├── DxImageProc.dll
+    └── GxIAPICPPEx.dll
+```
+
+现阶段 `Galaxy::SDK` 同时暴露大恒 VC/C API 和 C++ SDK 头文件，并链接 `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib`。`.lib` 只解决链接，运行时仍必须保证对应 DLL 可被系统加载。
+
 ## 7. 新增资源
 
 资源应按功能而不是文件格式随意堆放：

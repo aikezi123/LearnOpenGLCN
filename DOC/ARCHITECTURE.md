@@ -48,7 +48,7 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
                        └─────────────────┘
 ```
 
-`third_party/` 和操作系统 OpenGL 库只允许被外层适配器使用，不能向 `application` 或 `domain` 泄漏。
+`third_party/`、操作系统 OpenGL 库和相机 SDK 只允许被外层适配器使用，不能向 `application` 或 `domain` 泄漏。
 
 ## 2. 当前实现
 
@@ -60,10 +60,11 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 2. `third_party/glfw`
 3. `third_party/stb`
 4. `third_party/glm`
-5. `infrastructure`
-6. `lessons`
-7. `ui`
-8. `composition_root`
+5. `third_party/Galaxy`
+6. `infrastructure`
+7. `lessons`
+8. `ui`
+9. `composition_root`
 
 当前目标及依赖为：
 
@@ -72,12 +73,15 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 | `LearnOpenGLCN_Lessons` | Executable | LearnOpenGL 课程代码入口 | `lessons` |
 | `LearnOpenGLCN_Qt` | Executable | Qt/OpenGL 工程原型入口 | `learnopengl_ui` |
 | `lessons` | Static | 收集并编译所有课程示例 | `infrastructure`、`stb_image` |
-| `learnopengl_ui` | Static | 当前 Qt/OpenGL 显示原型与 UI 类 | Qt6 Widgets/OpenGLWidgets、Qt6 OpenGL、GLAD、OpenGL、stb_image |
+| `learnopengl_ui` | Static | 当前 Qt/OpenGL 显示原型与 UI 类 | Qt6 Widgets/OpenGLWidgets、Qt6 OpenGL、Galaxy::SDK、GLAD、OpenGL、stb_image |
 | `infrastructure` | Static | 提供 Shader 等公共技术能力 | GLAD、GLFW、OpenGL、GLM |
 | `glad` | Static | 加载 OpenGL 函数地址 | 无项目内依赖 |
 | `glfw3` | Imported Static | 窗口、上下文和输入 | Windows 系统库 |
 | `stb_image` | Static | 图片解码 | 无项目内依赖 |
 | `glm::glm` | Interface | 数学类型和矩阵运算 | 无项目内依赖 |
+| `Galaxy::SDK` | Interface | 大恒 Galaxy SDK 的 CMake 包装 target | `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib` |
+
+`third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。运行时 DLL 不会由 `.lib` 自动提供：若 DLL 未安装到系统 `PATH`，应放到 `third_party/Galaxy/bin/x64`，构建 `LearnOpenGLCN_Qt` 后由 CMake 复制到 executable 输出目录。
 
 `composition_root/qt_main.cpp` 负责启动 Qt 应用并显示 UI 窗口。`composition_root/lesson_main.cpp` 负责选择并运行 LearnOpenGL 课程入口。所有课程源码仍被编入同一个 `lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
 

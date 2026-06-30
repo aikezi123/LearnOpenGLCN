@@ -92,6 +92,7 @@ assets/textures/ui/display_image.png
 - `infrastructure/`：现有 OpenGL Shader 等基础设施。
 - `domain/`、`application/`：目标分层目录，当前尚未形成稳定 target。
 - `third_party/`：GLAD、GLFW、GLM、stb_image 等第三方依赖。
+- `third_party/Galaxy/`：大恒 Galaxy SDK 的第三方依赖包装目录，当前 CMake target 为 `Galaxy::SDK`。现有文件覆盖 VC/C API 的 `GxIAPI`、`DxImageProc`，以及 C++ SDK 的 `GalaxyIncludes.h`、`GxIAPICPPEx.lib`；运行时 DLL 需要位于系统 `PATH` 或 `third_party/Galaxy/bin/x64`。
 - `assets/`：Shader、纹理和后续模型资源。
 
 当前构建入口：

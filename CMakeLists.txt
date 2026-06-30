@@ -30,6 +30,10 @@ add_subdirectory(third_party/stb)
 # 把 third_party/glm 子目录加入构建系统
 add_subdirectory(third_party/glm)
 
+# 把 third_party/Galaxy 子目录加入构建系统
+# 这个子目录负责把大恒 Galaxy SDK 的头文件、.lib 和可选 DLL 包装成 CMake target
+add_subdirectory(third_party/Galaxy)
+
 add_subdirectory(infrastructure)
 
 # LearnOpenGL示例代码
