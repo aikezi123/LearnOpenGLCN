@@ -20,6 +20,16 @@ public:
     // 接收相机 RGB24 帧。该函数应在 UI 线程调用；真正的 OpenGL 上传发生在 paintGL()。
     void setRgb24Frame(int width, int height, std::vector<unsigned char> pixels);
 
+    // 设置图像翻转、旋转、平移等属性
+    void setFlipHorizontal(bool enabled);
+    void setFlipVertical(bool enabled);
+    void rotateClockwise90();
+    void rotateCounterClockwise90();
+    void setViewScale(float scale);
+    void setViewTranslation(float x, float y);
+    void panView(float deltaX, float deltaY);
+    void resetViewTransform();
+
 protected:
     // —————— ——Qt的回调函数重写。调用时自动会将当前QOpenGLWidget的上下文绑定到当前线程的context槽中，不需要手动makeCurrent(); ——————
     // 重写初始化函数。重写后的功能包括:1.初始化OpenGL函数入口 2.创建Shader Program 3.创建VAO/VBO/EBO，上传顶点和索引数据 4.初始化OpenGL状态
@@ -38,6 +48,7 @@ private:
     void initializeTexture();
     // 如果有新的相机帧，在当前 OpenGL context 中上传到 m_texture。
     void uploadPendingCameraFrame();
+    void applyViewTransform();
     // 清理对象
     void cleanup();
 
@@ -55,4 +66,10 @@ private:
     int m_textureHeight = 0;
     bool m_hasPendingCameraFrame = false;
     bool m_cameraTextureAllocated = false;
+    bool m_flipHorizontal = false;
+    bool m_flipVertical = false;
+    float m_rotationDegrees = 0.0F;
+    float m_viewScale = 1.0F;
+    float m_translateX = 0.0F;
+    float m_translateY = 0.0F;
 };

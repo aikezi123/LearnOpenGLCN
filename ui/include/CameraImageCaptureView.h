@@ -27,6 +27,8 @@ public:
     ~CameraImageCaptureView() override;
 
 private:
+    void connectViewControls();
+    float currentZoomScale() const;
     void startCamera();
 
     Ui::CameraImageCaptureView* m_ui;

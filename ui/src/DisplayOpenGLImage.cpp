@@ -6,12 +6,18 @@
 #include <QFileInfo>
 #include <stb_image.h>
 
+#include <algorithm>
 #include <array>
+#include <cmath>
 #include <iostream>
 #include <string>
 #include <utility>
 
 namespace {
+
+constexpr float kDegreesToRadians = 0.017453292519943295769F;
+constexpr float kMinimumViewScale = 0.1F;
+constexpr float kMaximumViewScale = 8.0F;
 
 std::string findTexturePath()
 {
@@ -65,6 +71,19 @@ GLuint compileShader(QOpenGLFunctions_3_3_Core& gl, GLenum type, const char* sou
     return shaderID;
 }
 
+float normalizedRotationDegrees(float degrees)
+{
+    while (degrees >= 360.0F) {
+        degrees -= 360.0F;
+    }
+
+    while (degrees <= -360.0F) {
+        degrees += 360.0F;
+    }
+
+    return degrees;
+}
+
 } // namespace
 
 DisplayOpenGLImage::DisplayOpenGLImage(QWidget *parent) : QOpenGLWidget(parent) {
@@ -90,6 +109,59 @@ void DisplayOpenGLImage::setRgb24Frame(int width, int height, std::vector<unsign
     m_pendingRgb24Frame = std::move(pixels);
     m_hasPendingCameraFrame = true;
 
+    update();
+}
+
+void DisplayOpenGLImage::setFlipHorizontal(bool enabled)
+{
+    m_flipHorizontal = enabled;
+    update();
+}
+
+void DisplayOpenGLImage::setFlipVertical(bool enabled)
+{
+    m_flipVertical = enabled;
+    update();
+}
+
+void DisplayOpenGLImage::rotateClockwise90()
+{
+    m_rotationDegrees = normalizedRotationDegrees(m_rotationDegrees - 90.0F);
+    update();
+}
+
+void DisplayOpenGLImage::rotateCounterClockwise90()
+{
+    m_rotationDegrees = normalizedRotationDegrees(m_rotationDegrees + 90.0F);
+    update();
+}
+
+void DisplayOpenGLImage::setViewScale(float scale)
+{
+    m_viewScale = std::clamp(scale, kMinimumViewScale, kMaximumViewScale);
+    update();
+}
+
+void DisplayOpenGLImage::setViewTranslation(float x, float y)
+{
+    m_translateX = x;
+    m_translateY = y;
+    update();
+}
+
+void DisplayOpenGLImage::panView(float deltaX, float deltaY)
+{
+    setViewTranslation(m_translateX + deltaX, m_translateY + deltaY);
+}
+
+void DisplayOpenGLImage::resetViewTransform()
+{
+    m_flipHorizontal = false;
+    m_flipVertical = false;
+    m_rotationDegrees = 0.0F;
+    m_viewScale = 1.0F;
+    m_translateX = 0.0F;
+    m_translateY = 0.0F;
     update();
 }
 
@@ -120,6 +192,7 @@ void DisplayOpenGLImage::paintGL()
     }
     
     glUseProgram(m_shaderProgram);
+    applyViewTransform();
 
     // 激活纹理单元 0。
     glActiveTexture(GL_TEXTURE0);
@@ -162,10 +235,11 @@ void DisplayOpenGLImage::initializeShader()
         layout(location = 1) in vec2 aTexCoord;
         
         out vec2 TexCoord;
+        uniform mat4 uTransform;
         
         void main()
         {
-            gl_Position = vec4(aPos, 1.0);
+            gl_Position = uTransform * vec4(aPos, 1.0);
             TexCoord = aTexCoord;
         }
     )";
@@ -1012,6 +1086,33 @@ void DisplayOpenGLImage::initializeGeometry()
         然后 GPU 才会根据 EBO 索引从 VBO 中读取顶点并执行绘制。
     */
 
+}
+
+void DisplayOpenGLImage::applyViewTransform()
+{
+    if (m_shaderProgram == 0) {
+        return;
+    }
+
+    const GLint transformLocation = glGetUniformLocation(m_shaderProgram, "uTransform");
+    if (transformLocation == -1) {
+        return;
+    }
+
+    const float radians = m_rotationDegrees * kDegreesToRadians;
+    const float cosine = std::cos(radians);
+    const float sine = std::sin(radians);
+    const float scaleX = m_viewScale * (m_flipHorizontal ? -1.0F : 1.0F);
+    const float scaleY = m_viewScale * (m_flipVertical ? -1.0F : 1.0F);
+
+    const std::array<float, 16> transform{
+        cosine * scaleX, sine * scaleX, 0.0F, 0.0F,
+        -sine * scaleY, cosine * scaleY, 0.0F, 0.0F,
+        0.0F, 0.0F, 1.0F, 0.0F,
+        m_translateX, m_translateY, 0.0F, 1.0F
+    };
+
+    glUniformMatrix4fv(transformLocation, 1, GL_FALSE, transform.data());
 }
 
 void DisplayOpenGLImage::initializeTexture()

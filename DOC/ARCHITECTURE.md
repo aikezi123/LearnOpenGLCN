@@ -91,7 +91,7 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 
 当前已经拆成两个 executable：`LearnOpenGLCN_Lessons` 和 `LearnOpenGLCN_Qt`。教程入口和 Qt 工程入口不再共享同一个 `main.cpp`，避免手动改入口来切换运行内容。
 
-`ui/` 目前包含 Qt Widgets 与 `QOpenGLWidget` 原型。相机 SDK 控制已经从 UI 拆到 `infrastructure/camera/galaxy`，通过 `application` 中的 `ICameraDevice` 和 `CameraPreviewService` 注入到 UI。纹理加载、Shader 编译和绘制流程仍暂时集中在 UI 类中，以便继续稳定 Qt OpenGL 显示路径；后续应再拆出 OpenGL 资源和图像加载能力，避免长期把渲染细节堆在 UI 层。
+`ui/` 目前包含 Qt Widgets 与 `QOpenGLWidget` 原型。`MainWindow` 已改为左侧 `QTreeWidget` 导航和右侧 `QStackedWidget` 页面容器，后续功能页面通过导航树注册。相机 SDK 控制已经从 UI 拆到 `infrastructure/camera/galaxy`，通过 `application` 中的 `ICameraDevice` 和 `CameraPreviewService` 注入到相机页面。相机页面的翻转、旋转、缩放、平移按钮属于 UI 交互，具体显示变换暂时由 `DisplayOpenGLImage` 通过 shader uniform 矩阵完成。纹理加载、Shader 编译和绘制流程仍暂时集中在 UI 类中，以便继续稳定 Qt OpenGL 显示路径；后续应再拆出 OpenGL 资源和图像加载能力，避免长期把渲染细节堆在 UI 层。
 
 ### 2.2 当前运行流程
 
@@ -102,6 +102,9 @@ main()
   ├── 设置 QSurfaceFormat，要求 OpenGL 3.3 Core Profile
   ├── 创建 QApplication
   ├── 创建 learnopengl::ui::MainWindow
+  │   ├── 初始化左侧导航树
+  │   ├── 初始化右侧页面栈
+  │   └── 将 CameraImageCaptureView 注册为“相机模块 / 大恒相机预览”
   ├── 显示主窗口
   └── 进入 Qt 事件循环 app.exec()
 ```

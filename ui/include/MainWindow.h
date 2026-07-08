@@ -4,6 +4,9 @@
 
 #include <memory>
 
+class QTreeWidgetItem;
+class QWidget;
+
 QT_BEGIN_NAMESPACE
 namespace Ui {
 class MainWindow;
@@ -27,6 +30,16 @@ public:
     ~MainWindow() override;
 
 private:
+    void initUIStyle();
+    void initPages(std::unique_ptr<application::CameraPreviewService> cameraPreview);
+    void connectSignals();
+
+    QTreeWidgetItem* addCategoryNode(const QString& name);
+    void addBusinessPage(QTreeWidgetItem* parent, const QString& name, QWidget* page);
+    void addRootBusinessPage(const QString& name, QWidget* page);
+    QWidget* createHomePage();
+    void decorateChildNodeUI(QTreeWidgetItem* item);
+
     Ui::MainWindow* m_ui;
 };
 

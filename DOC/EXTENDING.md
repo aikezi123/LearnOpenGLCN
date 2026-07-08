@@ -136,6 +136,8 @@ application/
 4. 把与 UI/API 无关的数据模型放入 domain，例如帧尺寸、像素格式、点云点、轨迹段、相机内参等。
 5. `composition_root` 负责把 Qt UI、OpenGL 适配器、相机适配器和 application service 装配起来。
 
+当前 Qt 主窗口使用左侧 `QTreeWidget` 导航和右侧 `QStackedWidget` 页面容器。新增 UI 页面时，优先把页面实现为独立 QWidget，再在 `MainWindow::initPages()` 中通过导航节点注册，不要继续把多个功能直接堆到同一个窗口控件里。
+
 拆分过程中保持每一步可构建、可运行，不一次性重写全部原型。
 
 ## 5. 新增 infrastructure 适配器
@@ -184,7 +186,7 @@ infrastructure/
 - 帧格式、宽高、stride、通道顺序、线程和缓冲区所有权必须明确。
 - 目标帧率至少满足 30 FPS，避免每帧重复创建纹理或 Program。
 
-当前大恒实现为 `learnopengl::infrastructure::camera::galaxy::GalaxyCameraController`，实现 `application::ICameraDevice`。它负责大恒 SDK 初始化、开关相机和输出 `domain::VideoFrame`，SDK 头文件只出现在 infrastructure 的 `.cpp` 中。`CameraImageCaptureView` 通过 `CameraPreviewService` 接收帧，并用 Qt queued invoke 投递到 UI 线程；OpenGL 上传仍放在 `QOpenGLWidget` 的有效 context 中完成，不在相机 SDK 回调线程中直接调用 `glXXX`。
+当前大恒实现为 `learnopengl::infrastructure::camera::galaxy::GalaxyCameraController`，实现 `application::ICameraDevice`。它负责大恒 SDK 初始化、开关相机和输出 `domain::VideoFrame`，SDK 头文件只出现在 infrastructure 的 `.cpp` 中。`CameraImageCaptureView` 通过 `CameraPreviewService` 接收帧，并用 Qt queued invoke 投递到 UI 线程；OpenGL 上传仍放在 `QOpenGLWidget` 的有效 context 中完成，不在相机 SDK 回调线程中直接调用 `glXXX`。当前图像翻转、旋转、缩放和平移属于 UI 原型交互，由 `CameraImageCaptureView` 控件发起，由 `DisplayOpenGLImage` 在绘制前上传 shader uniform 矩阵完成。
 
 ## 5.2 三维轨迹与点云显示模块
 

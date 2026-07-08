@@ -78,7 +78,7 @@ assets/textures/ui/display_image.png
 
 当前已建立相机预览的最小分层切片：`domain` 提供 `VideoFrame` / `PixelFormat`，`application` 提供 `ICameraDevice` 和 `CameraPreviewService`，`infrastructure/camera/galaxy` 提供 `GalaxyCameraController` 大恒适配器。大恒 SDK 头文件只出现在 infrastructure 的 `.cpp` 中，不再暴露给 UI 或 application。
 
-当前相机显示链路为：`composition_root/qt_main.cpp` 创建 `GalaxyCameraController` 并注入 `CameraPreviewService`，`MainWindow` 把 service 传给 `CameraImageCaptureView`。该窗口通过 Qt queued invoke 把 SDK 线程中的 `domain::VideoFrame` 投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。`DisplayOpenGLImage` 在 `paintGL()` 中上传待处理帧，首次或尺寸变化时使用 `glTexImage2D`，后续同尺寸帧使用 `glTexSubImage2D`。UI 不再直接处理相机 SDK 类型。
+当前 Qt 主窗口为左侧 `QTreeWidget` 导航 + 右侧 `QStackedWidget` 页面容器。`composition_root/qt_main.cpp` 创建 `GalaxyCameraController` 并注入 `CameraPreviewService`，`MainWindow` 把 service 传给 `CameraImageCaptureView`，并将该页面注册为“相机模块 / 大恒相机预览”。该窗口通过 Qt queued invoke 把 SDK 线程中的 `domain::VideoFrame` 投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。`DisplayOpenGLImage` 在 `paintGL()` 中上传待处理帧，首次或尺寸变化时使用 `glTexImage2D`，后续同尺寸帧使用 `glTexSubImage2D`。相机页面提供水平/垂直翻转、左右 90 度旋转、缩放、平移和重置控件；这些控件只负责 UI 交互，具体显示变换由 `DisplayOpenGLImage` 在绘制前上传 shader uniform 矩阵完成。UI 不再直接处理相机 SDK 类型。
 
 分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构。当前使用 `application/camera/include/camera/...`、`domain/video/include/video/...`、`infrastructure/camera/galaxy/include/camera/galaxy/...`、`infrastructure/shader/include/shader/...`。公共头文件目录保持简洁，不重复嵌套项目名和当前层名。
 
