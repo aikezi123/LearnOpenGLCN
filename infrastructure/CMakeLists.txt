@@ -3,12 +3,15 @@ find_package(OpenGL REQUIRED)
 # 收集infrastructure下所有模块的src/*.cpp
 file(GLOB_RECURSE INFRASTRUCTURE_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*/src/*.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*/*/src/*.cpp"
 )
 
 # 收集 infrastructure 下所有模块的头文件，主要用于 IDE 显示
 file(GLOB_RECURSE INFRASTRUCTURE_HEADERS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*/include/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/*/include/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*/*/include/*.h"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*/*/include/*.hpp"
 )
 
 
@@ -17,11 +20,14 @@ file(GLOB_RECURSE INFRASTRUCTURE_HEADERS CONFIGURE_DEPENDS
 file(GLOB_RECURSE INFRASTRUCTURE_INCLUDE_DIRS CONFIGURE_DEPENDS
     LIST_DIRECTORIES true
     "${CMAKE_CURRENT_SOURCE_DIR}/*/include"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*/*/include"
 )
 
 
 # 创建动态库
 add_library(infrastructure STATIC)
+
+add_library(learnopengl::infrastructure ALIAS infrastructure)
 
 target_sources(infrastructure PRIVATE
     ${INFRASTRUCTURE_SOURCES}
@@ -34,10 +40,14 @@ target_include_directories(infrastructure PUBLIC
 )
 
 # 链接库
-target_link_libraries(infrastructure PUBLIC
-    glad
-    glfw3
-    OpenGL::GL
-    glm::glm
+target_link_libraries(infrastructure
+    PUBLIC
+        learnopengl::application
+        glad
+        glfw3
+        OpenGL::GL
+        glm::glm
+    PRIVATE
+        Galaxy::SDK
 )
 

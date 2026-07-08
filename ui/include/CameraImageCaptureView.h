@@ -1,8 +1,8 @@
 #pragma once
 
-#include "GalaxyCameraController.h"
-
 #include <QWidget>
+
+#include <memory>
 
 QT_BEGIN_NAMESPACE
 namespace Ui {
@@ -10,20 +10,27 @@ class CameraImageCaptureView;
 }
 QT_END_NAMESPACE
 
+namespace learnopengl::application {
+class CameraPreviewService;
+}
+
 namespace learnopengl::ui {
 
 class CameraImageCaptureView final : public QWidget {
     Q_OBJECT
 
 public:
-    explicit CameraImageCaptureView(QWidget* parent = nullptr);
+    explicit CameraImageCaptureView(
+        std::unique_ptr<application::CameraPreviewService> cameraPreview,
+        QWidget* parent = nullptr
+    );
     ~CameraImageCaptureView() override;
 
 private:
     void startCamera();
 
     Ui::CameraImageCaptureView* m_ui;
-    GalaxyCameraController m_cameraController;
+    std::unique_ptr<application::CameraPreviewService> m_cameraPreview;
 };
 
 } // namespace learnopengl::ui

@@ -76,9 +76,17 @@ stb_image
 assets/textures/ui/display_image.png
 ```
 
-当前已新增 `ui/include/GalaxyCameraController.h` 与 `ui/src/GalaxyCameraController.cpp`，作为大恒相机最小控制器原型。它负责初始化 Galaxy SDK、打开第一台相机或指定 UserID 相机、启动/停止采集，并在 SDK 回调中把图像转换为 RGB24 后通过 `std::function<void(GalaxyCameraFrame)>` 交给上层。该回调发生在大恒 SDK 采集线程中，不能直接调用 OpenGL。
+当前已建立相机预览的最小分层切片：`domain` 提供 `VideoFrame` / `PixelFormat`，`application` 提供 `ICameraDevice` 和 `CameraPreviewService`，`infrastructure/camera/galaxy` 提供 `GalaxyCameraController` 大恒适配器。大恒 SDK 头文件只出现在 infrastructure 的 `.cpp` 中，不再暴露给 UI 或 application。
 
-当前相机显示链路已集中到 `CameraImageCaptureView`：该窗口拥有 `GalaxyCameraController`，通过 Qt queued invoke 把 SDK 线程中的 RGB24 帧投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。`DisplayOpenGLImage` 在 `paintGL()` 中上传待处理帧，首次或尺寸变化时使用 `glTexImage2D`，后续同尺寸帧使用 `glTexSubImage2D`。`MainWindow` 只负责创建并嵌入 `CameraImageCaptureView`，不直接处理相机 SDK 或 OpenGL 上传细节。
+当前相机显示链路为：`composition_root/qt_main.cpp` 创建 `GalaxyCameraController` 并注入 `CameraPreviewService`，`MainWindow` 把 service 传给 `CameraImageCaptureView`。该窗口通过 Qt queued invoke 把 SDK 线程中的 `domain::VideoFrame` 投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。`DisplayOpenGLImage` 在 `paintGL()` 中上传待处理帧，首次或尺寸变化时使用 `glTexImage2D`，后续同尺寸帧使用 `glTexSubImage2D`。UI 不再直接处理相机 SDK 类型。
+
+分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构。当前使用 `application/camera/include/camera/...`、`domain/video/include/video/...`、`infrastructure/camera/galaxy/include/camera/galaxy/...`、`infrastructure/shader/include/shader/...`。公共头文件目录保持简洁，不重复嵌套项目名和当前层名。
+
+application 层流程对象统一使用 `Service` 命名，例如 `CameraPreviewService`。端口接口和使用它的 service 放在 application，例如 `ICameraDevice`；它表达 application 为完成流程需要外部系统提供的能力，由 infrastructure 实现。domain 层只放稳定概念和值对象，例如 `VideoFrame`、`PixelFormat`，不放需要驱动外部系统干活的接口。
+
+术语约定：`GalaxyCameraController : ICameraDevice` 这种继承重写叫实现端口；`composition_root` 创建 `GalaxyCameraController`，把它作为 `ICameraDevice` 传给 `CameraPreviewService`，这个从外部传入依赖的动作叫依赖注入。依赖注入不是消除依赖，而是让 service 依赖抽象端口，不直接依赖具体实现。
+
+第三方 SDK 适配器优先使用 Pimpl。公开头文件只前置声明 `Impl` 并持有 `std::unique_ptr<Impl>`；SDK 头文件、SDK 成员、平台句柄和回调类放在 `.cpp` 中，避免大恒/海康等 SDK 类型穿透公共头文件和外层调用方。
 
 相机实时显示的下一阶段建议：
 
@@ -95,7 +103,7 @@ assets/textures/ui/display_image.png
 - `ui/`：Qt Widgets / QOpenGLWidget 原型层，已有 `learnopengl_ui` target。
 - `lessons/`：LearnOpenGL 教程示例集合。
 - `infrastructure/`：现有 OpenGL Shader 等基础设施。
-- `domain/`、`application/`：目标分层目录，当前尚未形成稳定 target。
+- `domain/`、`application/`：已形成相机预览所需的最小 target，当前包含图像帧模型、相机端口和预览 service。
 - `third_party/`：GLAD、GLFW、GLM、stb_image 等第三方依赖。
 - `third_party/Galaxy/`：大恒 Galaxy SDK 的第三方依赖包装目录，当前 CMake target 为 `Galaxy::SDK`。现有文件覆盖 VC/C API 的 `GxIAPI`、`DxImageProc`，以及 C++ SDK 的 `GalaxyIncludes.h`、`GxIAPICPPEx.lib`；运行时 DLL 直接放在 `out/build/<preset>/bin`，随 exe/pdb 一起提交。
 - `assets/`：Shader、纹理和后续模型资源。

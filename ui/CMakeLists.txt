@@ -41,11 +41,11 @@ target_include_directories(learnopengl_ui
 
 target_link_libraries(learnopengl_ui
     PUBLIC
+        learnopengl::application
         Qt6::Widgets
         Qt6::OpenGLWidgets
     PRIVATE
         Qt6::OpenGL
-        Galaxy::SDK
         stb_image
         glad
         OpenGL::GL

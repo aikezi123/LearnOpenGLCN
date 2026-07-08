@@ -1,5 +1,5 @@
 #include <shader_exercise.h>
-#include <learnopengl/Shader.hpp>
+#include <shader/Shader.hpp>
 
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>

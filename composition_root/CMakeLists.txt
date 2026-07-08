@@ -5,6 +5,7 @@ add_executable(LearnOpenGLCN_Qt
 
 target_link_libraries(LearnOpenGLCN_Qt PRIVATE
     learnopengl::ui
+    learnopengl::infrastructure
 )
 
 target_compile_features(LearnOpenGLCN_Qt PRIVATE

@@ -1,4 +1,4 @@
-#include <learnopengl/Shader.hpp>
+#include <shader/Shader.hpp>
 #include <glad/glad.h>
 
 #include<fstream>

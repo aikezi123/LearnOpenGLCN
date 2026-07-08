@@ -3,7 +3,7 @@
 #include <glfw/glfw3.h>
 #include <stb_image.h>
 #include <iostream>
-#include "Shader.hpp"
+#include <shader/Shader.hpp>
 
 
 /*

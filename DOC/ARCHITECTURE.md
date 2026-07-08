@@ -61,20 +61,24 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 3. `third_party/stb`
 4. `third_party/glm`
 5. `third_party/Galaxy`
-6. `infrastructure`
-7. `lessons`
-8. `ui`
-9. `composition_root`
+6. `domain`
+7. `application`
+8. `infrastructure`
+9. `lessons`
+10. `ui`
+11. `composition_root`
 
 当前目标及依赖为：
 
 | Target | 类型 | 主要职责 | 直接依赖 |
 | --- | --- | --- | --- |
 | `LearnOpenGLCN_Lessons` | Executable | LearnOpenGL 课程代码入口 | `lessons` |
-| `LearnOpenGLCN_Qt` | Executable | Qt/OpenGL 工程原型入口 | `learnopengl_ui` |
+| `LearnOpenGLCN_Qt` | Executable | Qt/OpenGL 工程原型入口与对象装配 | `learnopengl_ui`、`infrastructure` |
 | `lessons` | Static | 收集并编译所有课程示例 | `infrastructure`、`stb_image` |
-| `learnopengl_ui` | Static | 当前 Qt/OpenGL 显示原型与 UI 类 | Qt6 Widgets/OpenGLWidgets、Qt6 OpenGL、Galaxy::SDK、GLAD、OpenGL、stb_image |
-| `infrastructure` | Static | 提供 Shader 等公共技术能力 | GLAD、GLFW、OpenGL、GLM |
+| `learnopengl_ui` | Static | 当前 Qt/OpenGL 显示原型与 UI 类 | `learnopengl_application`、Qt6 Widgets/OpenGLWidgets、Qt6 OpenGL、GLAD、OpenGL、stb_image |
+| `infrastructure` | Static | 提供 Shader、OpenGL 公共技术能力和大恒相机适配器 | `learnopengl_application`、GLAD、GLFW、OpenGL、GLM；实现私有依赖 Galaxy::SDK |
+| `learnopengl_application` | Static | 相机预览 service 与相机端口接口 | `learnopengl_domain` |
+| `learnopengl_domain` | Interface | 与外部技术无关的图像帧等模型 | 无项目内依赖 |
 | `glad` | Static | 加载 OpenGL 函数地址 | 无项目内依赖 |
 | `glfw3` | Imported Static | 窗口、上下文和输入 | Windows 系统库 |
 | `stb_image` | Static | 图片解码 | 无项目内依赖 |
@@ -87,7 +91,7 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 
 当前已经拆成两个 executable：`LearnOpenGLCN_Lessons` 和 `LearnOpenGLCN_Qt`。教程入口和 Qt 工程入口不再共享同一个 `main.cpp`，避免手动改入口来切换运行内容。
 
-`ui/` 目前包含 Qt Widgets 与 `QOpenGLWidget` 原型。该阶段允许把纹理加载、Shader 编译和绘制流程暂时集中在 UI 类中，以便理解 Qt 替代 GLFW 后的渲染流程。稳定后应拆分出 OpenGL 资源、图像加载和业务用例，避免长期把功能堆在 UI 层。
+`ui/` 目前包含 Qt Widgets 与 `QOpenGLWidget` 原型。相机 SDK 控制已经从 UI 拆到 `infrastructure/camera/galaxy`，通过 `application` 中的 `ICameraDevice` 和 `CameraPreviewService` 注入到 UI。纹理加载、Shader 编译和绘制流程仍暂时集中在 UI 类中，以便继续稳定 Qt OpenGL 显示路径；后续应再拆出 OpenGL 资源和图像加载能力，避免长期把渲染细节堆在 UI 层。
 
 ### 2.2 当前运行流程
 
@@ -155,6 +159,7 @@ LearnOpenGLCN_Lessons.exe --list
 - 表达稳定的领域数据和规则。
 - 保存与具体图形 API 无关的模型，例如颜色、变换、网格描述和场景数据。
 - 执行不需要系统资源的纯计算。
+- 表达“是什么”的概念，例如 `VideoFrame`、`PixelFormat`、相机设备描述、相机参数值对象等。
 
 允许依赖：
 
@@ -169,14 +174,18 @@ LearnOpenGLCN_Lessons.exe --list
 
 领域模型不足时允许该层保持精简，不为满足目录形式而制造无意义抽象。
 
+不应把需要驱动外部系统干活的接口放到 domain。比如 `ICameraDevice` 包含打开相机、开始采集、停止采集、注册帧回调等动作，它是相机预览流程需要的外部能力端口，属于 application，而不是 domain。
+
 ### 3.2 application
 
 职责：
 
-- 编排用例和程序流程。
-- 定义外部能力端口，例如 `IRenderer`、`IWindow`、`IImageLoader`、`IClock`。
+- 编排用例和程序流程；本项目应用层流程对象统一采用 `Service` 命名，例如 `CameraPreviewService`。
+- 定义外部能力端口，例如 `ICameraDevice`、`IRenderer`、`IImageLoader`、`IClock`。
 - 使用 `domain` 模型表达输入和输出。
 - 定义与具体 OpenGL 实现无关的课程运行协议。
+
+端口接口应和使用它的 application service 放在同一层。application 通过端口描述“为了完成这个流程，需要外部世界提供什么能力”；具体实现由 infrastructure 提供。比如 `CameraPreviewService` 使用 `ICameraDevice`，而大恒的 `GalaxyCameraController` 在 infrastructure 中实现 `ICameraDevice`。
 
 允许依赖：
 
@@ -196,12 +205,14 @@ LearnOpenGLCN_Lessons.exe --list
 - 封装 OpenGL Shader、Buffer、VertexArray、Texture 等资源。
 - 实现基于 stb_image 的图片加载器。
 - 处理资源路径、文件读取和技术错误转换。
+- 对相机 SDK、平台 API 等重型第三方适配器，优先使用 Pimpl 将 SDK 类型和回调类隐藏在 `.cpp` 中，公共头文件只暴露项目接口。
 
 边界要求：
 
 - OpenGL 对象必须有清晰的所有权，优先使用 RAII。
 - 具体实现可以依赖 application/domain，反向依赖不允许出现。
 - 第三方类型尽量停留在 `.cpp` 或 infrastructure 的私有头文件中。
+- 如果公开类必须持有第三方 SDK 对象，优先改为公开类持有 `std::unique_ptr<Impl>`，由 `Impl` 在 `.cpp` 中包含和使用第三方头文件。
 - 不在该层决定具体运行哪一课程。
 
 ### 3.4 ui
@@ -248,6 +259,14 @@ LearnOpenGLCN_Lessons.exe --list
 `app` 可以知道所有外层具体类型，但其他层不得依赖 `app`。
 
 当前入口目录名为 `composition_root/`，承担 app/Composition Root 角色。不要在 `main.cpp` 中堆积业务逻辑、Shader 编译、纹理加载或相机采集流程。
+
+术语约定：
+
+- `application` 定义端口，例如 `ICameraDevice`。
+- `infrastructure` 继承并重写端口，例如 `GalaxyCameraController : ICameraDevice`，这叫“实现端口”。
+- `composition_root` 创建具体实现，并把它按端口类型传给需要该依赖的 service，例如把 `GalaxyCameraController` 作为 `ICameraDevice` 传给 `CameraPreviewService`，这个“从外部传入依赖”的动作叫“依赖注入”。
+
+依赖注入不是消除依赖，而是让 service 依赖抽象端口，把“使用哪个具体实现”的决定权移动到组合根。
 
 ### 3.7 assets
 
@@ -331,8 +350,9 @@ target_link_libraries(LearnOpenGLCN_Qt PRIVATE
 
 ## 5. CMake 边界规则
 
-- 每个模块拥有自己的 `CMakeLists.txt` 和 target。
-- 每个 target 只公开一个稳定的 `include/` 根目录。
+- 分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构，例如 `application/camera/include`、`domain/video/include`、`infrastructure/camera/galaxy/include`。
+- 每个模块优先拥有自己的 `include/` 和 `src/`；是否拆独立 `CMakeLists.txt` 和 target 根据模块规模决定。
+- 每个 target 只公开模块的稳定 `include/` 根目录。
 - 不把 `src/`、嵌套命名空间目录或其他模块目录加入公共 include path。
 - 新模块优先显式列出源文件，避免全工程 `GLOB_RECURSE` 模糊归属。
 - 外部依赖尽量使用带命名空间的 target，例如 `glm::glm`、`stb::image`。
@@ -343,11 +363,12 @@ target_link_libraries(LearnOpenGLCN_Qt PRIVATE
 
 ## 6. 已知架构债务
 
-- `domain`、`application` 仍未形成稳定 target；`ui` 已有 Qt 原型 target，但尚未完成与 application/infrastructure 的清晰拆分。
+- `domain`、`application` 已形成相机预览所需的最小 target，但还只覆盖图像帧模型、相机端口和预览 service。
+- `ui` 中的相机 SDK 依赖已拆到 `infrastructure/camera/galaxy`；OpenGL Shader、VAO/VBO/EBO、Texture 管理仍在 `DisplayOpenGLImage` 中，尚未迁移为 infrastructure RAII 资源。
 - 所有课程被收集进单一 `lessons` 静态库。
 - `lesson_main.cpp` 当前直接包含各课程头文件并维护课程列表，尚未形成独立课程注册系统。
 - lessons 和 infrastructure 的 include 目录由递归扫描产生，边界过宽。
-- 部分课程使用 `"Shader.hpp"`，依赖泄漏的 include 搜索路径。
+- 公共 include 路径已要求避免重复项目名和层名；历史或新增模块应使用 `camera/...`、`video/...`、`shader/...` 这类功能路径。
 - Shader 的 OpenGL Program ID 对外公开，且尚未完整实现 RAII 和移动语义。
 - GLFW 初始化、窗口创建和渲染循环在课程间重复。
 - 资源路径目前通过编译期绝对路径宏传入，不利于产物搬迁。

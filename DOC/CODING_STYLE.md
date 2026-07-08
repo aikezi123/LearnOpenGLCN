@@ -34,6 +34,8 @@
 | CMake target alias | 命名空间形式 | `learnopengl::application` |
 | Shader uniform | camelCase | `modelMatrix` |
 
+application 层中负责编排流程的对象统一使用 `Service` 后缀，例如 `CameraPreviewService`。application 层端口接口使用 `I` 前缀，例如 `ICameraDevice`；端口接口和使用它的 service 放在 application，不放 domain。domain 层只放稳定概念、值对象和纯规则，例如 `VideoFrame`、`PixelFormat`。
+
 课程入口应统一命名，例如 `runCoordinateTransformationLesson()`。避免继续引入 `transform()` 这类含义过宽的全局函数。
 
 文件名需要表达内容并保证拼写正确。已有 `textrues` 等历史名称可以在迁移对应课程时修复，不要求无关改动顺手大面积重命名。
@@ -53,14 +55,31 @@ namespace learnopengl::infrastructure::opengl {
 include 应从模块公开根目录开始：
 
 ```cpp
-#include <learnopengl/infrastructure/opengl/ShaderProgram.hpp>
+#include <shader/ShaderProgram.hpp>
+#include <camera/CameraPreviewService.h>
 ```
 
-禁止依赖偶然被加入搜索路径的短 include：
+分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构。先按功能模块分组，再在模块内放公开头文件和实现文件，例如：
+
+```text
+application/camera/include/camera/ICameraDevice.h
+application/camera/src/CameraPreviewService.cpp
+domain/video/include/video/VideoFrame.h
+infrastructure/camera/galaxy/include/camera/galaxy/GalaxyCameraController.h
+infrastructure/camera/galaxy/src/GalaxyCameraController.cpp
+infrastructure/shader/include/shader/Shader.hpp
+infrastructure/shader/src/Shader.cpp
+```
+
+公共头文件路径不要重复项目名或当前层名。项目根目录已经叫 LearnOpenGLCN，文件也已经位于某个层和模块之下，因此不要再嵌套 `learnopengl/application`、`learnopengl/domain`、`learnopengl/infrastructure` 这类目录。优先用功能目录表达含义。
+
+禁止依赖偶然被加入搜索路径的无归属 include：
 
 ```cpp
 // 不推荐
 #include "Shader.hpp"
+// 不推荐
+#include <learnopengl/application/camera/ICameraDevice.h>
 ```
 
 头文件规则：
@@ -70,6 +89,38 @@ include 应从模块公开根目录开始：
 - 不在头文件使用 `using namespace`。
 - application/domain 的公共头文件不得 include GLFW、GLAD、stb_image。
 - include 顺序建议为：对应头文件、项目头文件、第三方头文件、标准库头文件；各组之间空一行。
+
+### 4.1 Pimpl 与第三方实现隐藏
+
+当 infrastructure 的公开类需要持有第三方 SDK、平台 API、Qt/OpenGL 等不希望扩散的复杂类型时，优先使用 Pimpl（指向实现的指针）隐藏实现：
+
+```cpp
+class GalaxyCameraControllerImpl;
+
+class GalaxyCameraController final : public application::ICameraDevice {
+public:
+    GalaxyCameraController();
+    ~GalaxyCameraController() override;
+
+private:
+    std::unique_ptr<GalaxyCameraControllerImpl> m_impl;
+};
+```
+
+公共头文件只做 `Impl` 前置声明，不 include 第三方 SDK 头文件；`Impl` 的完整定义、第三方 SDK 成员和回调类放到 `.cpp` 中。这样包含公开头文件的调用方只认识项目接口，不会被迫包含第三方 SDK、平台宏或重量级头文件。
+
+适合使用 Pimpl 的情况：
+
+- 私有成员包含第三方 SDK 复杂类型、平台句柄、Qt/OpenGL 类型或宏污染风险较高的头文件。
+- 适配器实现变化频繁，但公开接口稳定。
+- 希望减少公共头文件依赖和外部重编译范围。
+
+不需要使用 Pimpl 的情况：
+
+- 类型只包含标准库、domain/application 稳定类型或简单值对象。
+- 该类型本身就是轻量数据模型，例如 `VideoFrame`、`PixelFormat`。
+
+Pimpl 的代价是多一个实现类、一层转发和一次指针间接访问；只有当依赖隔离收益明确时再使用。
 
 ## 5. 类型、函数和接口
 

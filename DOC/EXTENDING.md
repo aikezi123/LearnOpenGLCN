@@ -94,30 +94,47 @@ LearnOpenGLCN_Lessons.exe --list
 - 所属章节。
 - 创建或运行入口。
 
-## 4. 新增 application 用例
+## 4. 新增 application service
 
 适用场景：新增能力描述“程序要完成什么”，并且不应绑定 OpenGL/GLFW。
 
+推荐结构：
+
+```text
+application/
+└── module_name/
+    ├── include/module_name/
+    └── src/
+```
+
 步骤：
 
-1. 在 application 定义用例的输入和输出。
+1. 在 application 定义 service 的输入和输出，命名采用 `XxxService`。
 2. 识别需要的外部能力，并在 application 定义最小端口接口。
 3. 用 domain 类型表达核心数据，避免第三方类型穿透边界。
 4. 在 infrastructure/ui 实现端口。
-5. 在 app 创建具体实现并注入用例。
+5. 在 app 创建具体实现并注入 service。
 6. 对不需要图形上下文的应用逻辑增加单元测试。
 
-接口应从实际用例抽取。例如，用例只需要读取时间时，定义 `IClock::elapsedSeconds()`，不要直接把整个 GLFW API 包装成一个巨型接口。
+接口应从实际 service 抽取。例如，service 只需要读取时间时，定义 `IClock::elapsedSeconds()`，不要直接把整个 GLFW API 包装成一个巨型接口。
+
+端口接口放在 application，而不是 domain。判断方式：如果类型表达“是什么”，例如图像帧、像素格式、相机参数值对象，放 domain；如果接口表达“为了完成某个流程，需要外部系统做什么”，例如 `ICameraDevice`、`IImageLoader`、`IRenderer`，放 application；如果代码表达“用某个 SDK/API 具体怎么做”，放 infrastructure。
+
+术语区分：
+
+- 外层类继承并重写 application 端口，叫实现端口。例如 `GalaxyCameraController : ICameraDevice`。
+- 组合根创建具体实现，并按端口类型传给 service，叫依赖注入。例如把 `GalaxyCameraController` 作为 `ICameraDevice` 注入 `CameraPreviewService`。
+- 依赖注入不是让类之间没有依赖，而是让 service 依赖抽象端口，不直接依赖具体实现。
 
 ## 4.1 从 UI 原型迁移到分层实现
 
 当一个功能先在 `ui` 层跑通后，按以下顺序拆分：
 
 1. 保留 `ui` 对窗口、控件、事件和 `QOpenGLWidget` 生命周期的管理。
-2. 把稳定的流程编排提取为 application 用例，例如“接收一帧图像并请求显示”或“提交一批轨迹点并请求绘制”。
+2. 把稳定的流程编排提取为 application service，例如“接收一帧图像并请求显示”或“提交一批轨迹点并请求绘制”。
 3. 把外部技术实现放入 infrastructure，例如相机 SDK 适配器、stb_image 加载器、OpenGL Texture/Buffer 封装。
 4. 把与 UI/API 无关的数据模型放入 domain，例如帧尺寸、像素格式、点云点、轨迹段、相机内参等。
-5. `composition_root` 负责把 Qt UI、OpenGL 适配器、相机适配器和 application 用例装配起来。
+5. `composition_root` 负责把 Qt UI、OpenGL 适配器、相机适配器和 application service 装配起来。
 
 拆分过程中保持每一步可构建、可运行，不一次性重写全部原型。
 
@@ -130,16 +147,18 @@ LearnOpenGLCN_Lessons.exe --list
 ```text
 infrastructure/
 └── module_name/
-    ├── include/learnopengl/infrastructure/module_name/
+    ├── include/module_name/
     ├── src/
     └── CMakeLists.txt
 ```
+
+分层代码统一采用“层 / 模块 / include + src”的模块优先结构。比如 `application/camera/include/camera/`、`domain/video/include/video/`、`infrastructure/camera/galaxy/include/camera/galaxy/`。公共 include 目录下不要重复项目名或当前层名，不要创建 `learnopengl/application/camera/`、`learnopengl/domain/video/` 这类目录。
 
 步骤：
 
 1. 确认需要实现的 application 端口。
 2. 将第三方依赖设置为 target 的 `PRIVATE` 依赖。
-3. 避免在公共头文件暴露第三方结构体、句柄或宏。
+3. 避免在公共头文件暴露第三方结构体、句柄或宏；相机 SDK、平台 API 等适配器优先用 Pimpl 把 SDK 成员和回调类藏到 `.cpp` 中。
 4. 明确初始化顺序、线程要求和资源所有权。
 5. 将底层错误转换为项目错误。
 6. 在 app 组合根完成实例化。
@@ -165,7 +184,7 @@ infrastructure/
 - 帧格式、宽高、stride、通道顺序、线程和缓冲区所有权必须明确。
 - 目标帧率至少满足 30 FPS，避免每帧重复创建纹理或 Program。
 
-当前原型已有 `learnopengl::ui::GalaxyCameraController`，只负责大恒 SDK 初始化、开关相机和输出 RGB24 帧回调。OpenGL 上传仍应放在 `QOpenGLWidget` 的有效 context 中完成，不在相机 SDK 回调线程中直接调用 `glXXX`。
+当前大恒实现为 `learnopengl::infrastructure::camera::galaxy::GalaxyCameraController`，实现 `application::ICameraDevice`。它负责大恒 SDK 初始化、开关相机和输出 `domain::VideoFrame`，SDK 头文件只出现在 infrastructure 的 `.cpp` 中。`CameraImageCaptureView` 通过 `CameraPreviewService` 接收帧，并用 Qt queued invoke 投递到 UI 线程；OpenGL 上传仍放在 `QOpenGLWidget` 的有效 context 中完成，不在相机 SDK 回调线程中直接调用 `glXXX`。
 
 ## 5.2 三维轨迹与点云显示模块
 
@@ -239,7 +258,7 @@ assets/
 ### 阶段一：收紧现有边界
 
 - 修正 include 目录，不再公开 `src` 和嵌套目录。
-- 将 `#include "Shader.hpp"` 统一为稳定公开路径。
+- 将 `#include "Shader.hpp"` 统一为稳定公开路径，例如 `#include <shader/Shader.hpp>`。
 - 为现有 target 增加 `learnopengl::` 别名。
 - 将不必要的 `PUBLIC` 依赖改为 `PRIVATE`。
 

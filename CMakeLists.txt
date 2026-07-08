@@ -34,6 +34,9 @@ add_subdirectory(third_party/glm)
 # 这个子目录负责把大恒 Galaxy SDK 的头文件和 .lib 包装成 CMake target
 add_subdirectory(third_party/Galaxy)
 
+add_subdirectory(domain)
+add_subdirectory(application)
+
 add_subdirectory(infrastructure)
 
 # LearnOpenGL示例代码

@@ -86,6 +86,7 @@ composition_root/app
 - `ui` 管理窗口、控件、事件和可视化交互。
 - `composition_root` 负责创建对象、注入依赖、启动程序。
 - 第三方类型、Qt 类型、OpenGL ID、相机 SDK 类型不得泄漏到 `domain` 或 `application`。
+- 术语区分：外层类继承并重写 application 端口叫“实现端口”；组合根创建具体实现并按端口类型传给 service 才叫“依赖注入”。依赖注入不是消除依赖，而是让 service 依赖抽象端口，不直接依赖具体实现。
 
 阶段策略：
 
@@ -101,6 +102,7 @@ composition_root/app
 
 - 表达与图形 API 无关的数据模型和规则。
 - 表达颜色、变换、网格描述、点云点、轨迹段、图像帧元数据等稳定概念。
+- 表达“是什么”的稳定概念和值对象，例如 `VideoFrame`、`PixelFormat`、相机参数。
 - 使用 C++ 标准库和 domain 内部代码。
 
 禁止：
@@ -108,14 +110,16 @@ composition_root/app
 - 依赖 Qt、OpenGL、GLAD、GLFW、GLM、stb_image、大恒/海康 SDK。
 - 保存 QWidget、QOpenGLWidget、OpenGL ID、相机 SDK 句柄、文件系统适配器。
 - 调用 `glXXX` 或任何 UI/API 相关函数。
+- 放置需要驱动外部系统干活的端口接口，例如 `ICameraDevice`。
 
 ### 4.2 application
 
 允许：
 
-- 编排用例和流程。
+- 编排用例和流程；本项目应用层流程对象统一使用 `Service` 后缀命名。
 - 定义端口，例如图像帧源、渲染提交、时钟、资源定位、点云数据输入。
 - 使用 domain 类型描述输入、输出和状态。
+- 放置 service 所需的外部能力端口，例如 `ICameraDevice`，由 infrastructure 具体实现。
 
 禁止：
 
@@ -133,6 +137,7 @@ composition_root/app
 - 使用 stb_image 加载图片。
 - 接入大恒、海康等相机 SDK。
 - 处理文件系统、资源路径和底层错误转换。
+- 对相机 SDK、平台 API 等重型第三方适配器，优先使用 Pimpl 把 SDK 类型、句柄和回调类隐藏在 `.cpp` 中。
 
 禁止：
 
@@ -189,6 +194,8 @@ composition_root/app
 
 - 保持 CMake 3.21+ 和 C++17，除非用户明确要求升级。
 - 使用 target-based CMake。
+- 分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构，例如 `application/camera/include`、`domain/video/include`、`infrastructure/camera/galaxy/include`。
+- 公共 include 目录下不要重复项目名或当前层名，不要创建 `learnopengl/application`、`learnopengl/domain`、`learnopengl/infrastructure` 这类套娃目录。
 - 不新增全局 `include_directories()`、`link_libraries()` 或无关全局宏。
 - 不新增未被当前源码消费的编译宏、CMake option、feature flag 或预留开关；确有必要时必须说明当前收益和预计使用位置。
 - 只有公共头文件需要的依赖才能设为 `PUBLIC`；实现细节使用 `PRIVATE`。

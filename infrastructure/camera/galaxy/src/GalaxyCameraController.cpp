@@ -1,11 +1,15 @@
-#include "GalaxyCameraController.h"
+#include <camera/galaxy/GalaxyCameraController.h>
 
+#include <GalaxyIncludes.h>
+
+#include <atomic>
 #include <cstring>
 #include <iostream>
 #include <limits>
+#include <mutex>
 #include <utility>
 
-namespace learnopengl::ui {
+namespace learnopengl::infrastructure::camera::galaxy {
 namespace {
 
 std::string makeGalaxyError(const char* operation, CGalaxyException& error)
@@ -24,7 +28,6 @@ std::string makeUnknownError(const char* operation)
 
 bool calculateRgb24Size(uint64_t width, uint64_t height, size_t& byteCount)
 {
-    // RGB24 每个像素 3 字节。这里先做溢出检查，避免异常尺寸导致 vector 分配错误。
     if (width == 0 || height == 0) {
         return false;
     }
@@ -55,29 +58,82 @@ bool calculateRgb24Size(uint64_t width, uint64_t height, size_t& byteCount)
 
 } // namespace
 
-GalaxyCaptureHandler::GalaxyCaptureHandler(GalaxyCameraController* controller)
+class GalaxyCameraControllerImpl;
+
+class GalaxyCaptureHandler final : public ICaptureEventHandler {
+public:
+    explicit GalaxyCaptureHandler(GalaxyCameraControllerImpl* controller);
+    void DoOnImageCaptured(CImageDataPointer& imageData, void* userParam) override;
+
+private:
+    GalaxyCameraControllerImpl* m_controller{nullptr};
+};
+
+class GalaxyCameraControllerImpl final {
+public:
+    using FrameCallback = application::ICameraDevice::FrameCallback;
+
+    GalaxyCameraControllerImpl() = default;
+    ~GalaxyCameraControllerImpl();
+
+    GalaxyCameraControllerImpl(const GalaxyCameraControllerImpl&) = delete;
+    GalaxyCameraControllerImpl& operator=(const GalaxyCameraControllerImpl&) = delete;
+
+    bool openFirstCamera();
+    bool openByUserId(const std::string& userId);
+    bool startGrabbing();
+    void stopGrabbing();
+    void close();
+
+    void setAutoWhiteBalance(bool enabled);
+    void setGain(double value);
+    void setExposureTime(double value);
+
+    bool isOpen() const;
+    bool isGrabbing() const;
+    std::string lastError() const;
+    void setFrameCallback(FrameCallback callback);
+    void handleFrame(CImageDataPointer& imageData);
+
+private:
+    bool initializeSdk();
+    void uninitializeSdk();
+    void cleanupStream();
+    void setLastError(std::string message);
+
+    CGXDevicePointer m_device;
+    CGXStreamPointer m_stream;
+    CGXFeatureControlPointer m_featureControl;
+    std::unique_ptr<GalaxyCaptureHandler> m_captureHandler;
+
+    FrameCallback m_frameCallback;
+    mutable std::mutex m_callbackMutex;
+    mutable std::mutex m_errorMutex;
+    std::string m_lastError;
+
+    bool m_sdkInitialized{false};
+    std::atomic_bool m_isOpen{false};
+    std::atomic_bool m_isGrabbing{false};
+};
+
+GalaxyCaptureHandler::GalaxyCaptureHandler(GalaxyCameraControllerImpl* controller)
     : m_controller(controller)
 {
 }
 
-void GalaxyCaptureHandler::DoOnImageCaptured(
-    CImageDataPointer& imageData,
-    void*)
+void GalaxyCaptureHandler::DoOnImageCaptured(CImageDataPointer& imageData, void*)
 {
-    // SDK 在采集线程回调这里。不要在本函数里做 OpenGL 操作，只转给控制器处理帧数据。
     if (m_controller != nullptr) {
         m_controller->handleFrame(imageData);
     }
 }
 
-GalaxyCameraController::GalaxyCameraController() = default;
-
-GalaxyCameraController::~GalaxyCameraController()
+GalaxyCameraControllerImpl::~GalaxyCameraControllerImpl()
 {
     close();
 }
 
-bool GalaxyCameraController::openFirstCamera()
+bool GalaxyCameraControllerImpl::openFirstCamera()
 {
     if (m_isOpen.load()) {
         return true;
@@ -88,8 +144,6 @@ bool GalaxyCameraController::openFirstCamera()
     }
 
     try {
-        // 先枚举设备，再打开第一台。若相机配置过 UserID，优先按 UserID 打开；
-        // 否则退回用序列号打开，方便未配置 UserID 的相机也能在原型阶段跑起来。
         GxIAPICPP::gxdeviceinfo_vector devices;
         IGXFactory::GetInstance().UpdateAllDeviceList(100, devices);
 
@@ -131,7 +185,7 @@ bool GalaxyCameraController::openFirstCamera()
     return false;
 }
 
-bool GalaxyCameraController::openByUserId(const std::string& userId)
+bool GalaxyCameraControllerImpl::openByUserId(const std::string& userId)
 {
     if (m_isOpen.load()) {
         return true;
@@ -163,7 +217,7 @@ bool GalaxyCameraController::openByUserId(const std::string& userId)
     return false;
 }
 
-bool GalaxyCameraController::startGrabbing()
+bool GalaxyCameraControllerImpl::startGrabbing()
 {
     if (m_isGrabbing.load()) {
         return true;
@@ -175,7 +229,6 @@ bool GalaxyCameraController::startGrabbing()
     }
 
     try {
-        // 当前只使用第 0 路数据流。大恒 SDK 收到图像后会调用 GalaxyCaptureHandler。
         if (m_device->GetStreamCount() == 0) {
             setLastError("Galaxy camera has no stream.");
             return false;
@@ -191,7 +244,6 @@ bool GalaxyCameraController::startGrabbing()
 
         m_stream->RegisterCaptureCallback(m_captureHandler.get(), this);
         m_stream->StartGrab();
-        // StartGrab 启动本地流对象；AcquisitionStart 才是真正让相机开始出图。
         m_featureControl->GetCommandFeature("AcquisitionStart")->Execute();
 
         m_isGrabbing.store(true);
@@ -208,12 +260,12 @@ bool GalaxyCameraController::startGrabbing()
     return false;
 }
 
-void GalaxyCameraController::stopGrabbing()
+void GalaxyCameraControllerImpl::stopGrabbing()
 {
     cleanupStream();
 }
 
-void GalaxyCameraController::close()
+void GalaxyCameraControllerImpl::close()
 {
     cleanupStream();
 
@@ -234,7 +286,7 @@ void GalaxyCameraController::close()
     uninitializeSdk();
 }
 
-void GalaxyCameraController::setAutoWhiteBalance(bool flag)
+void GalaxyCameraControllerImpl::setAutoWhiteBalance(bool enabled)
 {
     if (!m_isOpen.load() || m_featureControl.IsNull()) {
         return;
@@ -246,7 +298,7 @@ void GalaxyCameraController::setAutoWhiteBalance(bool flag)
         }
 
         auto whiteBalanceFeature = m_featureControl->GetEnumFeature("BalanceWhiteAuto");
-        whiteBalanceFeature->SetValue(flag ? "Continuous" : "Off");
+        whiteBalanceFeature->SetValue(enabled ? "Continuous" : "Off");
     }
     catch (CGalaxyException& error) {
         setLastError(makeGalaxyError("Set Galaxy camera auto white balance", error));
@@ -256,7 +308,7 @@ void GalaxyCameraController::setAutoWhiteBalance(bool flag)
     }
 }
 
-void GalaxyCameraController::setGain(double value)
+void GalaxyCameraControllerImpl::setGain(double value)
 {
     if (!m_isOpen.load() || m_featureControl.IsNull()) {
         return;
@@ -269,8 +321,8 @@ void GalaxyCameraController::setGain(double value)
 
         auto gainFeature = m_featureControl->GetFloatFeature("Gain");
 
-        double min = gainFeature->GetMin();
-        double max = gainFeature->GetMax();
+        const double min = gainFeature->GetMin();
+        const double max = gainFeature->GetMax();
 
         if (value < min) {
             value = min;
@@ -288,22 +340,22 @@ void GalaxyCameraController::setGain(double value)
     catch (...) {
         setLastError(makeUnknownError("Set Galaxy camera gain"));
     }
-
 }
 
-void GalaxyCameraController::setExposureTime(double value)
+void GalaxyCameraControllerImpl::setExposureTime(double value)
 {
     if (!m_isOpen.load() || m_featureControl.IsNull()) {
         return;
     }
+
     try {
         if (!m_featureControl->IsImplemented("ExposureTime")) {
             return;
         }
 
         auto exposureFeature = m_featureControl->GetFloatFeature("ExposureTime");
-        double min = exposureFeature->GetMin();
-        double max = exposureFeature->GetMax();
+        const double min = exposureFeature->GetMin();
+        const double max = exposureFeature->GetMax();
 
         if (value < min) {
             value = min;
@@ -321,32 +373,31 @@ void GalaxyCameraController::setExposureTime(double value)
     catch (...) {
         setLastError(makeUnknownError("Set Galaxy camera exposure time"));
     }
-
 }
 
-bool GalaxyCameraController::isOpen() const
+bool GalaxyCameraControllerImpl::isOpen() const
 {
     return m_isOpen.load();
 }
 
-bool GalaxyCameraController::isGrabbing() const
+bool GalaxyCameraControllerImpl::isGrabbing() const
 {
     return m_isGrabbing.load();
 }
 
-std::string GalaxyCameraController::lastError() const
+std::string GalaxyCameraControllerImpl::lastError() const
 {
     std::lock_guard<std::mutex> lock(m_errorMutex);
     return m_lastError;
 }
 
-void GalaxyCameraController::setFrameCallback(FrameCallback callback)
+void GalaxyCameraControllerImpl::setFrameCallback(FrameCallback callback)
 {
     std::lock_guard<std::mutex> lock(m_callbackMutex);
     m_frameCallback = std::move(callback);
 }
 
-bool GalaxyCameraController::initializeSdk()
+bool GalaxyCameraControllerImpl::initializeSdk()
 {
     if (m_sdkInitialized) {
         return true;
@@ -367,7 +418,7 @@ bool GalaxyCameraController::initializeSdk()
     return false;
 }
 
-void GalaxyCameraController::uninitializeSdk()
+void GalaxyCameraControllerImpl::uninitializeSdk()
 {
     if (!m_sdkInitialized) {
         return;
@@ -386,9 +437,8 @@ void GalaxyCameraController::uninitializeSdk()
     m_sdkInitialized = false;
 }
 
-void GalaxyCameraController::cleanupStream()
+void GalaxyCameraControllerImpl::cleanupStream()
 {
-    // 关闭顺序和启动顺序相反：先让相机停止出图，再停本地流、注销回调、关闭流。
     if (!m_featureControl.IsNull()) {
         try {
             m_featureControl->GetCommandFeature("AcquisitionStop")->Execute();
@@ -409,7 +459,7 @@ void GalaxyCameraController::cleanupStream()
         }
         catch (...) {
         }
-        
+
         try {
             m_stream->Close();
         }
@@ -423,7 +473,7 @@ void GalaxyCameraController::cleanupStream()
     m_isGrabbing.store(false);
 }
 
-void GalaxyCameraController::handleFrame(CImageDataPointer& imageData)
+void GalaxyCameraControllerImpl::handleFrame(CImageDataPointer& imageData)
 {
     if (imageData.IsNull() || imageData->GetStatus() != GX_FRAME_STATUS_SUCCESS) {
         return;
@@ -431,7 +481,6 @@ void GalaxyCameraController::handleFrame(CImageDataPointer& imageData)
 
     FrameCallback callback;
     {
-        // 复制一份 std::function 后释放锁，再执行用户回调，避免回调反过来操作控制器时死锁。
         std::lock_guard<std::mutex> lock(m_callbackMutex);
         callback = m_frameCallback;
     }
@@ -449,7 +498,6 @@ void GalaxyCameraController::handleFrame(CImageDataPointer& imageData)
         return;
     }
 
-    // ConvertToRGB24 返回的是 SDK 管理的临时数据地址，不能把指针直接交给显示层长期使用。
     void* rgbBuffer = imageData->ConvertToRGB24(
         GX_BIT_0_7,
         GX_RAW2RGB_NEIGHBOUR,
@@ -461,19 +509,19 @@ void GalaxyCameraController::handleFrame(CImageDataPointer& imageData)
         return;
     }
 
-    GalaxyCameraFrame frame;
+    domain::VideoFrame frame;
     frame.width = static_cast<int>(width);
     frame.height = static_cast<int>(height);
     frame.frameId = imageData->GetFrameID();
-    frame.rgb24.resize(byteCount);
+    frame.pixelFormat = domain::PixelFormat::Rgb24;
+    frame.pixels.resize(byteCount);
 
-    // 复制成自己持有的内存，确保回调函数返回后上层仍然可以安全使用这帧。
-    std::memcpy(frame.rgb24.data(), rgbBuffer, byteCount);
+    std::memcpy(frame.pixels.data(), rgbBuffer, byteCount);
 
     callback(std::move(frame));
 }
 
-void GalaxyCameraController::setLastError(std::string message)
+void GalaxyCameraControllerImpl::setLastError(std::string message)
 {
     const std::string text = std::move(message);
     {
@@ -484,4 +532,71 @@ void GalaxyCameraController::setLastError(std::string message)
     std::cerr << text << std::endl;
 }
 
-} // namespace learnopengl::ui
+GalaxyCameraController::GalaxyCameraController()
+    : m_impl(std::make_unique<GalaxyCameraControllerImpl>())
+{
+}
+
+GalaxyCameraController::~GalaxyCameraController() = default;
+
+bool GalaxyCameraController::openFirstCamera()
+{
+    return m_impl->openFirstCamera();
+}
+
+bool GalaxyCameraController::openByUserId(const std::string& userId)
+{
+    return m_impl->openByUserId(userId);
+}
+
+bool GalaxyCameraController::startGrabbing()
+{
+    return m_impl->startGrabbing();
+}
+
+void GalaxyCameraController::stopGrabbing()
+{
+    m_impl->stopGrabbing();
+}
+
+void GalaxyCameraController::close()
+{
+    m_impl->close();
+}
+
+void GalaxyCameraController::setAutoWhiteBalance(bool enabled)
+{
+    m_impl->setAutoWhiteBalance(enabled);
+}
+
+void GalaxyCameraController::setGain(double value)
+{
+    m_impl->setGain(value);
+}
+
+void GalaxyCameraController::setExposureTime(double value)
+{
+    m_impl->setExposureTime(value);
+}
+
+bool GalaxyCameraController::isOpen() const
+{
+    return m_impl->isOpen();
+}
+
+bool GalaxyCameraController::isGrabbing() const
+{
+    return m_impl->isGrabbing();
+}
+
+std::string GalaxyCameraController::lastError() const
+{
+    return m_impl->lastError();
+}
+
+void GalaxyCameraController::setFrameCallback(FrameCallback callback)
+{
+    m_impl->setFrameCallback(std::move(callback));
+}
+
+} // namespace learnopengl::infrastructure::camera::galaxy
