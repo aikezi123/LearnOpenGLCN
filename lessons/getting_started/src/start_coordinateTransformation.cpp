@@ -13,7 +13,10 @@ int transform() {
 
     // ———————————— 1. 初始化glfw和glad库 ————————————
     // 初始化glfw
-    glfwInit();
+    if (!glfwInit()) {
+        std::cout << "Failed to initialize GLFW" << std::endl;
+        return -1;
+    }
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
@@ -109,9 +112,9 @@ int transform() {
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, 0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(float) * 5, reinterpret_cast<void*>(0));
     glEnableVertexAttribArray(0);
-    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(float) *5, reinterpret_cast<void*>(3 * sizeof(float)));
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(float) * 5, reinterpret_cast<void*>(3 * sizeof(float)));
     glEnableVertexAttribArray(1);
 
     // 创建纹理对象
@@ -135,31 +138,52 @@ int transform() {
 
 
     // 开始绘制
-glUseProgram(programID);
-glUniform1i(glGetUniformLocation(programID, "uTexture"), 0);
-
-while (!glfwWindowShouldClose(window)) {
-    glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
-    glClear(GL_COLOR_BUFFER_BIT);
-
-    glm::mat4 trans = glm::mat4(1.0f);
-    trans = glm::translate(trans, glm::vec3(0.3f, 0.2f, 0.0f));
-    trans = glm::rotate(trans, static_cast<float>(glfwGetTime()), glm::vec3(0.0f, 0.0f, 1.0f));
-    trans = glm::scale(trans, glm::vec3(0.8f, 0.8f, 1.0f));
-
-    unsigned int transformLocation = glGetUniformLocation(programID, "transform");
-    glUniformMatrix4fv(transformLocation, 1, GL_FALSE, glm::value_ptr(trans));
-
-    glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
     glUseProgram(programID);
-    glBindVertexArray(VAO);
-    glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    // 获取uTexture在glsl着色器代码中对应的location
+    unsigned int location = glGetUniformLocation(programID, "uTexture");
+    // 把location对应的对象也就是把uTexture的值设为0。
+    // uTexture = 0的含义：由于uTexture的类型是unifrom sampler 2D，因此它的值不是颜色、矩阵或坐标，而是Texture Unit编号。
+    // 因此，glUniform1i(loc, 0)表示uTexture = 0，也就是这个sample2D从Texture Unit 0采样。
+    // 真正的纹理绑定还得靠glActiveTexture(GL_TEXTURE0)；glBindTexture(GL_TEXTURE_2D, textureID)。
+    glUniform1i(location, 0);
+    
+    while (!glfwWindowShouldClose(window)) {
+        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        glClear(GL_COLOR_BUFFER_BIT);
+    
+        // ———————————————— 矩阵变换，实际顺序为先缩放、后旋转、再平移 ———————————————
+        // 构造4*4的单位变换矩阵
+        glm::mat4 trans = glm::mat4(1.0f);
+        // 变换矩阵左乘平移矩阵
+        trans = glm::translate(trans, glm::vec3(0.3f, 0.2f, 0.0f));
+        // 变换矩阵左乘旋转矩阵
+        trans = glm::rotate(trans, static_cast<float>(glfwGetTime()), glm::vec3(0.0f, 0.0f, 1.0f));
+        // 变换矩阵左乘缩放矩阵
+        trans = glm::scale(trans, glm::vec3(0.8f, 0.8f, 1.0f));
+    
+        glUseProgram(programID);
 
-    glfwSwapBuffers(window);
-    glfwPollEvents();
-}
-
+        // 查询programID这个program里名字叫“transform”的unifrom变量，它的location是多少
+        unsigned int transformLocation = glGetUniformLocation(programID, "transform");
+        // 把变换矩阵传给当前program的unifrom mat4 transform中
+        glUniformMatrix4fv(
+            transformLocation,         // unifrom location
+            1,                         // 上传1个mat4
+            GL_FALSE,                  // 不转置矩阵
+            glm::value_ptr(trans)      // 指向矩阵首元素的float指针
+        );    
+        
+        // 将当前的活动纹理单元切换为Texture Unit 0
+        glActiveTexture(GL_TEXTURE0);
+        // 将texture这个Texture Object绑定到当前活动的Texture Unit的GL_TEXTURE_2D绑定点上
+        glBindTexture(GL_TEXTURE_2D, texture);
+    
+        glBindVertexArray(VAO);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+    
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+    
     return 0;
 }

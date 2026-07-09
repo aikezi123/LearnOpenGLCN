@@ -124,7 +124,25 @@ powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Debug -NoPause
 .\out\build\ninja-msvc-debug\bin\LearnOpenGLCN_Lessons.exe --list
 ```
 
-## 6. 后续 Codex 工作要求
+## 6. 当前阶段完成总结
+
+当前阶段已经完成相机预览的最小整洁架构切片和课程入口整理：
+
+- `domain` 保存稳定图像帧概念：`VideoFrame` / `PixelFormat`。
+- `application` 保存相机预览流程和端口：`ICameraDevice` / `CameraPreviewService`。端口放 application，不放 domain。
+- `infrastructure/camera/galaxy` 保存大恒相机适配：`GalaxyCameraController` 实现 `ICameraDevice`，并用 Pimpl 隐藏大恒 SDK 头文件、SDK 成员和回调类。
+- `composition_root/qt_main.cpp` 负责依赖装配：大恒相机实现 -> `ICameraDevice` -> `CameraPreviewService` -> Qt UI。
+- Qt 主窗口使用左侧 `QTreeWidget` 导航和右侧 `QStackedWidget` 页面栈；相机页面为独立 `CameraImageCaptureView`。
+- `DisplayOpenGLImage` 当前仍是 UI 原型控件，负责相机帧纹理上传和显示变换。它支持水平/垂直翻转、左右 90 度旋转、缩放、平移和重置，具体通过 shader uniform 矩阵完成。
+- `LearnOpenGLCN_Lessons.exe` 已有课程导航器和 `lessons/catalog` 注册表。无参数打开 Qt 导航器，带课程 ID 直接运行 GLFW 课程，`lesson_main.cpp` 只保留入口与命令行选择逻辑，导航窗口实现位于 `composition_root/lesson_launcher`。
+
+仍需注意的阶段性债务：
+
+- `DisplayOpenGLImage` 中的 Shader、VAO/VBO/EBO、Texture 尚未迁移为 infrastructure RAII 资源。
+- GLFW 课程仍以独立窗口运行，导航器通过子进程启动课程，没有嵌入 Qt 右侧面板。
+- lessons 仍是单一静态库，课程源码和 include 目录仍通过递归扫描收集。
+
+## 7. 后续 Codex 工作要求
 
 每次开始较大修改前，Codex 应读取：
 

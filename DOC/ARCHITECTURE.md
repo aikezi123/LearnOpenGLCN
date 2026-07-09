@@ -364,7 +364,27 @@ target_link_libraries(LearnOpenGLCN_Qt PRIVATE
 - 为项目 target 建立 `learnopengl::` 别名，减少调用方与真实 target 名称耦合。
 - `LEARNOPENGL_ASSET_DIR` 等环境配置应由 app 或资源适配器持有，不向所有模块公开传播。
 
-## 6. 已知架构债务
+## 6. 当前阶段完成总结
+
+本阶段完成了从“相机功能集中在 UI 层”到“相机预览最小分层切片”的迁移，并把课程运行入口整理为更适合后续扩展的导航形式。
+
+已完成内容：
+
+- 相机相关模型进入 `domain`：当前以 `VideoFrame` / `PixelFormat` 表达与具体相机 SDK、Qt、OpenGL 无关的稳定图像帧概念。
+- 相机预览流程进入 `application`：`ICameraDevice` 作为外部相机能力端口，`CameraPreviewService` 负责编排预览流程。端口接口和使用它的 service 放在 application，不放 domain。
+- 大恒相机适配进入 `infrastructure/camera/galaxy`：`GalaxyCameraController` 实现 application 端口，并用 Pimpl 隐藏大恒 SDK 头文件、句柄和回调类，避免 SDK 类型穿透公共头文件。
+- Qt 组合根负责装配：`composition_root/qt_main.cpp` 创建大恒适配器，将其作为 `ICameraDevice` 注入 `CameraPreviewService`，再把 service 注入 `MainWindow` / `CameraImageCaptureView`。
+- Qt 主窗口已改为左侧导航树和右侧页面栈，后续功能页面优先独立成 QWidget 后注册到导航中。
+- 相机图像显示控件支持水平翻转、垂直翻转、左右 90 度旋转、缩放、平移和重置；这些仍属于 UI 原型交互，由 `DisplayOpenGLImage` 通过 shader uniform 矩阵完成。
+- LearnOpenGL 课程入口已形成 `LessonRegistry` 和 Qt 课程导航器；`lesson_main.cpp` 只保留命令行选择和启动导航窗口，导航窗口实现放在 `composition_root/lesson_launcher`。
+
+本阶段仍然保留的阶段性做法：
+
+- `DisplayOpenGLImage` 仍直接管理 Shader、VAO/VBO/EBO 和 Texture，尚未抽成 infrastructure 的 OpenGL RAII 资源。
+- GLFW 教程课程仍以独立窗口运行；课程导航器通过子进程启动课程，不把 GLFW 画面直接嵌入 Qt 右侧面板。
+- lessons 当前仍是单一静态库，课程源码通过递归扫描收集，尚未拆成每课程或每章节独立 target。
+
+## 7. 已知架构债务
 
 - `domain`、`application` 已形成相机预览所需的最小 target，但还只覆盖图像帧模型、相机端口和预览 service。
 - `ui` 中的相机 SDK 依赖已拆到 `infrastructure/camera/galaxy`；OpenGL Shader、VAO/VBO/EBO、Texture 管理仍在 `DisplayOpenGLImage` 中，尚未迁移为 infrastructure RAII 资源。

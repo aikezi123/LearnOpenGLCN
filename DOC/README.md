@@ -21,26 +21,47 @@
 
 ```text
 LearnOpenGLCN_Lessons (executable)
-    └── lessons (static library)
-        ├── infrastructure (static library)
-        │   ├── glad
-        │   ├── glfw3
-        │   ├── OpenGL::GL
-        │   └── glm::glm
-        └── stb_image
+    ├── lessons (static library)
+    │   ├── infrastructure (static library)
+    │   └── stb_image
+    └── Qt6::Widgets
+
+lessons (static library)
+    └── infrastructure (static library)
+        ├── learnopengl_application
+        ├── glad
+        ├── glfw3
+        ├── OpenGL::GL
+        └── glm::glm
+
+learnopengl_application (static library)
+    └── learnopengl_domain (interface library)
 
 LearnOpenGLCN_Qt (executable)
-    └── learnopengl_ui (static library)
-        ├── Qt6::Widgets
-        ├── Qt6::OpenGLWidgets
-        ├── Qt6::OpenGL
-        ├── Galaxy::SDK
-        ├── glad
-        ├── OpenGL::GL
-        └── stb_image
+    ├── learnopengl_ui (static library)
+    └── infrastructure (static library)
+
+learnopengl_ui (static library)
+    ├── learnopengl_application
+    ├── Qt6::Widgets
+    ├── Qt6::OpenGLWidgets
+    ├── Qt6::OpenGL
+    ├── glad
+    ├── OpenGL::GL
+    └── stb_image
+
+infrastructure (static library)
+    ├── learnopengl_application
+    ├── Galaxy::SDK
+    ├── glad
+    ├── glfw3
+    ├── OpenGL::GL
+    └── glm::glm
 ```
 
-`ui/` 已形成 `learnopengl_ui` target，并承载当前 Qt/OpenGL 显示原型。`domain/` 与 `application/` 已建立目录，但尚未形成对应 CMake target。它们是后续整洁架构迁移的目标位置，不代表当前已经完成分层。
+`domain/` 与 `application/` 已形成相机预览所需的最小 target：`learnopengl_domain` 提供 `VideoFrame` / `PixelFormat` 等稳定模型，`learnopengl_application` 提供 `ICameraDevice` 和 `CameraPreviewService`。`infrastructure/camera/galaxy` 提供大恒相机适配器，`ui/` 承载当前 Qt/OpenGL 显示原型。
+
+`LearnOpenGLCN_Lessons.exe` 不带参数会打开 Qt 课程导航器；课程列表来自 `lessons/catalog` 的 `LessonRegistry`，导航窗口实现位于 `composition_root/lesson_launcher`。传入课程 ID 时仍可直接运行对应 GLFW 课程，例如 `LearnOpenGLCN_Lessons.exe transform`。
 
 当前 `third_party/Galaxy` 已包装出 `Galaxy::SDK`。现有目录包含大恒 VC/C API 与 C++ SDK 的头文件和 import library，可支持 `GxIAPI`、`DxImageProc`、`GalaxyIncludes.h`、`IGXFactory`、`CGXDevicePointer` 等接口。大恒运行时 DLL 直接放在 `out/build/<preset>/bin`，和 exe 一起提交运行。
 
