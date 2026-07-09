@@ -437,7 +437,7 @@ int start_textures() {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
-
+        
     }
 
     glDeleteVertexArrays(1, &VAO);

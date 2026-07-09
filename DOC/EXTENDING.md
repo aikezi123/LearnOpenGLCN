@@ -47,11 +47,13 @@ assets/
 1. 创建课程公开入口头文件。
 2. 在 `.cpp` 中实现窗口初始化、资源创建、渲染循环和清理。
 3. 资源路径以 `assets` 为根组织，不依赖当前工作目录。
-4. 在 `composition_root/lesson_main.cpp` 的课程列表中加入该课程入口。
+4. 在 `lessons/catalog/src/LessonRegistry.cpp` 的课程注册表中加入该课程入口，保持顺序与 LearnOpenGL 目录一致。
 5. 使用 Debug 配置完整构建并运行。
 6. 检查窗口缩放、ESC 退出、Shader/纹理加载失败等路径。
 
 当前 `lessons/CMakeLists.txt` 使用 `GLOB_RECURSE ... CONFIGURE_DEPENDS`，新增 `.cpp` 通常会触发重新配置。目标架构迁移后应改成显式 target 和源文件列表。
+
+当前 `LearnOpenGLCN_Lessons.exe` 不带参数会打开 Qt 课程导航器；选择课程后，导航器通过子进程传入课程 ID 来运行对应 GLFW 课程窗口。导航窗口代码位于 `composition_root/lesson_launcher`，`lesson_main.cpp` 只保留参数解析、直接运行课程和启动导航窗口。传入课程 ID 时仍可直接运行课程，例如 `LearnOpenGLCN_Lessons.exe transform`；`--list` 可查看已注册课程。
 
 ## 3. 目标阶段新增课程
 

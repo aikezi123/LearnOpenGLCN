@@ -108,6 +108,8 @@ application 层流程对象统一使用 `Service` 命名，例如 `CameraPreview
 - `third_party/Galaxy/`：大恒 Galaxy SDK 的第三方依赖包装目录，当前 CMake target 为 `Galaxy::SDK`。现有文件覆盖 VC/C API 的 `GxIAPI`、`DxImageProc`，以及 C++ SDK 的 `GalaxyIncludes.h`、`GxIAPICPPEx.lib`；运行时 DLL 直接放在 `out/build/<preset>/bin`，随 exe/pdb 一起提交。
 - `assets/`：Shader、纹理和后续模型资源。
 
+当前 `LearnOpenGLCN_Lessons.exe` 不带参数会打开 Qt 课程导航器。课程清单来自 `lessons/catalog` 的 `LessonRegistry`，左侧按 LearnOpenGL 入门章节顺序列出已实现课程，右侧显示课程信息、运行按钮和子进程输出。点击运行时，导航器启动同一个 exe 并传入课程 ID，实际 GLFW 课程画面仍在独立窗口中运行；传入课程 ID 时仍可直接运行，例如 `LearnOpenGLCN_Lessons.exe transform`。导航窗口实现已拆到 `composition_root/lesson_launcher`，`lesson_main.cpp` 只保留入口与命令行选择逻辑。
+
 当前构建入口：
 
 ```powershell
