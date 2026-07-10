@@ -1,5 +1,6 @@
 #include "MainWindow.h"
 #include "CameraImageCaptureView.h"
+#include "TrajectoryExportView.h"
 #include "ui/ui_MainWindow.h"
 
 #include <camera/CameraPreviewService.h>
@@ -127,6 +128,13 @@ void MainWindow::initPages(std::unique_ptr<application::CameraPreviewService> ca
         cameraCategory,
         QStringLiteral("大恒相机预览"),
         new CameraImageCaptureView(std::move(cameraPreview), m_ui->contentStack)
+    );
+
+    auto* trajectoryCategory = addCategoryNode(QStringLiteral("轨迹算法"));
+    addBusinessPage(
+        trajectoryCategory,
+        QStringLiteral("螺旋线导出"),
+        new TrajectoryExportView(m_ui->contentStack)
     );
 
     m_ui->navigationTree->expandAll();

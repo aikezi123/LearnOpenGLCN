@@ -35,7 +35,7 @@ lessons (static library)
         └── glm::glm
 
 learnopengl_application (static library)
-    └── learnopengl_domain (interface library)
+    └── learnopengl_domain (static library)
 
 LearnOpenGLCN_Qt (executable)
     ├── learnopengl_ui (static library)
@@ -59,7 +59,7 @@ infrastructure (static library)
     └── glm::glm
 ```
 
-`domain/` 与 `application/` 已形成相机预览所需的最小 target：`learnopengl_domain` 提供 `VideoFrame` / `PixelFormat` 等稳定模型，`learnopengl_application` 提供 `ICameraDevice` 和 `CameraPreviewService`。`infrastructure/camera/galaxy` 提供大恒相机适配器，`ui/` 承载当前 Qt/OpenGL 显示原型。
+`domain/` 与 `application/` 已形成相机预览所需的最小 target：`learnopengl_domain` 提供 `VideoFrame` / `PixelFormat` 等稳定模型，并包含 `domain/trajectory` 中的二维阿基米德螺旋点生成纯算法；`learnopengl_application` 提供 `ICameraDevice` 和 `CameraPreviewService`。`infrastructure/camera/galaxy` 提供大恒相机适配器，`ui/` 承载当前 Qt/OpenGL 显示原型。
 
 `LearnOpenGLCN_Lessons.exe` 不带参数会打开 Qt 课程导航器；课程列表来自 `lessons/catalog` 的 `LessonRegistry`，导航窗口实现位于 `composition_root/lesson_launcher`。传入课程 ID 时仍可直接运行对应 GLFW 课程，例如 `LearnOpenGLCN_Lessons.exe transform`。
 

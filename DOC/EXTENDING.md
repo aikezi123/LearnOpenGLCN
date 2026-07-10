@@ -202,6 +202,8 @@ infrastructure/
 
 不要让 domain 保存 OpenGL Buffer ID，也不要让 application 创建 QWidget 或调用 `glXXX`。
 
+当前 `domain/trajectory` 已包含 `ArchimedeanSpiral2DGenerator`。它只负责固定阿基米德螺旋 `r = A + Bθ` 的二维采样点生成：线间距全局固定并计算 `B`，半径范围只配置该段目标点间距，点距误差通过当前配置的 `DeltaThetaMethod` 求解。文件导出、参数读取、三维曲面映射和 OpenGL 绘制应放在 application、infrastructure 或 ui 的后续模块中。
+
 ## 6. 新增第三方依赖
 
 新增依赖前先确认标准库或现有依赖是否已经能解决问题。

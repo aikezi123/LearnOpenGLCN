@@ -479,14 +479,11 @@ void GalaxyCameraControllerImpl::handleFrame(CImageDataPointer& imageData)
         return;
     }
 
-    FrameCallback callback;
     {
         std::lock_guard<std::mutex> lock(m_callbackMutex);
-        callback = m_frameCallback;
-    }
-
-    if (!callback) {
-        return;
+        if (!m_frameCallback) {
+            return;
+        }
     }
 
     const uint64_t width = imageData->GetWidth();
@@ -518,7 +515,14 @@ void GalaxyCameraControllerImpl::handleFrame(CImageDataPointer& imageData)
 
     std::memcpy(frame.pixels.data(), rgbBuffer, byteCount);
 
-    callback(std::move(frame));
+    // 回调调用也处于同一把锁的保护下。setFrameCallback({}) 返回时，
+    // 可以确定此前进入的回调已经结束，避免 UI 析构期间发生释放后访问。
+    {
+        std::lock_guard<std::mutex> lock(m_callbackMutex);
+        if (m_frameCallback) {
+            m_frameCallback(std::move(frame));
+        }
+    }
 }
 
 void GalaxyCameraControllerImpl::setLastError(std::string message)

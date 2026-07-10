@@ -5,6 +5,7 @@ endif()
 find_package(OpenGL REQUIRED)
 
 find_package(Qt6 6.9 CONFIG REQUIRED COMPONENTS
+    Concurrent
     Widgets
     OpenGL
     OpenGLWidgets
@@ -42,9 +43,11 @@ target_include_directories(learnopengl_ui
 target_link_libraries(learnopengl_ui
     PUBLIC
         learnopengl::application
+        learnopengl::domain
         Qt6::Widgets
         Qt6::OpenGLWidgets
     PRIVATE
+        Qt6::Concurrent
         Qt6::OpenGL
         stb_image
         glad

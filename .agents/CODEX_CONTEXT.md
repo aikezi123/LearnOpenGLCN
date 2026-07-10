@@ -103,7 +103,7 @@ application 层流程对象统一使用 `Service` 命名，例如 `CameraPreview
 - `ui/`：Qt Widgets / QOpenGLWidget 原型层，已有 `learnopengl_ui` target。
 - `lessons/`：LearnOpenGL 教程示例集合。
 - `infrastructure/`：现有 OpenGL Shader 等基础设施。
-- `domain/`、`application/`：已形成相机预览所需的最小 target，当前包含图像帧模型、相机端口和预览 service。
+- `domain/`、`application/`：已形成相机预览所需的最小 target，当前包含图像帧模型、二维轨迹纯算法、相机端口和预览 service。
 - `third_party/`：GLAD、GLFW、GLM、stb_image 等第三方依赖。
 - `third_party/Galaxy/`：大恒 Galaxy SDK 的第三方依赖包装目录，当前 CMake target 为 `Galaxy::SDK`。现有文件覆盖 VC/C API 的 `GxIAPI`、`DxImageProc`，以及 C++ SDK 的 `GalaxyIncludes.h`、`GxIAPICPPEx.lib`；运行时 DLL 直接放在 `out/build/<preset>/bin`，随 exe/pdb 一起提交。
 - `assets/`：Shader、纹理和后续模型资源。
@@ -129,6 +129,7 @@ powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Debug -NoPause
 当前阶段已经完成相机预览的最小整洁架构切片和课程入口整理：
 
 - `domain` 保存稳定图像帧概念：`VideoFrame` / `PixelFormat`。
+- `domain/trajectory` 保存二维轨迹纯算法：`ArchimedeanSpiral2DGenerator` 生成固定阿基米德螺旋上的 XOY 平面采样点，线间距全局固定，不处理 Z 方向、文件导出或 OpenGL 绘制。
 - `application` 保存相机预览流程和端口：`ICameraDevice` / `CameraPreviewService`。端口放 application，不放 domain。
 - `infrastructure/camera/galaxy` 保存大恒相机适配：`GalaxyCameraController` 实现 `ICameraDevice`，并用 Pimpl 隐藏大恒 SDK 头文件、SDK 成员和回调类。
 - `composition_root/qt_main.cpp` 负责依赖装配：大恒相机实现 -> `ICameraDevice` -> `CameraPreviewService` -> Qt UI。

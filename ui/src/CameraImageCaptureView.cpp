@@ -33,6 +33,9 @@ CameraImageCaptureView::CameraImageCaptureView(
 CameraImageCaptureView::~CameraImageCaptureView()
 {
     if (m_cameraPreview != nullptr) {
+        // 先注销跨线程帧回调，再停止采集。注销返回后底层保证不会再有
+        // 已复制的回调继续向正在析构的 QWidget 投递事件。
+        m_cameraPreview->setFrameCallback({});
         m_cameraPreview->close();
     }
 
