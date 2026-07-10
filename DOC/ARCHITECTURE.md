@@ -75,7 +75,7 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 | `LearnOpenGLCN_Lessons` | Executable | LearnOpenGL 课程导航器与课程代码入口 | `lessons`、Qt6 Widgets |
 | `LearnOpenGLCN_Qt` | Executable | Qt/OpenGL 工程原型入口与对象装配 | `learnopengl_ui`、`infrastructure` |
 | `lessons` | Static | 收集并编译所有课程示例 | `infrastructure`、`stb_image` |
-| `learnopengl_ui` | Static | 当前 Qt/OpenGL 显示原型与 UI 类 | `learnopengl_application`、Qt6 Widgets/OpenGLWidgets、Qt6 OpenGL、GLAD、OpenGL、stb_image |
+| `learnopengl_ui` | Static | 当前 Qt/OpenGL 显示原型、相机页面与轨迹导出页面 | `learnopengl_application`、`learnopengl_domain`、Qt6 Widgets/OpenGLWidgets、Qt6 Concurrent、Qt6 OpenGL、GLAD、OpenGL、stb_image |
 | `infrastructure` | Static | 提供 Shader、OpenGL 公共技术能力和大恒相机适配器 | `learnopengl_application`、GLAD、GLFW、OpenGL、GLM；实现私有依赖 Galaxy::SDK |
 | `learnopengl_application` | Static | 相机预览 service 与相机端口接口 | `learnopengl_domain` |
 | `learnopengl_domain` | Static | 与外部技术无关的图像帧模型和二维轨迹纯算法 | 无项目内依赖 |
@@ -104,7 +104,8 @@ main()
   ├── 创建 learnopengl::ui::MainWindow
   │   ├── 初始化左侧导航树
   │   ├── 初始化右侧页面栈
-  │   └── 将 CameraImageCaptureView 注册为“相机模块 / 大恒相机预览”
+  │   ├── 将 CameraImageCaptureView 注册为“相机模块 / 大恒相机预览”
+  │   └── 将 TrajectoryExportView 注册为“轨迹算法 / 螺旋线导出”
   ├── 显示主窗口
   └── 进入 Qt 事件循环 app.exec()
 ```
@@ -164,7 +165,7 @@ LearnOpenGLCN_Lessons.exe --list
 - 执行不需要系统资源的纯计算。
 - 表达“是什么”的概念，例如 `VideoFrame`、`PixelFormat`、相机设备描述、相机参数值对象等。
 
-当前 `domain/trajectory` 包含 `ArchimedeanSpiral2DGenerator`，用于生成固定阿基米德螺旋 `r = A + Bθ` 上的二维采样点。该算法只使用标准库，只控制 XOY 平面点距；线间距全局固定并用于计算 `B`，不同半径段只改变目标点间距。
+当前 `domain/trajectory` 包含 `ArchimedeanSpiral2DGenerator`，用于生成固定阿基米德螺旋 `r = A + Bθ` 上的二维采样点。该算法只使用标准库，只控制 XOY 平面点距；线间距全局固定并用于计算 `B`，不同半径段只改变目标点间距。详见 [二维阿基米德螺旋轨迹](./TRAJECTORY_2D.md)。
 
 允许依赖：
 
@@ -374,6 +375,7 @@ target_link_libraries(LearnOpenGLCN_Qt PRIVATE
 
 - 相机相关模型进入 `domain`：当前以 `VideoFrame` / `PixelFormat` 表达与具体相机 SDK、Qt、OpenGL 无关的稳定图像帧概念。
 - 二维轨迹纯算法进入 `domain`：当前以 `ArchimedeanSpiral2DGenerator` 生成固定阿基米德螺旋上的 XOY 平面采样点，不处理文件、UI、OpenGL 或三维曲面映射。
+- Qt 轨迹导出页面进入 `ui`：`TrajectoryExportView` 负责参数输入、分段编辑和后台 txt 导出；Qt Concurrent、文件写入和页面生命周期只属于外层实现，不进入 domain。
 - 相机预览流程进入 `application`：`ICameraDevice` 作为外部相机能力端口，`CameraPreviewService` 负责编排预览流程。端口接口和使用它的 service 放在 application，不放 domain。
 - 大恒相机适配进入 `infrastructure/camera/galaxy`：`GalaxyCameraController` 实现 application 端口，并用 Pimpl 隐藏大恒 SDK 头文件、句柄和回调类，避免 SDK 类型穿透公共头文件。
 - Qt 组合根负责装配：`composition_root/qt_main.cpp` 创建大恒适配器，将其作为 `ICameraDevice` 注入 `CameraPreviewService`，再把 service 注入 `MainWindow` / `CameraImageCaptureView`。

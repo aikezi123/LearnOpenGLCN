@@ -137,6 +137,15 @@ powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Debug -NoPause
 - `DisplayOpenGLImage` 当前仍是 UI 原型控件，负责相机帧纹理上传和显示变换。它支持水平/垂直翻转、左右 90 度旋转、缩放、平移和重置，具体通过 shader uniform 矩阵完成。
 - `LearnOpenGLCN_Lessons.exe` 已有课程导航器和 `lessons/catalog` 注册表。无参数打开 Qt 导航器，带课程 ID 直接运行 GLFW 课程，`lesson_main.cpp` 只保留入口与命令行选择逻辑，导航窗口实现位于 `composition_root/lesson_launcher`。
 
+本阶段还完成了二维阿基米德螺旋轨迹的最小闭环：
+
+- `domain/trajectory/ArchimedeanSpiral2DGenerator` 固定实现圆形阿基米德螺旋 `r = A + B*theta`，只生成 XOY 点；线间距全局固定，半径分段仅改变目标点间距。
+- 点距求解先使用局部弧长微分估算 `dtheta`，再对“实际二维点距 - 目标点距”的距离残差进行二分求解；残差命名统一使用 `residual`，避免和程序错误混淆。
+- `generate(ranges)` 合并保存所有分段的点到 `m_points`，点内以 `rangeIndex` 记录所属分段；共享边界点去重，启用 `appendRangeEndPoint` 时允许补一个精确边界点，因此最后剩余距离可能小于目标点距。
+- Qt 主窗口新增“轨迹算法 / 螺旋线导出”页面。它在后台生成每段并同时输出总文件、分段坐标文件和分段迭代次数文件；页面显示生成、写入和总耗时，关闭时安全等待后台任务结束。
+- 独立 C++ 导出工具位于 `tools/trajectory`，是单独 CMake 项目，不由主工程顶层 CMake 构建。仓库内不保留 MATLAB 辅助脚本。
+- 详细说明统一记录在 `DOC/TRAJECTORY_2D.md`。椭圆模型和三维曲面映射尚未实现；后续应替换椭圆的 `pointAt()`/局部速度公式，并按曲面模型计算 Z。
+
 仍需注意的阶段性债务：
 
 - `DisplayOpenGLImage` 中的 Shader、VAO/VBO/EBO、Texture 尚未迁移为 infrastructure RAII 资源。

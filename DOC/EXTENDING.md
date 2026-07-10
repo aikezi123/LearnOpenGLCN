@@ -202,7 +202,15 @@ infrastructure/
 
 不要让 domain 保存 OpenGL Buffer ID，也不要让 application 创建 QWidget 或调用 `glXXX`。
 
-当前 `domain/trajectory` 已包含 `ArchimedeanSpiral2DGenerator`。它只负责固定阿基米德螺旋 `r = A + Bθ` 的二维采样点生成：线间距全局固定并计算 `B`，半径范围只配置该段目标点间距，点距误差通过当前配置的 `DeltaThetaMethod` 求解。文件导出、参数读取、三维曲面映射和 OpenGL 绘制应放在 application、infrastructure 或 ui 的后续模块中。
+当前 `domain/trajectory` 已包含 `ArchimedeanSpiral2DGenerator`。它只负责固定阿基米德螺旋 `r = A + Bθ` 的二维采样点生成：线间距全局固定并计算 `B`，半径范围只配置该段目标点间距。当前用局部弧长微分估算 `dtheta` 初值，再通过实际二维点距的带符号残差进行二分求解；多段结果保存在统一点序列中，并用 `rangeIndex` 保留来源。完整行为见 [二维阿基米德螺旋轨迹](./TRAJECTORY_2D.md)。
+
+当前 UI 已提供参数与分段配置、后台 txt 导出、每段与总结果导出以及生成/写入耗时日志。它是外层原型实现，domain 不依赖 Qt Concurrent、文件系统或 UI。
+
+后续扩展应保持以下边界：
+
+1. 椭圆螺旋需要替换 `pointAt()` 和局部速度公式；残差夹逼和二分求解框架可以复用。
+2. 三维轨迹应按明确的曲面模型从 `(x, y)` 或半径计算 `z`，不应把点序号递增当作曲面高度。
+3. OpenGL 点云/轨迹绘制应由外层渲染模块消费 domain 结果，不能让 domain 保存 OpenGL 对象或调用图形 API。
 
 ## 6. 新增第三方依赖
 
