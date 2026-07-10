@@ -49,7 +49,7 @@ public:
         double yMm{0.0};                         // y 坐标，单位 mm。
         double radiusMm{0.0};                    // 当前点半径，单位 mm。
         double thetaRad{0.0};                    // 当前点极角，单位 rad。
-        std::size_t rangeIndex{0};               // 当前点所属半径段索引。
+        std::size_t rangeIndex{0};               // 当前点所属半径段索引。例如有3段，第一段半径ranges[0] = {0.0, 0.3, 0.005};ranges[1] = {0.3, 1.0, 0.010};ranges[2] = {1.0, 3.5, 0.050};
         int iterationsFromPreviousPoint{0};      // 从上一个点求解到当前点时消耗的迭代次数；直接估算满足容限时为 0。
     };
 
@@ -87,39 +87,48 @@ public:
 
 public:
     // 算法辅助接口：用于轨迹检查、误差分析和后续求解方法扩展。
-    double radialGrowthPerRadian() const; // 返回 r = A + B*theta 中的 B。
+    // 返回 r = A + B*theta 中的 B。
+    double radialGrowthPerRadian() const;
 
-    double radiusAtTheta(double thetaRad) const; // 根据 theta 计算半径 r。
+    // 根据 theta 计算半径 r。即求r = A + B*theta。
+    double radiusAtTheta(double thetaRad) const;
 
-    double thetaAtRadius(double radiusMm) const; // 根据半径反算 theta。
+    // 根据半径反算 theta。θ = (r - A) / B
+    double thetaAtRadius(double radiusMm) const;
 
-    Point pointAt(double thetaRad, std::size_t rangeIndex = 0) const; // 根据 theta 计算二维点。
+    // 根据 theta 计算二维点。x = rcosθ，y = rsinθ
+    Point pointAt(double thetaRad, std::size_t rangeIndex = 0) const;
 
-    double estimateDeltaTheta(double thetaNowRad, double pointSpacingMm) const; // 使用局部弧长微分估算 dtheta 初值。
+    // 使用局部弧长微分估算 dtheta 初值。dθ = pointSpacing / sqrt(r^2 + B^2)。
+    double estimateDeltaTheta(double thetaNowRad, double pointSpacingMm) const;
 
-    // F(thetaCandidate) = distance(point(thetaCandidate), point(thetaNow)) - pointSpacingMm
+    // 两点之间距离与点间距之间的距离误差。F(thetaCandidate) = distance(point(thetaCandidate), point(thetaNow)) - pointSpacingMm
     double distanceError(double thetaNowRad, double thetaCandidateRad, double pointSpacingMm) const;
 
-    bool isDistanceErrorWithinTolerance(double errorMm) const; // 判断距离误差是否已经满足当前容限。
+    // 判断距离误差是否已经满足当前容限。
+    bool isDistanceErrorWithinTolerance(double errorMm) const;
 
-    DeltaThetaResult solveNextDeltaTheta(double thetaNowRad, double thetaEndRad, double pointSpacingMm) const; // 按 deltaThetaMethod 求解下一个 dtheta。
+    // 按 deltaThetaMethod 求解下一个 dtheta。
+    DeltaThetaResult solveNextDeltaTheta(double thetaNowRad, double thetaEndRad, double pointSpacingMm) const;
 
-    DeltaThetaResult solveNextDeltaThetaBisection(double thetaNowRad, double thetaEndRad, double pointSpacingMm) const; // 使用二分法求解下一个 dtheta。
+    // 使用二分法求解下一个 dtheta。目标找到下一个θnext,使得|distance(P(θnow), P(θnext)) - pointSpacing| ≤ ε。dθ = θnext - θnow
+    // thetaNowRad是当前轨迹点的极角。thetaEndRad是当前半径分段结束边界对应的极角，单位都是rad。
+    DeltaThetaResult solveNextDeltaThetaBisection(double thetaNowRad, double thetaEndRad, double pointSpacingMm) const;
 
 private:
-    void validateGenerationParameters() const;
-    void validateRadiusRange(const RadiusRange& range) const;
-    void validateRadiusRanges(const std::vector<RadiusRange>& ranges) const;
+    void validateGenerationParameters() const; // 校验起始半径、线间距、误差容限和求解器次数等全局参数。
+    void validateRadiusRange(const RadiusRange& range) const; // 校验单个半径段的范围和目标点间距。
+    void validateRadiusRanges(const std::vector<RadiusRange>& ranges) const; // 校验多个半径段非空、连续且顺序正确。
 
-    void appendRadiusRange(const RadiusRange& range, std::size_t rangeIndex);
+    void appendRadiusRange(const RadiusRange& range, std::size_t rangeIndex); // 将指定半径段生成的点追加到 m_points。
 
-    static double pointDistance(const Point& lhs, const Point& rhs);
-    static std::vector<double> computeDistances(const std::vector<Point>& points);
+    static double pointDistance(const Point& lhs, const Point& rhs); // 计算两个轨迹点在 XOY 平面内的欧氏距离，单位 mm。
+    static std::vector<double> computeDistances(const std::vector<Point>& points); // 计算输入点序列中所有相邻点的二维距离。
 
-    GenerationParameters m_parameters;
-    double m_radialGrowthPerRadian{0.0};
-    std::vector<Point> m_points;
-    std::vector<double> m_distancesMm;
+    GenerationParameters m_parameters;          // 当前生成器使用的全局配置参数副本。
+    double m_radialGrowthPerRadian{0.0};         // r = A + B*theta 中的 B，单位 mm/rad。
+    std::vector<Point> m_points;                 // 最近一次生成得到的全部二维轨迹点。
+    std::vector<double> m_distancesMm;           // 最近一次结果中相邻点的二维距离，数量通常为 m_points.size()-1。
 };
 
 } // namespace learnopengl::domain::trajectory
