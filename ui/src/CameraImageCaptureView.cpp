@@ -56,6 +56,13 @@ void CameraImageCaptureView::connectViewControls()
         m_ui->widget,
         &DisplayOpenGLImage::setFlipVertical
     );
+    connect(m_ui->circleDisplayCheckBox, &QCheckBox::toggled, this, [this](bool enabled) {
+        m_ui->widget->setDisplayShape(
+            enabled
+                ? DisplayOpenGLImage::DisplayShape::Circle
+                : DisplayOpenGLImage::DisplayShape::Rectangle
+        );
+    });
     connect(
         m_ui->rotateLeftButton,
         &QPushButton::clicked,

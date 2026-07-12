@@ -380,7 +380,7 @@ target_link_libraries(LearnOpenGLCN_Qt PRIVATE
 - 大恒相机适配进入 `infrastructure/camera/galaxy`：`GalaxyCameraController` 实现 application 端口，并用 Pimpl 隐藏大恒 SDK 头文件、句柄和回调类，避免 SDK 类型穿透公共头文件。
 - Qt 组合根负责装配：`composition_root/qt_main.cpp` 创建大恒适配器，将其作为 `ICameraDevice` 注入 `CameraPreviewService`，再把 service 注入 `MainWindow` / `CameraImageCaptureView`。
 - Qt 主窗口已改为左侧导航树和右侧页面栈，后续功能页面优先独立成 QWidget 后注册到导航中。
-- 相机图像显示控件支持水平翻转、垂直翻转、左右 90 度旋转、缩放、平移和重置；这些仍属于 UI 原型交互，由 `DisplayOpenGLImage` 通过 shader uniform 矩阵完成。
+- 相机图像显示控件支持水平翻转、垂直翻转、左右 90 度旋转、缩放、平移和重置；这些仍属于 UI 原型交互，由 `DisplayOpenGLImage` 通过 shader uniform 矩阵完成。控件显示形状可在默认矩形与圆形之间切换；圆形外观只通过 QWidget mask 裁剪并露出圆外父窗口背景。圆形模式在渲染前从原始纹理中心裁取最大正方形，并输出到居中的正方形 viewport，再对该 1:1 图像执行观察变换，避免 90 度旋转后因宽高比变化而拉伸。
 - LearnOpenGL 课程入口已形成 `LessonRegistry` 和 Qt 课程导航器；`lesson_main.cpp` 只保留命令行选择和启动导航窗口，导航窗口实现放在 `composition_root/lesson_launcher`。
 
 本阶段仍然保留的阶段性做法：

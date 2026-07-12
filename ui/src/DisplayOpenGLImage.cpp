@@ -4,6 +4,8 @@
 #include <QCoreApplication>
 #include <QDir>
 #include <QFileInfo>
+#include <QRegion>
+#include <QResizeEvent>
 #include <stb_image.h>
 
 #include <algorithm>
@@ -15,10 +17,11 @@
 
 namespace {
 
-constexpr float kDegreesToRadians = 0.017453292519943295769F;
-constexpr float kMinimumViewScale = 0.1F;
-constexpr float kMaximumViewScale = 8.0F;
+constexpr float kDegreesToRadians = 0.017453292519943295769F; // 角度转换为弧度的系数。
+constexpr float kMinimumViewScale = 0.1F;                    // 允许的最小缩放倍数，避免图像缩小到不可见。
+constexpr float kMaximumViewScale = 8.0F;                    // 允许的最大缩放倍数，限制异常输入。
 
+// 按工作目录和程序目录的常见布局查找启动时使用的默认纹理。
 std::string findTexturePath()
 {
     const QString relativePath = QStringLiteral("assets/textures/ui/display_image.png");
@@ -42,7 +45,7 @@ std::string findTexturePath()
     return {};
 }
 
-// 编译着色器，返回着色器ID
+// 编译指定类型的 GLSL 着色器；失败时输出日志、释放对象并返回 0。
 GLuint compileShader(QOpenGLFunctions_3_3_Core& gl, GLenum type, const char* source)
 {
     // 根据type类型创建着色器对象，并返回它的OpenGL ID
@@ -71,6 +74,7 @@ GLuint compileShader(QOpenGLFunctions_3_3_Core& gl, GLenum type, const char* sou
     return shaderID;
 }
 
+// 把累计旋转角度约束到 (-360°, 360°)，避免长期操作造成数值持续增大。
 float normalizedRotationDegrees(float degrees)
 {
     while (degrees >= 360.0F) {
@@ -91,6 +95,7 @@ DisplayOpenGLImage::DisplayOpenGLImage(QWidget *parent) : QOpenGLWidget(parent) 
 
 DisplayOpenGLImage::~DisplayOpenGLImage()
 {
+    // OpenGL 对象只能在所属上下文为 current 时安全删除。
     if (context() != nullptr) {
         makeCurrent();
         cleanup();
@@ -100,10 +105,12 @@ DisplayOpenGLImage::~DisplayOpenGLImage()
 
 void DisplayOpenGLImage::setRgb24Frame(int width, int height, std::vector<unsigned char> pixels)
 {
+    // 拒绝不完整帧，保留当前已显示内容。
     if (width <= 0 || height <= 0 || pixels.empty()) {
         return;
     }
 
+    // 这里只转移 CPU 像素数据；避免在没有 current context 的普通 UI 调用中执行 OpenGL 命令。
     m_pendingFrameWidth = width;
     m_pendingFrameHeight = height;
     m_pendingRgb24Frame = std::move(pixels);
@@ -156,6 +163,7 @@ void DisplayOpenGLImage::panView(float deltaX, float deltaY)
 
 void DisplayOpenGLImage::resetViewTransform()
 {
+    // 显示形状是控件配置，不属于图像观察变换，因此这里不重置 m_displayShape。
     m_flipHorizontal = false;
     m_flipVertical = false;
     m_rotationDegrees = 0.0F;
@@ -165,34 +173,61 @@ void DisplayOpenGLImage::resetViewTransform()
     update();
 }
 
+void DisplayOpenGLImage::setDisplayShape(DisplayShape shape)
+{
+    if (m_displayShape == shape) {
+        return;
+    }
+
+    m_displayShape = shape;
+    // mask 决定控件实际可见区域，viewport 和纹理裁剪将在下一次 paintGL() 中更新。
+    updateDisplayMask();
+    update();
+}
+
+DisplayOpenGLImage::DisplayShape DisplayOpenGLImage::displayShape() const
+{
+    return m_displayShape;
+}
+
 void DisplayOpenGLImage::initializeGL()
 {
-    initializeOpenGLFunctions();   // 初始化opengl函数库
+    // Qt 调用本函数时已经激活本控件的 OpenGL 上下文。
+    initializeOpenGLFunctions();   // 初始化 OpenGL 3.3 函数入口。
 
-    initializeShader();            // 初始化着色器
-    initializeGeometry();          // 初始化几何对象
-    initializeTexture();           // 初始化纹理
+    initializeShader();            // 初始化着色器程序。
+    initializeGeometry();          // 初始化纹理矩形的几何对象。
+    initializeTexture();           // 初始化默认纹理。
 
     glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 }
 
 void DisplayOpenGLImage::resizeGL(int width, int height) {
-    // 从当前framebuffer的左下角开始。使用宽度width、高度height的矩形区域作为OpenGL的绘制区域
+    m_framebufferWidth = width;
+    m_framebufferHeight = height;
+
+    // paintGL() 会根据当前显示形状选择完整矩形或居中的正方形 viewport。
     glViewport(0, 0, width, height);
 }
 
 void DisplayOpenGLImage::paintGL()
 {
+    // 先清理整个帧缓冲，圆形 viewport 外不会遗留上一帧画面。
     glClear(GL_COLOR_BUFFER_BIT);
 
+    // paintGL() 期间上下文有效，因此相机帧的 GPU 上传集中在这里执行。
     uploadPendingCameraFrame();
 
     if (m_shaderProgram == 0 || m_texture == 0 || m_vao == 0) {
         return;
     }
-    
+
+    // 显示区域、顶点变换和纹理裁剪彼此独立：分别控制画到哪里、怎样变换、采样哪一块。
+    applyDisplayViewport();
+
     glUseProgram(m_shaderProgram);
     applyViewTransform();
+    applyTextureCrop();
 
     // 激活纹理单元 0。
     glActiveTexture(GL_TEXTURE0);
@@ -206,6 +241,13 @@ void DisplayOpenGLImage::paintGL()
 
     glBindTexture(GL_TEXTURE_2D, 0);
     glUseProgram(0);
+}
+
+void DisplayOpenGLImage::resizeEvent(QResizeEvent* event)
+{
+    // 先让基类完成 QOpenGLWidget 自身的尺寸处理，再按新尺寸更新 mask。
+    QOpenGLWidget::resizeEvent(event);
+    updateDisplayMask();
 }
 
 void DisplayOpenGLImage::initializeShader()
@@ -253,10 +295,13 @@ void DisplayOpenGLImage::initializeShader()
         layout(location = 0) out vec4 fragColor;
 
         uniform sampler2D uTexture;
+        uniform vec2 uTextureScale;
+        uniform vec2 uTextureOffset;
 
         void main()
         {
-            fragColor = texture(uTexture, TexCoord);
+            vec2 sampleCoord = TexCoord * uTextureScale + uTextureOffset;
+            fragColor = texture(uTexture, sampleCoord);
         }
     )";
 
@@ -1099,12 +1144,14 @@ void DisplayOpenGLImage::applyViewTransform()
         return;
     }
 
+    // 翻转通过负缩放实现，再与统一缩放和旋转合并为一个矩阵。
     const float radians = m_rotationDegrees * kDegreesToRadians;
     const float cosine = std::cos(radians);
     const float sine = std::sin(radians);
     const float scaleX = m_viewScale * (m_flipHorizontal ? -1.0F : 1.0F);
     const float scaleY = m_viewScale * (m_flipVertical ? -1.0F : 1.0F);
 
+    // OpenGL 按列主序读取矩阵；这里得到的效果等价于先缩放/翻转、再旋转、最后平移。
     const std::array<float, 16> transform{
         cosine * scaleX, sine * scaleX, 0.0F, 0.0F,
         -sine * scaleY, cosine * scaleY, 0.0F, 0.0F,
@@ -1113,6 +1160,86 @@ void DisplayOpenGLImage::applyViewTransform()
     };
 
     glUniformMatrix4fv(transformLocation, 1, GL_FALSE, transform.data());
+}
+
+void DisplayOpenGLImage::applyDisplayViewport()
+{
+    // 矩形模式保持原有行为，让纹理矩形覆盖整个帧缓冲。
+    if (m_displayShape == DisplayShape::Rectangle) {
+        glViewport(0, 0, m_framebufferWidth, m_framebufferHeight);
+        return;
+    }
+
+    // 圆形模式取帧缓冲短边作为直径，避免正方形画面被非等比 viewport 拉伸。
+    const int side = std::min(m_framebufferWidth, m_framebufferHeight);
+    const int x = (m_framebufferWidth - side) / 2;
+    const int y = (m_framebufferHeight - side) / 2;
+    glViewport(x, y, side, side);
+}
+
+void DisplayOpenGLImage::applyTextureCrop()
+{
+    if (m_shaderProgram == 0) {
+        return;
+    }
+
+    float scaleX = 1.0F;
+    float scaleY = 1.0F;
+    float offsetX = 0.0F;
+    float offsetY = 0.0F;
+
+    // 圆形模式先从原纹理中央取最大正方形；矩形模式保留完整的 [0, 1] 纹理坐标范围。
+    if (
+        m_displayShape == DisplayShape::Circle
+        && m_textureWidth > 0
+        && m_textureHeight > 0
+    ) {
+        if (m_textureWidth > m_textureHeight) {
+            scaleX = static_cast<float>(m_textureHeight)
+                / static_cast<float>(m_textureWidth);
+            offsetX = (1.0F - scaleX) * 0.5F;
+        }
+        else if (m_textureHeight > m_textureWidth) {
+            scaleY = static_cast<float>(m_textureWidth)
+                / static_cast<float>(m_textureHeight);
+            offsetY = (1.0F - scaleY) * 0.5F;
+        }
+    }
+
+    // 将正方形裁剪范围交给片段着色器，仅改变采样坐标，不负责控件的圆形边界。
+    const GLint textureScaleLocation = glGetUniformLocation(m_shaderProgram, "uTextureScale");
+    if (textureScaleLocation != -1) {
+        glUniform2f(textureScaleLocation, scaleX, scaleY);
+    }
+
+    const GLint textureOffsetLocation = glGetUniformLocation(m_shaderProgram, "uTextureOffset");
+    if (textureOffsetLocation != -1) {
+        glUniform2f(textureOffsetLocation, offsetX, offsetY);
+    }
+}
+
+void DisplayOpenGLImage::updateDisplayMask()
+{
+    // 矩形模式清除 mask，使控件重新显示完整区域。
+    if (m_displayShape == DisplayShape::Rectangle) {
+        clearMask();
+        return;
+    }
+
+    const int diameter = std::min(width(), height());
+    if (diameter <= 0) {
+        clearMask();
+        return;
+    }
+
+    // 以控件短边为直径构造居中椭圆区域，使 UI 层最终看起来是一个圆形控件。
+    const QRect circleRect(
+        (width() - diameter) / 2,
+        (height() - diameter) / 2,
+        diameter,
+        diameter
+    );
+    setMask(QRegion(circleRect, QRegion::Ellipse));
 }
 
 void DisplayOpenGLImage::initializeTexture()
@@ -1504,6 +1631,7 @@ void DisplayOpenGLImage::uploadPendingCameraFrame()
         return;
     }
 
+    // 默认纹理不存在或初始化失败时，延迟创建一个可承载相机帧的纹理对象。
     if (m_texture == 0) {
         glGenTextures(1, &m_texture);
         if (m_texture == 0) {
@@ -1512,16 +1640,19 @@ void DisplayOpenGLImage::uploadPendingCameraFrame()
         }
     }
 
+    // 相机图像需要线性过滤，并使用边缘钳制避免图像边缘重复采样。
     glBindTexture(GL_TEXTURE_2D, m_texture);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
+    // RGB24 每像素为 3 字节，行宽未必是 4 的倍数；临时使用 1 字节对齐避免跨行错读。
     GLint previousUnpackAlignment = 4;
     glGetIntegerv(GL_UNPACK_ALIGNMENT, &previousUnpackAlignment);
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+    // 首帧或分辨率变化时重新分配纹理存储；尺寸不变时只更新像素以减少开销。
     const bool needAllocate =
         !m_cameraTextureAllocated
         || m_textureWidth != m_pendingFrameWidth
@@ -1558,15 +1689,18 @@ void DisplayOpenGLImage::uploadPendingCameraFrame()
         );
     }
 
+    // 恢复进入函数前的 OpenGL 像素解包状态，避免影响其他纹理上传代码。
     glPixelStorei(GL_UNPACK_ALIGNMENT, previousUnpackAlignment);
     glBindTexture(GL_TEXTURE_2D, 0);
 
+    // GPU 已读取本帧数据，释放 CPU 缓冲并清除待上传标志。
     m_pendingRgb24Frame.clear();
     m_hasPendingCameraFrame = false;
 }
 
 void DisplayOpenGLImage::cleanup()
 {
+    // 所有 ID 都以 0 表示“尚未创建/已经释放”，因此 cleanup() 可安全地避免重复删除。
     if (m_texture != 0) {
         glDeleteTextures(1, &m_texture);
         m_texture = 0;

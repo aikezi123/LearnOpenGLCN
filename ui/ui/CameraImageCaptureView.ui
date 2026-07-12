@@ -71,6 +71,13 @@
        </widget>
       </item>
       <item>
+       <widget class="QCheckBox" name="circleDisplayCheckBox">
+        <property name="text">
+         <string>圆形显示</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="rotateLeftButton">
         <property name="text">
          <string>左转90</string>

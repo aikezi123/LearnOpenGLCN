@@ -24,6 +24,15 @@
         "CMAKE_C_COMPILER": "cl",
         "CMAKE_CXX_COMPILER": "cl"
       }
+    },
+    {
+      "name": "ninja-msvc-asan",
+      "displayName": "Ninja + MSVC AddressSanitizer",
+      "inherits": "ninja-msvc-debug",
+      "binaryDir": "${sourceDir}/out/build/${presetName}",
+      "cacheVariables": {
+        "LEARNOPENGL_ENABLE_ASAN": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -34,6 +43,10 @@
     {
       "name": "ninja-msvc-release",
       "configurePreset": "ninja-msvc-release"
+    },
+    {
+      "name": "ninja-msvc-asan",
+      "configurePreset": "ninja-msvc-asan"
     }
   ]
 }

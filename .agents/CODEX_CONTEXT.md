@@ -78,7 +78,7 @@ assets/textures/ui/display_image.png
 
 当前已建立相机预览的最小分层切片：`domain` 提供 `VideoFrame` / `PixelFormat`，`application` 提供 `ICameraDevice` 和 `CameraPreviewService`，`infrastructure/camera/galaxy` 提供 `GalaxyCameraController` 大恒适配器。大恒 SDK 头文件只出现在 infrastructure 的 `.cpp` 中，不再暴露给 UI 或 application。
 
-当前 Qt 主窗口为左侧 `QTreeWidget` 导航 + 右侧 `QStackedWidget` 页面容器。`composition_root/qt_main.cpp` 创建 `GalaxyCameraController` 并注入 `CameraPreviewService`，`MainWindow` 把 service 传给 `CameraImageCaptureView`，并将该页面注册为“相机模块 / 大恒相机预览”。该窗口通过 Qt queued invoke 把 SDK 线程中的 `domain::VideoFrame` 投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。`DisplayOpenGLImage` 在 `paintGL()` 中上传待处理帧，首次或尺寸变化时使用 `glTexImage2D`，后续同尺寸帧使用 `glTexSubImage2D`。相机页面提供水平/垂直翻转、左右 90 度旋转、缩放、平移和重置控件；这些控件只负责 UI 交互，具体显示变换由 `DisplayOpenGLImage` 在绘制前上传 shader uniform 矩阵完成。UI 不再直接处理相机 SDK 类型。
+当前 Qt 主窗口为左侧 `QTreeWidget` 导航 + 右侧 `QStackedWidget` 页面容器。`composition_root/qt_main.cpp` 创建 `GalaxyCameraController` 并注入 `CameraPreviewService`，`MainWindow` 把 service 传给 `CameraImageCaptureView`，并将该页面注册为“相机模块 / 大恒相机预览”。该窗口通过 Qt queued invoke 把 SDK 线程中的 `domain::VideoFrame` 投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。`DisplayOpenGLImage` 在 `paintGL()` 中上传待处理帧，首次或尺寸变化时使用 `glTexImage2D`，后续同尺寸帧使用 `glTexSubImage2D`。相机页面提供水平/垂直翻转、左右 90 度旋转、缩放、平移、重置以及矩形/圆形显示切换；圆形外观只使用 QWidget mask，圆形模式另外从纹理中心裁取最大正方形并使用居中的正方形 viewport，使后续观察变换始终作用于 1:1 图像。显示形状不会被重置视图操作改变。UI 不再直接处理相机 SDK 类型。
 
 分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构。当前使用 `application/camera/include/camera/...`、`domain/video/include/video/...`、`infrastructure/camera/galaxy/include/camera/galaxy/...`、`infrastructure/shader/include/shader/...`。公共头文件目录保持简洁，不重复嵌套项目名和当前层名。
 
@@ -116,6 +116,8 @@ application 层流程对象统一使用 `Service` 命名，例如 `CameraPreview
 powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Debug -NoPause
 ```
 
+项目提供独立的 `ninja-msvc-asan` CMake preset，用于在 VS Code + CMake Tools 中构建和调试 MSVC AddressSanitizer 版本。ASan 构建目录为 `out/build/ninja-msvc-asan`，不会改变普通 Debug/Release 配置；构建后自动把 x64 Debug ASan 运行时 DLL 部署到 `bin`。
+
 当前 Debug 运行入口：
 
 ```powershell
@@ -134,7 +136,7 @@ powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Debug -NoPause
 - `infrastructure/camera/galaxy` 保存大恒相机适配：`GalaxyCameraController` 实现 `ICameraDevice`，并用 Pimpl 隐藏大恒 SDK 头文件、SDK 成员和回调类。
 - `composition_root/qt_main.cpp` 负责依赖装配：大恒相机实现 -> `ICameraDevice` -> `CameraPreviewService` -> Qt UI。
 - Qt 主窗口使用左侧 `QTreeWidget` 导航和右侧 `QStackedWidget` 页面栈；相机页面为独立 `CameraImageCaptureView`。
-- `DisplayOpenGLImage` 当前仍是 UI 原型控件，负责相机帧纹理上传和显示变换。它支持水平/垂直翻转、左右 90 度旋转、缩放、平移和重置，具体通过 shader uniform 矩阵完成。
+- `DisplayOpenGLImage` 当前仍是 UI 原型控件，负责相机帧纹理上传和显示变换。它支持水平/垂直翻转、左右 90 度旋转、缩放、平移、重置和矩形/圆形显示切换；圆形控件外观只通过 QWidget mask 完成，圆形模式的纹理坐标中心裁取与正方形 viewport 保证观察变换作用于 1:1 图像。
 - `LearnOpenGLCN_Lessons.exe` 已有课程导航器和 `lessons/catalog` 注册表。无参数打开 Qt 导航器，带课程 ID 直接运行 GLFW 课程，`lesson_main.cpp` 只保留入口与命令行选择逻辑，导航窗口实现位于 `composition_root/lesson_launcher`。
 
 本阶段还完成了二维阿基米德螺旋轨迹的最小闭环：

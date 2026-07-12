@@ -47,3 +47,28 @@ set_target_properties(
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
+
+if(LEARNOPENGL_ENABLE_ASAN)
+    get_filename_component(MSVC_COMPILER_DIRECTORY "${CMAKE_CXX_COMPILER}" DIRECTORY)
+    set(
+        MSVC_ASAN_RUNTIME_DLL
+        "${MSVC_COMPILER_DIRECTORY}/clang_rt.asan_dbg_dynamic-x86_64.dll"
+    )
+
+    if(NOT EXISTS "${MSVC_ASAN_RUNTIME_DLL}")
+        message(FATAL_ERROR "MSVC AddressSanitizer runtime was not found: ${MSVC_ASAN_RUNTIME_DLL}")
+    endif()
+
+    foreach(target_name IN ITEMS LearnOpenGLCN_Qt LearnOpenGLCN_Lessons)
+        add_custom_command(
+            TARGET ${target_name}
+            POST_BUILD
+            COMMAND
+                ${CMAKE_COMMAND} -E copy_if_different
+                "${MSVC_ASAN_RUNTIME_DLL}"
+                "$<TARGET_FILE_DIR:${target_name}>"
+            COMMENT "Deploying the MSVC AddressSanitizer runtime for ${target_name}"
+            VERBATIM
+        )
+    endforeach()
+endif()

@@ -11,6 +11,25 @@ project(LearnOpenGL_Window LANGUAGES C CXX)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+option(
+    LEARNOPENGL_ENABLE_ASAN
+    "Enable AddressSanitizer for memory error diagnostics"
+    OFF
+)
+
+if(LEARNOPENGL_ENABLE_ASAN)
+    if(NOT MSVC)
+        message(FATAL_ERROR "LEARNOPENGL_ENABLE_ASAN currently supports the MSVC toolchain only.")
+    endif()
+
+    if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
+        message(FATAL_ERROR "The current AddressSanitizer preset supports x64 builds only.")
+    endif()
+
+    add_compile_options(/fsanitize=address /Zi)
+    add_link_options(/fsanitize=address /DEBUG /INCREMENTAL:NO)
+endif()
+
 # MSVC 使用 UTF-8，避免中文注释或字符串导致 C4819
 if (MSVC)
     add_compile_options(/utf-8)

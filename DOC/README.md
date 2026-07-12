@@ -84,6 +84,16 @@ Release 构建：
 .\msvc-cmake.ps1 -Config Release -NoPause
 ```
 
+在 VS Code 中排查堆越界、释放后访问等内存错误时，可以通过 CMake Tools 选择 `ninja-msvc-asan` preset。该配置使用 MSVC AddressSanitizer，并与普通 Debug/Release 构建目录隔离：
+
+```text
+CMake: Select Configure Preset -> ninja-msvc-asan
+CMake: Build
+Run and Debug -> LearnOpenGLCN Qt - ASan
+```
+
+ASan 构建产物位于 `out/build/ninja-msvc-asan/bin`。构建过程会把所需的 MSVC ASan 运行时 DLL 自动部署到该目录，不要求每次手动初始化 PowerShell 运行环境。
+
 构建产物默认位于：
 
 ```text
