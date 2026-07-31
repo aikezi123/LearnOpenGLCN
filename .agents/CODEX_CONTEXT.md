@@ -86,6 +86,8 @@ application 层流程对象统一使用 `Service` 命名，例如 `CameraCapture
 
 术语约定：`GalaxyCameraController : ICameraDevice` 这种继承重写叫实现端口；`CameraComposition` 创建 `GalaxyCameraController`，把它作为 `ICameraDevice` 传给 `CameraCaptureService`，这个从外部传入依赖的动作叫依赖注入。依赖注入不是消除依赖，而是让 service 依赖抽象端口，不直接依赖具体实现。
 
+依赖倒置（DIP）与依赖注入（DI）需要区分：DIP 解决编译依赖方向，Application 定义并依赖 `ICameraDevice`，Infrastructure 反过来依赖 Application 并由 `GalaxyCameraController` 实现该接口；DI 解决对象创建和传递，`CameraComposition` 创建具体适配器并通过构造函数传给 `CameraCaptureService`。接口本身不是保存对象的插槽，真正保存 `unique_ptr<ICameraDevice>` 的是 service。两者结合后，Application 不包含 Infrastructure 具体类型，运行时仍通过虚函数动态分派到 Galaxy 实现。
+
 组合根与 UI/Infrastructure 的边界已经明确：UI 只依赖 Application，不直接包含或创建 Infrastructure 具体类；Infrastructure 实现 Application 端口；组合根位于最外层，可以同时知道 UI、Application 和 Infrastructure，并负责选择具体实现、创建对象和转移所有权。编译依赖与运行调用必须分开理解：代码上 `CameraImageCaptureView` 不认识 `GalaxyCameraController`，运行时调用仍会沿 `CameraImageCaptureView -> CameraCaptureService -> ICameraDevice -> GalaxyCameraController` 执行。
 
 `MainWindow` 仍通过 `QStackedWidget` 包含并显示多个页面，但不再创建具体页面及其后台依赖。`AppComposition` 汇总模块并向 `MainWindow` 注册通用 `QWidget`；`CameraComposition` 和 `TrajectoryComposition` 分别创建各自对象图。Qt 父子机制拥有页面，`CameraImageCaptureView` 通过 `unique_ptr` 拥有 `CameraCaptureService`，service 再通过 `unique_ptr<ICameraDevice>` 拥有实际相机适配器。组合根负责装配，不要求长期持有全部对象。

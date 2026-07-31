@@ -305,7 +305,116 @@ CameraImageCaptureView
 
 因此，组合根不只是为了绕开一条 include 限制；它集中决定“本次程序使用哪个具体实现”、创建多少个实例、哪个页面使用哪个 service，以及对象所有权如何转移。
 
-#### 3.6.2 页面包含关系与对象创建关系
+#### 3.6.2 依赖倒置与依赖注入
+
+依赖倒置（Dependency Inversion Principle，DIP）和依赖注入（Dependency Injection，DI）经常一起使用，但解决的是两个不同问题：
+
+| 概念 | 解决的问题 | 当前相机模块中的体现 |
+| --- | --- | --- |
+| 依赖倒置 | 编译依赖应该指向谁 | Application 定义 `ICameraDevice`，Infrastructure 实现它 |
+| 依赖注入 | 具体对象由谁创建，怎样交给使用者 | `CameraComposition` 创建 `GalaxyCameraController` 并传给 `CameraCaptureService` |
+
+如果 `CameraCaptureService` 在内部直接创建大恒相机：
+
+```cpp
+class CameraCaptureService {
+private:
+    std::unique_ptr<GalaxyCameraController> m_cameraDevice;
+};
+```
+
+Application 就必须包含 Infrastructure 的具体类型，编译依赖方向变成：
+
+```text
+application
+    -> infrastructure
+    -> Galaxy SDK
+```
+
+依赖倒置要求高层策略不要依赖低层技术细节，而是由高层所在的 Application 定义自己需要的抽象契约：
+
+```cpp
+class ICameraDevice {
+public:
+    virtual ~ICameraDevice() = default;
+    virtual CameraResult startCapture() = 0;
+    virtual CameraResult stopCapture() = 0;
+};
+```
+
+`CameraCaptureService` 只依赖这个契约：
+
+```cpp
+class CameraCaptureService {
+public:
+    explicit CameraCaptureService(
+        std::unique_ptr<ICameraDevice> cameraDevice
+    );
+
+private:
+    std::unique_ptr<ICameraDevice> m_cameraDevice;
+};
+```
+
+Infrastructure 反过来依赖并实现 Application 定义的接口：
+
+```cpp
+class GalaxyCameraController final
+    : public application::ICameraDevice {
+};
+```
+
+编译依赖因此被倒置为：
+
+```text
+infrastructure
+    -> application::ICameraDevice
+```
+
+Application 不再知道 Galaxy、海康或模拟相机的具体类型。这里的“倒置”是编译依赖方向发生了变化，并不表示运行时调用方向也反转。
+
+依赖注入负责把具体实现交给使用者。当前由组合根执行构造函数注入：
+
+```cpp
+auto cameraDevice =
+    std::make_unique<GalaxyCameraController>();
+
+auto cameraService =
+    std::make_unique<CameraCaptureService>(
+        std::move(cameraDevice)
+    );
+```
+
+这里不是把对象存进“接口本身”，而是把 `GalaxyCameraController` 以 `ICameraDevice` 接口类型传给 `CameraCaptureService`，由 service 保存并使用：
+
+```text
+unique_ptr<GalaxyCameraController>
+    -> unique_ptr<ICameraDevice>
+    -> CameraCaptureService::m_cameraDevice
+```
+
+最终形成的职责分工是：
+
+```text
+application
+    ├── 定义 ICameraDevice
+    └── CameraCaptureService 依赖 ICameraDevice
+
+infrastructure
+    └── GalaxyCameraController 实现 ICameraDevice
+
+composition_root
+    ├── 创建 GalaxyCameraController
+    └── 注入 CameraCaptureService
+```
+
+依赖倒置和依赖注入应组合理解：
+
+- DIP 让 Application 依赖自己拥有的抽象，而不依赖 Infrastructure 具体实现。
+- DI 让 Application 不必在内部创建具体实现，由最外层组合根选择并传入。
+- 只把对象作为参数传入属于 DI；只有同时让内层依赖抽象、外层实现抽象，才形成当前架构需要的依赖方向。
+
+#### 3.6.3 页面包含关系与对象创建关系
 
 引入组合根以后，`MainWindow` 仍然在界面结构上包含多个子页面，但不再负责创建具体页面及其后台依赖。两种关系需要分开理解：
 
