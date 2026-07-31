@@ -1,9 +1,6 @@
 #include "MainWindow.h"
-#include "CameraImageCaptureView.h"
 #include "TrajectoryExportView.h"
 #include "ui/ui_MainWindow.h"
-
-#include <camera/CameraPreviewService.h>
 
 #include <QBrush>
 #include <QColor>
@@ -15,14 +12,9 @@
 #include <QTreeWidgetItem>
 #include <QVBoxLayout>
 
-#include <utility>
-
 namespace learnopengl::ui {
 
-MainWindow::MainWindow(
-    std::unique_ptr<application::CameraPreviewService> cameraPreview,
-    QWidget* parent
-)
+MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_ui(new Ui::MainWindow)
 {
@@ -32,7 +24,7 @@ MainWindow::MainWindow(
 
     initUIStyle();
     connectSignals();
-    initPages(std::move(cameraPreview));
+    initPages();
 }
 
 MainWindow::~MainWindow()
@@ -119,16 +111,9 @@ void MainWindow::connectSignals()
     );
 }
 
-void MainWindow::initPages(std::unique_ptr<application::CameraPreviewService> cameraPreview)
+void MainWindow::initPages()
 {
     addRootBusinessPage(QStringLiteral("首页"), createHomePage());
-
-    auto* cameraCategory = addCategoryNode(QStringLiteral("相机模块"));
-    addBusinessPage(
-        cameraCategory,
-        QStringLiteral("大恒相机预览"),
-        new CameraImageCaptureView(std::move(cameraPreview), m_ui->contentStack)
-    );
 
     auto* trajectoryCategory = addCategoryNode(QStringLiteral("轨迹算法"));
     addBusinessPage(
@@ -257,7 +242,7 @@ QWidget* MainWindow::createHomePage()
     auto* cameraTitle = new QLabel(QStringLiteral("相机模块"), cameraPanel);
     cameraTitle->setObjectName(QStringLiteral("panelTitle"));
 
-    auto* cameraText = new QLabel(QStringLiteral("大恒相机实时预览已接入，后续可扩展海康或模拟相机。"), cameraPanel);
+    auto* cameraText = new QLabel(QStringLiteral("相机链路正在按 Domain 到 UI 的顺序重新重构。"), cameraPanel);
     cameraText->setObjectName(QStringLiteral("panelText"));
     cameraText->setWordWrap(true);
 

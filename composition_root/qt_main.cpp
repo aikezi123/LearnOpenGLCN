@@ -1,13 +1,7 @@
 #include "MainWindow.h"
 
-#include <camera/CameraPreviewService.h>
-#include <camera/ICameraDevice.h>
-#include <camera/galaxy/GalaxyCameraController.h>
-
 #include <QApplication>
 #include <QSurfaceFormat>
-
-#include <memory>
 
 int main(int argc, char* argv[])
 {
@@ -19,13 +13,7 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
 
-    std::unique_ptr<learnopengl::application::ICameraDevice> cameraDevice =
-        std::make_unique<learnopengl::infrastructure::camera::galaxy::GalaxyCameraController>();
-    auto cameraPreview = std::make_unique<learnopengl::application::CameraPreviewService>(
-        std::move(cameraDevice)
-    );
-
-    learnopengl::ui::MainWindow window(std::move(cameraPreview));
+    learnopengl::ui::MainWindow window;
     window.show();
 
     return app.exec();

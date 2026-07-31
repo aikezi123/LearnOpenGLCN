@@ -24,6 +24,11 @@ file(GLOB_RECURSE LEARNOPENGL_UI_FORMS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.ui"
 )
 
+# 相机页面仍连接旧 Application 接口，重构完成前暂时不加入 UI target。
+list(FILTER LEARNOPENGL_UI_SOURCES EXCLUDE REGEX "CameraImageCaptureView\\.cpp$")
+list(FILTER LEARNOPENGL_UI_HEADERS EXCLUDE REGEX "CameraImageCaptureView\\.h$")
+list(FILTER LEARNOPENGL_UI_FORMS EXCLUDE REGEX "CameraImageCaptureView\\.ui$")
+
 add_library(learnopengl_ui STATIC)
 
 add_library(learnopengl::ui ALIAS learnopengl_ui)
@@ -42,7 +47,6 @@ target_include_directories(learnopengl_ui
 
 target_link_libraries(learnopengl_ui
     PUBLIC
-        learnopengl::application
         learnopengl::domain
         Qt6::Widgets
         Qt6::OpenGLWidgets
