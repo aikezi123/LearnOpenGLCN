@@ -1,5 +1,4 @@
 #include "MainWindow.h"
-#include "TrajectoryExportView.h"
 #include "ui/ui_MainWindow.h"
 
 #include <QBrush>
@@ -115,13 +114,6 @@ void MainWindow::initPages()
 {
     addRootBusinessPage(QStringLiteral("首页"), createHomePage());
 
-    auto* trajectoryCategory = addCategoryNode(QStringLiteral("轨迹算法"));
-    addBusinessPage(
-        trajectoryCategory,
-        QStringLiteral("螺旋线导出"),
-        new TrajectoryExportView(m_ui->contentStack)
-    );
-
     m_ui->navigationTree->expandAll();
 
     if (m_ui->navigationTree->topLevelItemCount() > 0) {
@@ -143,7 +135,41 @@ QTreeWidgetItem* MainWindow::addCategoryNode(const QString& name)
     return item;
 }
 
-void MainWindow::addBusinessPage(QTreeWidgetItem* parent, const QString& name, QWidget* page)
+QTreeWidgetItem* MainWindow::findCategoryNode(const QString& name) const
+{
+    const int itemCount = m_ui->navigationTree->topLevelItemCount();
+    for (int index = 0; index < itemCount; ++index) {
+        QTreeWidgetItem* item = m_ui->navigationTree->topLevelItem(index);
+        if (item != nullptr
+            && !item->data(0, Qt::UserRole).isValid()
+            && item->text(0) == name) {
+            return item;
+        }
+    }
+
+    return nullptr;
+}
+
+void MainWindow::addBusinessPage(
+    const QString& categoryName,
+    const QString& pageName,
+    QWidget* page
+)
+{
+    QTreeWidgetItem* category = findCategoryNode(categoryName);
+    if (category == nullptr) {
+        category = addCategoryNode(categoryName);
+    }
+
+    addPageToCategory(category, pageName, page);
+    category->setExpanded(true);
+}
+
+void MainWindow::addPageToCategory(
+    QTreeWidgetItem* parent,
+    const QString& name,
+    QWidget* page
+)
 {
     if (parent == nullptr || page == nullptr) {
         return;

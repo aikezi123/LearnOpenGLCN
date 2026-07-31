@@ -6,9 +6,6 @@ file(GLOB_RECURSE INFRASTRUCTURE_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*/*/src/*.cpp"
 )
 
-# 相机 Application 接口正在逐层重构，暂时不编译旧 Galaxy 适配器。
-list(FILTER INFRASTRUCTURE_SOURCES EXCLUDE REGEX "[/\\\\]camera[/\\\\]galaxy[/\\\\]")
-
 # 收集 infrastructure 下所有模块的头文件，主要用于 IDE 显示
 file(GLOB_RECURSE INFRASTRUCTURE_HEADERS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*/include/*.h"
@@ -16,8 +13,6 @@ file(GLOB_RECURSE INFRASTRUCTURE_HEADERS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*/*/include/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/*/*/include/*.hpp"
 )
-
-list(FILTER INFRASTRUCTURE_HEADERS EXCLUDE REGEX "[/\\\\]camera[/\\\\]galaxy[/\\\\]")
 
 # 收集所有模块的include目录
 file(GLOB_RECURSE INFRASTRUCTURE_INCLUDE_DIRS CONFIGURE_DEPENDS
@@ -45,9 +40,12 @@ target_include_directories(infrastructure PUBLIC
 # 链接库
 target_link_libraries(infrastructure
     PUBLIC
+        learnopengl::application
         glad
         glfw3
         OpenGL::GL
         glm::glm
+    PRIVATE
+        Galaxy::SDK
 )
 

@@ -20,13 +20,25 @@ public:
     explicit MainWindow(QWidget* parent = nullptr);
     ~MainWindow() override;
 
+    // 将装配层创建好的功能页面注册到指定导航分类。
+    void addBusinessPage(
+        const QString& categoryName,
+        const QString& pageName,
+        QWidget* page
+    );
+
 private:
     void initUIStyle();
     void initPages();
     void connectSignals();
 
     QTreeWidgetItem* addCategoryNode(const QString& name);
-    void addBusinessPage(QTreeWidgetItem* parent, const QString& name, QWidget* page);
+    QTreeWidgetItem* findCategoryNode(const QString& name) const;
+    void addPageToCategory(
+        QTreeWidgetItem* parent,
+        const QString& name,
+        QWidget* page
+    );
     void addRootBusinessPage(const QString& name, QWidget* page);
     QWidget* createHomePage();
     void decorateChildNodeUI(QTreeWidgetItem* item);

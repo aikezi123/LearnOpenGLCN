@@ -24,11 +24,15 @@ public:
 
     virtual ~ICameraDevice() = default;
 
+
     // 打开第一个可用相机。
-    virtual CameraResult openFirstAvailable() = 0;
+    virtual CameraResult openFirstCamera() = 0;
 
     // 根据跨厂商可识别的设备 ID 打开相机。
     virtual CameraResult openById(const std::string& deviceId) = 0;
+
+    // 打开相机自定义名称
+    virtual CameraResult openCameraByName(std::string deviceName) = 0;
 
     // 开始图像采集。
     virtual CameraResult startCapture() = 0;
@@ -39,9 +43,10 @@ public:
     // 停止采集并关闭设备。
     virtual CameraResult close() = 0;
 
-    virtual CameraResult setAutoWhiteBalance(bool enabled) = 0;
-    virtual CameraResult setGain(double value) = 0;
-    virtual CameraResult setExposureTimeMicroseconds(double value) = 0;
+    virtual CameraResult setAutoWhiteBalance(bool enable) = 0;
+    virtual CameraResult setExposeTimeUs(double usTime) = 0;
+    virtual CameraResult setGainDb(double gain) = 0;
+    virtual CameraResult setFps(double fps) = 0;
 
     // 设置空回调表示停止向 Application 投递图像帧。
     virtual void setFrameCallback(FrameCallback callback) = 0;

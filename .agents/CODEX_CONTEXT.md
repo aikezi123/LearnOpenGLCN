@@ -76,15 +76,19 @@ stb_image
 assets/textures/ui/display_image.png
 ```
 
-当前已建立相机预览的最小分层切片：`domain` 提供 `VideoFrame` / `PixelFormat`，`application` 提供 `ICameraDevice` 和 `CameraPreviewService`，`infrastructure/camera/galaxy` 提供 `GalaxyCameraController` 大恒适配器。大恒 SDK 头文件只出现在 infrastructure 的 `.cpp` 中，不再暴露给 UI 或 application。
+当前已建立相机采集的最小分层切片：`domain` 提供 `ImageFrame` / `PixelFormat`，`application` 提供 `ICameraDevice` 和 `CameraCaptureService`，`infrastructure/camera/galaxy` 提供 `GalaxyCameraController` 大恒适配器。大恒 SDK 头文件只出现在 infrastructure 的 `.cpp` 中，不再暴露给 UI 或 application。
 
-当前 Qt 主窗口为左侧 `QTreeWidget` 导航 + 右侧 `QStackedWidget` 页面容器。`composition_root/qt_main.cpp` 创建 `GalaxyCameraController` 并注入 `CameraPreviewService`，`MainWindow` 把 service 传给 `CameraImageCaptureView`，并将该页面注册为“相机模块 / 大恒相机预览”。该窗口通过 Qt queued invoke 把 SDK 线程中的 `domain::VideoFrame` 投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。`DisplayOpenGLImage` 在 `paintGL()` 中上传待处理帧，首次或尺寸变化时使用 `glTexImage2D`，后续同尺寸帧使用 `glTexSubImage2D`。相机页面提供水平/垂直翻转、左右 90 度旋转、缩放、平移、重置以及矩形/圆形显示切换；圆形外观只使用 QWidget mask，圆形模式另外从纹理中心裁取最大正方形并使用居中的正方形 viewport，使后续观察变换始终作用于 1:1 图像。显示形状不会被重置视图操作改变。UI 不再直接处理相机 SDK 类型。
+当前 Qt 主窗口为左侧 `QTreeWidget` 导航 + 右侧 `QStackedWidget` 页面容器。`composition_root/AppComposition` 组织应用页面，`modules/CameraComposition` 创建 `GalaxyCameraController`，将其作为 `ICameraDevice` 注入 `CameraCaptureService`，再创建 `CameraImageCaptureView`；`modules/TrajectoryComposition` 创建轨迹页面。`qt_main.cpp` 只负责 Qt/OpenGL 初始化、显示窗口和进入事件循环。相机窗口通过 Qt queued invoke 把 SDK 线程中的 `domain::ImageFrame` 投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。UI 不直接处理相机 SDK 类型。
 
 分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构。当前使用 `application/camera/include/camera/...`、`domain/video/include/video/...`、`infrastructure/camera/galaxy/include/camera/galaxy/...`、`infrastructure/shader/include/shader/...`。公共头文件目录保持简洁，不重复嵌套项目名和当前层名。
 
-application 层流程对象统一使用 `Service` 命名，例如 `CameraPreviewService`。端口接口和使用它的 service 放在 application，例如 `ICameraDevice`；它表达 application 为完成流程需要外部系统提供的能力，由 infrastructure 实现。domain 层只放稳定概念和值对象，例如 `VideoFrame`、`PixelFormat`，不放需要驱动外部系统干活的接口。
+application 层流程对象统一使用 `Service` 命名，例如 `CameraCaptureService`。端口接口和使用它的 service 放在 application，例如 `ICameraDevice`；它表达 application 为完成流程需要外部系统提供的能力，由 infrastructure 实现。domain 层只放稳定概念和值对象，例如 `ImageFrame`、`PixelFormat`，不放需要驱动外部系统干活的接口。
 
-术语约定：`GalaxyCameraController : ICameraDevice` 这种继承重写叫实现端口；`composition_root` 创建 `GalaxyCameraController`，把它作为 `ICameraDevice` 传给 `CameraPreviewService`，这个从外部传入依赖的动作叫依赖注入。依赖注入不是消除依赖，而是让 service 依赖抽象端口，不直接依赖具体实现。
+术语约定：`GalaxyCameraController : ICameraDevice` 这种继承重写叫实现端口；`CameraComposition` 创建 `GalaxyCameraController`，把它作为 `ICameraDevice` 传给 `CameraCaptureService`，这个从外部传入依赖的动作叫依赖注入。依赖注入不是消除依赖，而是让 service 依赖抽象端口，不直接依赖具体实现。
+
+组合根与 UI/Infrastructure 的边界已经明确：UI 只依赖 Application，不直接包含或创建 Infrastructure 具体类；Infrastructure 实现 Application 端口；组合根位于最外层，可以同时知道 UI、Application 和 Infrastructure，并负责选择具体实现、创建对象和转移所有权。编译依赖与运行调用必须分开理解：代码上 `CameraImageCaptureView` 不认识 `GalaxyCameraController`，运行时调用仍会沿 `CameraImageCaptureView -> CameraCaptureService -> ICameraDevice -> GalaxyCameraController` 执行。
+
+`MainWindow` 仍通过 `QStackedWidget` 包含并显示多个页面，但不再创建具体页面及其后台依赖。`AppComposition` 汇总模块并向 `MainWindow` 注册通用 `QWidget`；`CameraComposition` 和 `TrajectoryComposition` 分别创建各自对象图。Qt 父子机制拥有页面，`CameraImageCaptureView` 通过 `unique_ptr` 拥有 `CameraCaptureService`，service 再通过 `unique_ptr<ICameraDevice>` 拥有实际相机适配器。组合根负责装配，不要求长期持有全部对象。
 
 第三方 SDK 适配器优先使用 Pimpl。公开头文件只前置声明 `Impl` 并持有 `std::unique_ptr<Impl>`；SDK 头文件、SDK 成员、平台句柄和回调类放在 `.cpp` 中，避免大恒/海康等 SDK 类型穿透公共头文件和外层调用方。
 
@@ -130,11 +134,11 @@ powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Debug -NoPause
 
 当前阶段已经完成相机预览的最小整洁架构切片和课程入口整理：
 
-- `domain` 保存稳定图像帧概念：`VideoFrame` / `PixelFormat`。
+- `domain` 保存稳定图像帧概念：`ImageFrame` / `PixelFormat`。
 - `domain/trajectory` 保存二维轨迹纯算法：`ArchimedeanSpiral2DGenerator` 生成固定阿基米德螺旋上的 XOY 平面采样点，线间距全局固定，不处理 Z 方向、文件导出或 OpenGL 绘制。
-- `application` 保存相机预览流程和端口：`ICameraDevice` / `CameraPreviewService`。端口放 application，不放 domain。
+- `application` 保存相机采集流程和端口：`ICameraDevice` / `CameraCaptureService`。端口放 application，不放 domain。
 - `infrastructure/camera/galaxy` 保存大恒相机适配：`GalaxyCameraController` 实现 `ICameraDevice`，并用 Pimpl 隐藏大恒 SDK 头文件、SDK 成员和回调类。
-- `composition_root/qt_main.cpp` 负责依赖装配：大恒相机实现 -> `ICameraDevice` -> `CameraPreviewService` -> Qt UI。
+- `composition_root/modules/CameraComposition` 负责相机依赖装配：大恒相机实现 -> `ICameraDevice` -> `CameraCaptureService` -> Qt UI；`AppComposition` 负责汇总各模块页面，`qt_main.cpp` 只保留启动流程。
 - Qt 主窗口使用左侧 `QTreeWidget` 导航和右侧 `QStackedWidget` 页面栈；相机页面为独立 `CameraImageCaptureView`。
 - `DisplayOpenGLImage` 当前仍是 UI 原型控件，负责相机帧纹理上传和显示变换。它支持水平/垂直翻转、左右 90 度旋转、缩放、平移、重置和矩形/圆形显示切换；圆形控件外观只通过 QWidget mask 完成，圆形模式的纹理坐标中心裁取与正方形 viewport 保证观察变换作用于 1:1 图像。
 - `LearnOpenGLCN_Lessons.exe` 已有课程导航器和 `lessons/catalog` 注册表。无参数打开 Qt 导航器，带课程 ID 直接运行 GLFW 课程，`lesson_main.cpp` 只保留入口与命令行选择逻辑，导航窗口实现位于 `composition_root/lesson_launcher`。

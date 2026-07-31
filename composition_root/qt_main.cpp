@@ -1,7 +1,10 @@
-#include "MainWindow.h"
+#include "AppComposition.h"
 
 #include <QApplication>
+#include <QMainWindow>
 #include <QSurfaceFormat>
+
+#include <memory>
 
 int main(int argc, char* argv[])
 {
@@ -13,8 +16,9 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
 
-    learnopengl::ui::MainWindow window;
-    window.show();
+    learnopengl::composition::AppComposition composition;
+    std::unique_ptr<QMainWindow> window = composition.createMainWindow();
+    window->show();
 
     return app.exec();
 }

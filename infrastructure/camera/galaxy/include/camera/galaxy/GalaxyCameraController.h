@@ -17,19 +17,17 @@ public:
     GalaxyCameraController(const GalaxyCameraController&) = delete;
     GalaxyCameraController& operator=(const GalaxyCameraController&) = delete;
 
-    bool openFirstCamera() override;
-    bool openByUserId(const std::string& userId) override;
-    bool startGrabbing() override;
-    void stopGrabbing() override;
-    void close() override;
+    application::CameraResult openFirstCamera() override;
+    application::CameraResult openById(const std::string& deviceId) override;
+    application::CameraResult openCameraByName(std::string deviceName) override;
+    application::CameraResult startCapture() override;
+    application::CameraResult stopCapture() override;
+    application::CameraResult close() override;
 
-    void setAutoWhiteBalance(bool enabled) override;
-    void setGain(double value) override;
-    void setExposureTime(double value) override;
-
-    bool isOpen() const override;
-    bool isGrabbing() const override;
-    std::string lastError() const override;
+    application::CameraResult setAutoWhiteBalance(bool enable) override;
+    application::CameraResult setExposeTimeUs(double usTime) override;
+    application::CameraResult setGainDb(double gain) override;
+    application::CameraResult setFps(double fps) override;
 
     void setFrameCallback(FrameCallback callback) override;
 

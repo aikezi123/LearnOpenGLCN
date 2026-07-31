@@ -9,10 +9,26 @@ find_package(Qt6 6.9 CONFIG REQUIRED COMPONENTS
 # Qt/OpenGL 工程原型入口
 add_executable(LearnOpenGLCN_Qt
     qt_main.cpp
+    AppComposition.h
+    AppComposition.cpp
+    modules/CameraComposition.h
+    modules/CameraComposition.cpp
+    modules/TrajectoryComposition.h
+    modules/TrajectoryComposition.cpp
 )
 
-target_link_libraries(LearnOpenGLCN_Qt PRIVATE
-    learnopengl::ui
+target_include_directories(LearnOpenGLCN_Qt
+    PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}
+        ${CMAKE_CURRENT_SOURCE_DIR}/modules
+)
+
+target_link_libraries(LearnOpenGLCN_Qt
+    PRIVATE
+        learnopengl::application
+        learnopengl::infrastructure
+        learnopengl::ui
+        Qt6::Widgets
 )
 
 target_compile_features(LearnOpenGLCN_Qt PRIVATE

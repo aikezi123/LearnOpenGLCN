@@ -1,5 +1,6 @@
 #include <camera/galaxy/GalaxyCameraController.h>
 
+// Galaxy SDK 仅在 Infrastructure 实现文件中使用，避免向上层泄漏厂商类型。
 #include <GalaxyIncludes.h>
 
 #include <atomic>
@@ -80,18 +81,21 @@ public:
     GalaxyCameraControllerImpl& operator=(const GalaxyCameraControllerImpl&) = delete;
 
     bool openFirstCamera();
+    bool openBySerialNumber(const std::string& serialNumber);
     bool openByUserId(const std::string& userId);
     bool startGrabbing();
-    void stopGrabbing();
-    void close();
+    bool stopGrabbing();
+    bool close();
 
-    void setAutoWhiteBalance(bool enabled);
-    void setGain(double value);
-    void setExposureTime(double value);
+    bool setAutoWhiteBalance(bool enabled);
+    bool setGain(double value);
+    bool setExposureTime(double value);
+    bool setFps(double value);
 
     bool isOpen() const;
     bool isGrabbing() const;
     std::string lastError() const;
+    application::CameraResult makeResult(bool succeeded) const;
     void setFrameCallback(FrameCallback callback);
     void handleFrame(CImageDataPointer& imageData);
 
@@ -130,7 +134,7 @@ void GalaxyCaptureHandler::DoOnImageCaptured(CImageDataPointer& imageData, void*
 
 GalaxyCameraControllerImpl::~GalaxyCameraControllerImpl()
 {
-    close();
+    static_cast<void>(close());
 }
 
 bool GalaxyCameraControllerImpl::openFirstCamera()
@@ -170,6 +174,7 @@ bool GalaxyCameraControllerImpl::openFirstCamera()
             m_device = IGXFactory::GetInstance().OpenDeviceBySN(serialNumber, GX_ACCESS_EXCLUSIVE);
         }
 
+        m_featureControl = m_device->GetRemoteFeatureControl();
         m_isOpen.store(true);
         return true;
     }
@@ -180,6 +185,45 @@ bool GalaxyCameraControllerImpl::openFirstCamera()
         setLastError(makeUnknownError("Open first Galaxy camera"));
     }
 
+    m_device = CGXDevicePointer();
+    uninitializeSdk();
+    return false;
+}
+
+bool GalaxyCameraControllerImpl::openBySerialNumber(
+    const std::string& serialNumber
+)
+{
+    if (m_isOpen.load()) {
+        return true;
+    }
+
+    if (serialNumber.empty()) {
+        setLastError("Galaxy camera serial number is empty.");
+        return false;
+    }
+
+    if (!initializeSdk()) {
+        return false;
+    }
+
+    try {
+        m_device = IGXFactory::GetInstance().OpenDeviceBySN(
+            serialNumber.c_str(),
+            GX_ACCESS_EXCLUSIVE
+        );
+        m_featureControl = m_device->GetRemoteFeatureControl();
+        m_isOpen.store(true);
+        return true;
+    }
+    catch (CGalaxyException& error) {
+        setLastError(makeGalaxyError("Open Galaxy camera by serial number", error));
+    }
+    catch (...) {
+        setLastError(makeUnknownError("Open Galaxy camera by serial number"));
+    }
+
+    m_featureControl = CGXFeatureControlPointer();
     m_device = CGXDevicePointer();
     uninitializeSdk();
     return false;
@@ -202,6 +246,7 @@ bool GalaxyCameraControllerImpl::openByUserId(const std::string& userId)
 
     try {
         m_device = IGXFactory::GetInstance().OpenDeviceByUserID(userId.c_str(), GX_ACCESS_EXCLUSIVE);
+        m_featureControl = m_device->GetRemoteFeatureControl();
         m_isOpen.store(true);
         return true;
     }
@@ -234,10 +279,9 @@ bool GalaxyCameraControllerImpl::startGrabbing()
             return false;
         }
 
-        m_featureControl = m_device->GetRemoteFeatureControl();
-        setExposureTime(6000);
-        setGain(2);
-        setAutoWhiteBalance(true);
+        if (m_featureControl.IsNull()) {
+            m_featureControl = m_device->GetRemoteFeatureControl();
+        }
 
         m_stream = m_device->OpenStream(0);
         m_captureHandler = std::make_unique<GalaxyCaptureHandler>(this);
@@ -260,14 +304,16 @@ bool GalaxyCameraControllerImpl::startGrabbing()
     return false;
 }
 
-void GalaxyCameraControllerImpl::stopGrabbing()
+bool GalaxyCameraControllerImpl::stopGrabbing()
 {
     cleanupStream();
+    return true;
 }
 
-void GalaxyCameraControllerImpl::close()
+bool GalaxyCameraControllerImpl::close()
 {
     cleanupStream();
+    bool succeeded = true;
 
     if (!m_device.IsNull()) {
         try {
@@ -275,30 +321,37 @@ void GalaxyCameraControllerImpl::close()
         }
         catch (CGalaxyException& error) {
             setLastError(makeGalaxyError("Close Galaxy camera", error));
+            succeeded = false;
         }
         catch (...) {
             setLastError(makeUnknownError("Close Galaxy camera"));
+            succeeded = false;
         }
     }
 
+    m_featureControl = CGXFeatureControlPointer();
     m_device = CGXDevicePointer();
     m_isOpen.store(false);
     uninitializeSdk();
+    return succeeded;
 }
 
-void GalaxyCameraControllerImpl::setAutoWhiteBalance(bool enabled)
+bool GalaxyCameraControllerImpl::setAutoWhiteBalance(bool enabled)
 {
     if (!m_isOpen.load() || m_featureControl.IsNull()) {
-        return;
+        setLastError("Cannot set Galaxy auto white balance: camera is not open.");
+        return false;
     }
 
     try {
         if (!m_featureControl->IsImplemented("BalanceWhiteAuto")) {
-            return;
+            setLastError("Galaxy camera does not support auto white balance.");
+            return false;
         }
 
         auto whiteBalanceFeature = m_featureControl->GetEnumFeature("BalanceWhiteAuto");
         whiteBalanceFeature->SetValue(enabled ? "Continuous" : "Off");
+        return true;
     }
     catch (CGalaxyException& error) {
         setLastError(makeGalaxyError("Set Galaxy camera auto white balance", error));
@@ -306,17 +359,21 @@ void GalaxyCameraControllerImpl::setAutoWhiteBalance(bool enabled)
     catch (...) {
         setLastError(makeUnknownError("Set Galaxy camera auto white balance"));
     }
+
+    return false;
 }
 
-void GalaxyCameraControllerImpl::setGain(double value)
+bool GalaxyCameraControllerImpl::setGain(double value)
 {
     if (!m_isOpen.load() || m_featureControl.IsNull()) {
-        return;
+        setLastError("Cannot set Galaxy gain: camera is not open.");
+        return false;
     }
 
     try {
         if (!m_featureControl->IsImplemented("Gain")) {
-            return;
+            setLastError("Galaxy camera does not support gain control.");
+            return false;
         }
 
         auto gainFeature = m_featureControl->GetFloatFeature("Gain");
@@ -333,6 +390,7 @@ void GalaxyCameraControllerImpl::setGain(double value)
         }
 
         gainFeature->SetValue(value);
+        return true;
     }
     catch (CGalaxyException& error) {
         setLastError(makeGalaxyError("Set Galaxy camera gain", error));
@@ -340,17 +398,21 @@ void GalaxyCameraControllerImpl::setGain(double value)
     catch (...) {
         setLastError(makeUnknownError("Set Galaxy camera gain"));
     }
+
+    return false;
 }
 
-void GalaxyCameraControllerImpl::setExposureTime(double value)
+bool GalaxyCameraControllerImpl::setExposureTime(double value)
 {
     if (!m_isOpen.load() || m_featureControl.IsNull()) {
-        return;
+        setLastError("Cannot set Galaxy exposure time: camera is not open.");
+        return false;
     }
 
     try {
         if (!m_featureControl->IsImplemented("ExposureTime")) {
-            return;
+            setLastError("Galaxy camera does not support exposure time control.");
+            return false;
         }
 
         auto exposureFeature = m_featureControl->GetFloatFeature("ExposureTime");
@@ -366,6 +428,7 @@ void GalaxyCameraControllerImpl::setExposureTime(double value)
         }
 
         exposureFeature->SetValue(value);
+        return true;
     }
     catch (CGalaxyException& error) {
         setLastError(makeGalaxyError("Set Galaxy camera exposure time", error));
@@ -373,6 +436,47 @@ void GalaxyCameraControllerImpl::setExposureTime(double value)
     catch (...) {
         setLastError(makeUnknownError("Set Galaxy camera exposure time"));
     }
+
+    return false;
+}
+
+bool GalaxyCameraControllerImpl::setFps(double value)
+{
+    if (!m_isOpen.load() || m_featureControl.IsNull()) {
+        setLastError("Cannot set Galaxy frame rate: camera is not open.");
+        return false;
+    }
+
+    try {
+        if (!m_featureControl->IsImplemented("AcquisitionFrameRate")) {
+            setLastError("Galaxy camera does not support frame rate control.");
+            return false;
+        }
+
+        auto frameRateFeature =
+            m_featureControl->GetFloatFeature("AcquisitionFrameRate");
+        const double min = frameRateFeature->GetMin();
+        const double max = frameRateFeature->GetMax();
+
+        if (value < min) {
+            value = min;
+        }
+
+        if (value > max) {
+            value = max;
+        }
+
+        frameRateFeature->SetValue(value);
+        return true;
+    }
+    catch (CGalaxyException& error) {
+        setLastError(makeGalaxyError("Set Galaxy camera frame rate", error));
+    }
+    catch (...) {
+        setLastError(makeUnknownError("Set Galaxy camera frame rate"));
+    }
+
+    return false;
 }
 
 bool GalaxyCameraControllerImpl::isOpen() const
@@ -389,6 +493,16 @@ std::string GalaxyCameraControllerImpl::lastError() const
 {
     std::lock_guard<std::mutex> lock(m_errorMutex);
     return m_lastError;
+}
+
+application::CameraResult GalaxyCameraControllerImpl::makeResult(
+    bool succeeded
+) const
+{
+    return application::CameraResult{
+        succeeded,
+        succeeded ? std::string{} : lastError()
+    };
 }
 
 void GalaxyCameraControllerImpl::setFrameCallback(FrameCallback callback)
@@ -468,7 +582,6 @@ void GalaxyCameraControllerImpl::cleanupStream()
     }
 
     m_captureHandler.reset();
-    m_featureControl = CGXFeatureControlPointer();
     m_stream = CGXStreamPointer();
     m_isGrabbing.store(false);
 }
@@ -506,7 +619,7 @@ void GalaxyCameraControllerImpl::handleFrame(CImageDataPointer& imageData)
         return;
     }
 
-    domain::VideoFrame frame;
+    domain::ImageFrame frame;
     frame.width = static_cast<int>(width);
     frame.height = static_cast<int>(height);
     frame.frameId = imageData->GetFrameID();
@@ -543,59 +656,72 @@ GalaxyCameraController::GalaxyCameraController()
 
 GalaxyCameraController::~GalaxyCameraController() = default;
 
-bool GalaxyCameraController::openFirstCamera()
+application::CameraResult GalaxyCameraController::openFirstCamera()
 {
-    return m_impl->openFirstCamera();
+    const bool succeeded = m_impl->openFirstCamera();
+    return m_impl->makeResult(succeeded);
 }
 
-bool GalaxyCameraController::openByUserId(const std::string& userId)
+application::CameraResult GalaxyCameraController::openById(
+    const std::string& deviceId
+)
 {
-    return m_impl->openByUserId(userId);
+    const bool succeeded = m_impl->openBySerialNumber(deviceId);
+    return m_impl->makeResult(succeeded);
 }
 
-bool GalaxyCameraController::startGrabbing()
+application::CameraResult GalaxyCameraController::openCameraByName(
+    std::string deviceName
+)
 {
-    return m_impl->startGrabbing();
+    const bool succeeded = m_impl->openByUserId(deviceName);
+    return m_impl->makeResult(succeeded);
 }
 
-void GalaxyCameraController::stopGrabbing()
+application::CameraResult GalaxyCameraController::startCapture()
 {
-    m_impl->stopGrabbing();
+    const bool succeeded = m_impl->startGrabbing();
+    return m_impl->makeResult(succeeded);
 }
 
-void GalaxyCameraController::close()
+application::CameraResult GalaxyCameraController::stopCapture()
 {
-    m_impl->close();
+    const bool succeeded = m_impl->stopGrabbing();
+    return m_impl->makeResult(succeeded);
 }
 
-void GalaxyCameraController::setAutoWhiteBalance(bool enabled)
+application::CameraResult GalaxyCameraController::close()
 {
-    m_impl->setAutoWhiteBalance(enabled);
+    const bool succeeded = m_impl->close();
+    return m_impl->makeResult(succeeded);
 }
 
-void GalaxyCameraController::setGain(double value)
+application::CameraResult GalaxyCameraController::setAutoWhiteBalance(
+    bool enable
+)
 {
-    m_impl->setGain(value);
+    const bool succeeded = m_impl->setAutoWhiteBalance(enable);
+    return m_impl->makeResult(succeeded);
 }
 
-void GalaxyCameraController::setExposureTime(double value)
+application::CameraResult GalaxyCameraController::setExposeTimeUs(
+    double usTime
+)
 {
-    m_impl->setExposureTime(value);
+    const bool succeeded = m_impl->setExposureTime(usTime);
+    return m_impl->makeResult(succeeded);
 }
 
-bool GalaxyCameraController::isOpen() const
+application::CameraResult GalaxyCameraController::setGainDb(double gain)
 {
-    return m_impl->isOpen();
+    const bool succeeded = m_impl->setGain(gain);
+    return m_impl->makeResult(succeeded);
 }
 
-bool GalaxyCameraController::isGrabbing() const
+application::CameraResult GalaxyCameraController::setFps(double fps)
 {
-    return m_impl->isGrabbing();
-}
-
-std::string GalaxyCameraController::lastError() const
-{
-    return m_impl->lastError();
+    const bool succeeded = m_impl->setFps(fps);
+    return m_impl->makeResult(succeeded);
 }
 
 void GalaxyCameraController::setFrameCallback(FrameCallback callback)
