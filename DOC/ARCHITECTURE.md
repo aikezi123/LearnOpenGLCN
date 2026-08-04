@@ -83,9 +83,9 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 | `glfw3` | Imported Static | 窗口、上下文和输入 | Windows 系统库 |
 | `stb_image` | Static | 图片解码 | 无项目内依赖 |
 | `glm::glm` | Interface | 数学类型和矩阵运算 | 无项目内依赖 |
-| `Galaxy::SDK` | Interface | 大恒 Galaxy SDK 的 CMake 包装 target | `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib` |
+| `Galaxy::SDK` | Interface | 大恒 Galaxy C++ SDK 的 CMake 包装 target | `GxIAPICPPEx.lib` |
 
-`third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。大恒运行时 DLL 不再由 CMake 查找或复制，而是直接放在 `out/build/<preset>/bin`，随 exe、pdb 等运行产物一起提交。
+`third_party/Galaxy` 当前保存大恒 VC/C API 与 C++ SDK 头文件、`GxIAPICPPEx.lib`，以及当前 C++ 相机适配器所需的 13 个 Win64 递归运行依赖。构建 `LearnOpenGLCN_Qt` 后，CMake 将这些 DLL 自动部署到可执行文件目录，构建和启动不依赖本机 Galaxy SDK 安装路径或全局 `PATH`。
 
 `composition_root/qt_main.cpp` 只负责初始化 Qt/OpenGL、调用 `AppComposition` 创建窗口并进入事件循环。`AppComposition` 负责组织模块页面，`modules/CameraComposition` 和 `modules/TrajectoryComposition` 分别装配相机与轨迹功能。`composition_root/lesson_main.cpp` 负责解析命令行参数、直接运行课程或启动 LearnOpenGL 课程导航器；导航窗口实现放在 `composition_root/lesson_launcher`。课程清单集中在 `lessons/catalog` 的 `LessonRegistry` 中。所有课程源码仍被编入同一个 `lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
 
@@ -489,7 +489,7 @@ composition_root/
 
 - 不在第三方源码中加入项目业务逻辑。
 - 不允许 application/domain 直接链接平台型第三方库。
-- GLFW 当前使用 VS2022 预编译库，因此现阶段构建具有 Windows/MSVC 平台约束。
+- GLFW 当前使用仓库内保存的官方 3.4 Windows x64 VC2022 预编译静态库，因此现阶段构建具有 Windows/MSVC x64 平台约束。
 
 ## 4. 目标 CMake 结构
 

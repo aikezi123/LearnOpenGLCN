@@ -19,7 +19,7 @@
 
 #ifndef GXIAPICPP_EXPORTS
 #pragma comment(lib, "GxIAPICPPEx.lib")
-#endif 
+#endif
 
 /**
 \brief A Reference Counting Class
@@ -75,7 +75,7 @@ public:
 
 	/// Constructor from GXSmartPtr ref type.
 	GXSmartPtr(const GXSmartPtr& src):m_ptr(src.m_ptr),m_pUse(src.GetCountBasePtr())
-	{		
+	{
 #if defined (_WIN32)
 		m_pUse->AddRefCopy();
 #elif defined (__linux__)
@@ -94,7 +94,7 @@ public:
 		//Linux TODO
 #else
 #   error No/unknown platform thread support
-#endif		
+#endif
 		decrUse();
 		m_ptr=rhs.m_ptr;
 		m_pUse=rhs.GetCountBasePtr();
@@ -111,7 +111,7 @@ public:
 		else
 		{
 			throw CGalaxyException(GX_STATUS_ERROR,"Access through NULL pointer");
-		}		
+		}
 	}
 
 	/// Dereferencing
@@ -124,7 +124,7 @@ public:
 		else
 		{
 			throw CGalaxyException(GX_STATUS_ERROR,"Access through NULL pointer");
-		}		
+		}
 	}
 
 	/// Dereferencing
@@ -137,7 +137,7 @@ public:
 		else
 		{
 			throw CGalaxyException(GX_STATUS_ERROR,"Access through NULL pointer");
-		}		
+		}
 	}
 
 	/// Dereferencing
@@ -150,7 +150,7 @@ public:
 		else
 		{
 			throw CGalaxyException(GX_STATUS_ERROR,"Access through NULL pointer");
-		}		
+		}
 	}
 
 	/// Get the reference count
@@ -164,7 +164,7 @@ public:
 	{
 		return m_ptr;
 	}
-	
+
 	/// true if the pointer is not valid
     bool IsNull(void) const
     {
@@ -199,8 +199,8 @@ public:
 		//Linux TODO
 #else
 #   error No/unknown platform thread support
-#endif		
-		m_ptr = p;   
+#endif
+		m_ptr = p;
 	}
 
 	template<class T, class U>

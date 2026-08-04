@@ -239,14 +239,19 @@ third_party/Galaxy/
 │   └── C++_SDK/
 │       └── GalaxyIncludes.h
 ├── libs/
-│   ├── VC_Lib/
-│   │   ├── GxIAPI.lib
-│   │   └── DxImageProc.lib
 │   └── VC++_Lib/
 │       └── GxIAPICPPEx.lib
+├── bin/
+│   └── Win64/
+│       ├── GxIAPICPPEx.dll
+│       ├── DxImageProc.dll
+│       ├── GenApi_MD_VC120_v3_0.dll
+│       └── ...（共 13 个递归运行依赖）
+└── licenses/
+    └── galaxy_3rd_party_licenses.txt
 ```
 
-现阶段 `Galaxy::SDK` 同时暴露大恒 VC/C API 和 C++ SDK 头文件，并链接 `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib`。`.lib` 只解决链接；运行时 DLL 直接放在 `out/build/<preset>/bin`，不再通过环境变量或 CMake 复制逻辑定位。
+现阶段 `Galaxy::SDK` 暴露大恒 VC/C API 和 C++ SDK 头文件，但当前适配器只链接 `GxIAPICPPEx.lib`。`third_party/Galaxy/bin/Win64` 保存其 13 个最小递归运行依赖，由 CMake 在构建 Qt 可执行程序后复制到目标目录。仓库中的 SDK 文件必须保持同一版本和 x64 架构；新增 C API 调用后，应根据新的可执行文件依赖表补充 import library 和运行 DLL，而不是预先保存整套 SDK。
 
 ## 7. 新增资源
 

@@ -1,7 +1,7 @@
 ﻿//------------------------------------------------------------------------
 /**
 \file		GXDeviceInfo.h
-\brief		The device enumeration process creates a list of CGXDeviceInfo objects 
+\brief		The device enumeration process creates a list of CGXDeviceInfo objects
 (GxIAPICPP::gxdeviceinfo_vector). Each CGXDeviceInfo object stores the information of a device.
 The information is retrieved during the device enumeration process (IGXFactory::UpdateDeviceList)
 \Date       2016-8-09
@@ -167,7 +167,7 @@ public:
 	//----------------------------------------------------------------------------------
 	virtual GxIAPICPP::gxstring GetNICDescription() const;
 
-	
+
 private:
 	CGXDeviceInfoImplPointer        m_CGXDeviceInfoImplPointer;           ///< Internal use only
 };

@@ -44,8 +44,8 @@ public:
 	\param     [in]nLength The number of bytes in pBuffer
 	\return    void
 	*/
-	//--------------------------------------------------------- 
-	virtual void SetBuffer(uint8_t* pBuffer, int64_t nLength) = 0;		
+	//---------------------------------------------------------
+	virtual void SetBuffer(uint8_t* pBuffer, int64_t nLength) = 0;
 };
 
 template class GXIAPICPP_API  GXSmartPtr<IRegisterFeature>;

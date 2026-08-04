@@ -35,7 +35,7 @@ public:
 	\param      bValue[in]       The value to set
 	\return     void
 	*/
-	//--------------------------------------------------------- 
+	//---------------------------------------------------------
 	virtual void SetValue(bool bValue) = 0;
 };
 

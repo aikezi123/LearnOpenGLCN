@@ -15,7 +15,7 @@
 
 class GXIAPICPP_API IGXStream
 {
-public:	
+public:
 	//---------------------------------------------------------
 	/**
 	\brief Destructor
@@ -81,8 +81,8 @@ public:
 	//----------------------------------------------------------------------------------
 	/**
 	\brief     when underlying thread receives data from a device, it will fill a buffer from the receiving buffer pool.
-	when a buffer is filled it is removed from the pool and if successfully filled,	it is put into the output buffer queue. 
-	The upper thread get a buffer from the output buffer queue and call user method back, 
+	when a buffer is filled it is removed from the pool and if successfully filled,	it is put into the output buffer queue.
+	The upper thread get a buffer from the output buffer queue and call user method back,
 	after the user method returned, the upper thread queue the buffer back to the receiving buffer pool.
 	Flush queue means to flush the output buffer queue.
 	\return    void
@@ -108,15 +108,15 @@ public:
 
 	//----------------------------------------------------------------------------------
 	/**
-	\brief     Get the Optimal Packet Size 
+	\brief     Get the Optimal Packet Size
 	\return    uint32_t
 	*/
 	//----------------------------------------------------------------------------------
     virtual uint32_t GetOptimalPacketSize(void) = 0;
-    
+
     //----------------------------------------------------------------------------------
 	/**
-	\brief     Get payload Size 
+	\brief     Get payload Size
 	\return    uint32_t
 	*/
 	//----------------------------------------------------------------------------------

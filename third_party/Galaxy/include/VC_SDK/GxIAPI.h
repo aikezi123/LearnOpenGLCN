@@ -242,27 +242,27 @@ GX_API GXUpdateAllDeviceList      (uint32_t* punNumDevices, uint32_t nTimeOut);
 \param      [in]groupKey			         The group key specified by the protocol
 \param      [in]groupMask			         Protocol-defined group mask
 \param      [in]pBroadcastAddress			 The destination IP to send cmd to can be broadcast IP (255.255.255.255), subnet broadcast (192.168.42.255), unicast (192.168.42.42)
-\param      [in]pSpecialAddress			     The source IP of the cmd is used to clearly identify the network port from which the command is sent. 
+\param      [in]pSpecialAddress			     The source IP of the cmd is used to clearly identify the network port from which the command is sent.
 \                                            This can solve the problem of repeated cmd sending in the case of multiple network cards.
-\param      [in]timeoutMs			         Optional: Time in milliseconds the call is waiting for acknowledges of the addressed devices. 
-\                                            Waiting for acknowledges is stopped if pNumResults have been received. 
+\param      [in]timeoutMs			         Optional: Time in milliseconds the call is waiting for acknowledges of the addressed devices.
+\                                            Waiting for acknowledges is stopped if pNumResults have been received.
 \                                            This parameter can be 0 if a check of action command results is not required.
-\param      [in][out]pNumResults			 Optional: The number of results in the results array. 
-\                                            The value passed should be equal to the expected number of devices that acknowledge the command. 
-\                                            Returns the number of received results. This parameter is ignored if timeoutMs is 0. 
+\param      [in][out]pNumResults			 Optional: The number of results in the results array.
+\                                            The value passed should be equal to the expected number of devices that acknowledge the command.
+\                                            Returns the number of received results. This parameter is ignored if timeoutMs is 0.
 \                                            Thus, this parameter can be NULL if timeoutMs is 0.
-\param      [in][out]pResults			     Optional: An array with *pNumResults elements to hold the action command result status. 
-\                                            The buffer is filled beginning from the start. 
-\                                            Remaining results are not changed if less results are received than result items available. 
+\param      [in][out]pResults			     Optional: An array with *pNumResults elements to hold the action command result status.
+\                                            The buffer is filled beginning from the start.
+\                                            Remaining results are not changed if less results are received than result items available.
 \                                            This parameter is ignored if timeoutMs is 0. Thus, this parameter can be NULL if timeoutMs is 0.
 \return		GX_STATUS_SUCCESS                The operation was successful and no errors occurred
             GX_STATUS_NOT_INIT_API            GXInitLib is not called to initialize the library
             For other error conditions, see GX_STATUS_LIST
 */
 //----------------------------------------------------------------------------------
-GX_API GXGigEIssueActionCommand( uint32_t nDeviceKey, uint32_t nGroupKey, 
-                                uint32_t nGroupMask, const char* strBroadcastAddress, 
-                                const char* strSpecialAddress, uint32_t nTimeoutMs, 
+GX_API GXGigEIssueActionCommand( uint32_t nDeviceKey, uint32_t nGroupKey,
+                                uint32_t nGroupMask, const char* strBroadcastAddress,
+                                const char* strSpecialAddress, uint32_t nTimeoutMs,
                                 uint32_t* pnNumResults, GX_GIGE_ACTION_COMMAND_RESULT* pstResults );
 
 //----------------------------------------------------------------------------------
@@ -298,31 +298,31 @@ GX_API GXGigEIssueActionCommand( uint32_t nDeviceKey, uint32_t nGroupKey,
 \param      [in]groupKey			         The group key specified by the protocol
 \param      [in]groupMask			         Protocol-defined group mask
 \param      [in]actiontimeNs                 The time in nanoseconds to perform the operation.The actual value depends on the master clock used.
-\                                            For example, the master clock value of a set of synchronized camera devices can be obtained by reading the 
+\                                            For example, the master clock value of a set of synchronized camera devices can be obtained by reading the
 \                                            timestamp value GXGetIntValue(hDevice, "TimestampLatch") after latching it from the set of camera devices
 \param      [in]pBroadcastAddress			 The destination IP to send cmd to can be broadcast IP (255.255.255.255), subnet broadcast (192.168.42.255), unicast (192.168.42.42)
-\param      [in]pSpecialAddress			     Optional: The source IP of the cmd is used to clearly identify the network port from which the command is sent. 
+\param      [in]pSpecialAddress			     Optional: The source IP of the cmd is used to clearly identify the network port from which the command is sent.
 \                                            This can solve the problem of repeated cmd sending in the case of multiple network cards.
-\param      [in]timeoutMs			         Optional: Time in milliseconds the call is waiting for acknowledges of the addressed devices. 
-\                                            Waiting for acknowledges is stopped if pNumResults have been received. 
+\param      [in]timeoutMs			         Optional: Time in milliseconds the call is waiting for acknowledges of the addressed devices.
+\                                            Waiting for acknowledges is stopped if pNumResults have been received.
 \                                            This parameter can be 0 if a check of action command results is not required.
-\param      [in][out]pNumResults			 Optional: The number of results in the results array. 
-\                                            The value passed should be equal to the expected number of devices that acknowledge the command. 
-\                                            Returns the number of received results. This parameter is ignored if timeoutMs is 0. 
+\param      [in][out]pNumResults			 Optional: The number of results in the results array.
+\                                            The value passed should be equal to the expected number of devices that acknowledge the command.
+\                                            Returns the number of received results. This parameter is ignored if timeoutMs is 0.
                                              Thus, this parameter can be NULL if timeoutMs is 0.
-\param      [in][out]pResults			     Optional: An array with *pNumResults elements to hold the action command result status. 
-\                                            The buffer is filled beginning from the start. 
-\                                            Remaining results are not changed if less results are received than result items available. 
+\param      [in][out]pResults			     Optional: An array with *pNumResults elements to hold the action command result status.
+\                                            The buffer is filled beginning from the start.
+\                                            Remaining results are not changed if less results are received than result items available.
 \                                            This parameter is ignored if timeoutMs is 0. Thus, this parameter can be NULL if timeoutMs is 0.
 \return		GX_STATUS_SUCCESS                The operation was successful and no errors occurred
             GX_STATUS_NOT_INIT_API            GXInitLib is not called to initialize the library
             For other error conditions, see GX_STATUS_LIST
 */
 //----------------------------------------------------------------------------------
-GX_API GXGigEIssueScheduledActionCommand( uint32_t nDeviceKey, uint32_t nGroupKey, 
-                                         uint32_t nGroupMask, uint64_t nActiontimeNs, 
-                                         const char* strBroadcastAddress, const char* strSpecialAddress, 
-                                         uint32_t nTimeoutMs, uint32_t* pnNumResults, 
+GX_API GXGigEIssueScheduledActionCommand( uint32_t nDeviceKey, uint32_t nGroupKey,
+                                         uint32_t nGroupMask, uint64_t nActiontimeNs,
+                                         const char* strBroadcastAddress, const char* strSpecialAddress,
+                                         uint32_t nTimeoutMs, uint32_t* pnNumResults,
                                          GX_GIGE_ACTION_COMMAND_RESULT* pstResults );
 
 //----------------------------------------------------------------------------------

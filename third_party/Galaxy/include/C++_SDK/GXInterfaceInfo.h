@@ -1,7 +1,7 @@
 ﻿//------------------------------------------------------------------------
 /**
 \file		GXInterfaceInfo.h
-\brief		The Interface enumeration process creates a list of CGXInterfaceInfo objects 
+\brief		The Interface enumeration process creates a list of CGXInterfaceInfo objects
             (GxIAPICPP::gxinterfaceinfo_vector). Each CGXInterfaceInfo object stores the information of a Interface.
             The information is retrieved during the Interface enumeration process (IGXFactory::UpdateDeviceList)
 \Date       2022-08-30
@@ -43,14 +43,14 @@ public:
 	*/
 	//---------------------------------------------------------
     CGXInterfaceInfo(CGXInterfaceInfoImplPointer& objCGXInterfaceInfoImplPointer);
-    
+
     //---------------------------------------------------------
 	/**
 	\brief Destructor
 	*/
 	//---------------------------------------------------------
     virtual ~CGXInterfaceInfo(void);
-    
+
     //---------------------------------------------------------
 	/**
 	\brief Get interface type
@@ -66,7 +66,7 @@ public:
 	*/
 	//---------------------------------------------------------
     virtual GxIAPICPP::gxstring GetVendorName() const;
-    
+
     //---------------------------------------------------------
 	/**
 	\brief Get interface model name
@@ -74,7 +74,7 @@ public:
 	*/
 	//---------------------------------------------------------
     virtual GxIAPICPP::gxstring GetModelName() const;
-    
+
     //---------------------------------------------------------
 	/**
 	\brief Get interface serial number
@@ -82,7 +82,7 @@ public:
 	*/
 	//---------------------------------------------------------
     virtual GxIAPICPP::gxstring GetSerialNumber() const;
-    
+
     //---------------------------------------------------------
 	/**
 	\brief Get interface display name
@@ -90,7 +90,7 @@ public:
 	*/
 	//---------------------------------------------------------
     virtual GxIAPICPP::gxstring GetDisplayName() const;
-    
+
     //---------------------------------------------------------
 	/**
 	\brief Get interface ID (CXP)
@@ -98,7 +98,7 @@ public:
 	*/
 	//---------------------------------------------------------
     virtual GxIAPICPP::gxstring GetInterfaceID() const;
-    
+
     //---------------------------------------------------------
 	/**
 	\brief Get interface init flag (CXP)
@@ -106,7 +106,7 @@ public:
 	*/
 	//---------------------------------------------------------
     virtual uint32_t GetInitFlag() const;
-    
+
 private:
     CGXInterfaceInfoImplPointer        m_objGXInterfaceInfoImplPointer;           ///< Internal use only
 };

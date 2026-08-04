@@ -1,25 +1,25 @@
-//--------------------------------------------------------------- 
-/** 
+﻿//---------------------------------------------------------------
+/**
 \file      DxImageProc.h
 \brief     Image Processing Library
-\version   v1.0.2506.9181 
+\version   v1.0.2506.9181
 \date      2025-06-18
-\author    Software Department 
-<p>Copyright (c) 2022-2024 and all right reserved.</p> 
-*/ 
-//--------------------------------------------------------------- 
+\author    Software Department
+<p>Copyright (c) 2022-2024 and all right reserved.</p>
+*/
+//---------------------------------------------------------------
 
-#if !defined (_DXIMAGEPROC_H)         
+#if !defined (_DXIMAGEPROC_H)
 #define _DXIMAGEPROC_H 			///< pre-compiled macro define
 
 ////////////////////////////////////////////////////////////////////////////////////////////
-//  Type definitions. The following types are defined in the standard C library header 
+//  Type definitions. The following types are defined in the standard C library header
 //  stdint.h. This file is not included in the previous version of Microsoft's compilation
 //  platform VS 2010, so type definitions need to be redefined here.
 ////////////////////////////////////////////////////////////////////////////////////////////
 
 #if defined(_WIN32)
-    #ifndef _STDINT_H 
+    #ifndef _STDINT_H
         #ifdef _MSC_VER // Microsoft compiler
             #if _MSC_VER < 1600
                 typedef __int8            int8_t;
@@ -38,7 +38,7 @@
             // Not a Microsoft compiler
             #include <stdint.h>
         #endif
-    #endif 
+    #endif
 #else
     // Linux
     #include <stdint.h>
@@ -80,8 +80,8 @@
             #define GX_STDC __attribute__((stdcall))
             #define GX_CDEC __attribute__((cdecl))
         #else
-            #define GX_STDC 
-            #define GX_CDEC 
+            #define GX_STDC
+            #define GX_CDEC
         #endif
 
         #if defined(__cplusplus)
@@ -98,10 +98,10 @@
 extern "C" {
 #endif
 
-#ifdef _WIN32                   
+#ifdef _WIN32
 #define DHDECL __stdcall
 
-#else                          
+#else
 #include <stdlib.h>
 #include <string.h>
 #define  DHDECL GX_DLLEXPORT
@@ -121,28 +121,28 @@ IMAGE_CONVERT_DECLARE_HANDLE(DX_IMAGE_FORMAT_CONVERT_HANDLE);
 
 FLAT_FIELD_CORRECTION_DECLARE_HANDLE(DX_FLAT_FIELD_CORRECTION_HANDLE);
 
-typedef char                        VxInt8;     
-typedef short                       VxInt16;     
-typedef int                         VxInt32;     
-#ifdef _WIN32 
-typedef __int64                     VxInt64;     
-typedef unsigned __int64            VxUint64;     
+typedef char                        VxInt8;
+typedef short                       VxInt16;
+typedef int                         VxInt32;
+#ifdef _WIN32
+typedef __int64                     VxInt64;
+typedef unsigned __int64            VxUint64;
 #else
-typedef long long                   VxInt64;     
-typedef unsigned long long          VxUint64;     
+typedef long long                   VxInt64;
+typedef unsigned long long          VxUint64;
 #endif
-typedef unsigned char               VxUint8;     
-typedef unsigned short              VxUint16;    
-typedef unsigned int                VxUint32;    
+typedef unsigned char               VxUint8;
+typedef unsigned short              VxUint16;
+typedef unsigned int                VxUint32;
 
 /// status  definition
 typedef enum  tagDX_STATUS
 {
-	DX_OK                         = 0,    
-	DX_PARAMETER_INVALID          = -101, 
-	DX_PARAMETER_OUT_OF_BOUND     = -102, 
-	DX_NOT_ENOUGH_SYSTEM_MEMORY   = -103, 
-	DX_NOT_FIND_DEVICE            = -104, 
+	DX_OK                         = 0,
+	DX_PARAMETER_INVALID          = -101,
+	DX_PARAMETER_OUT_OF_BOUND     = -102,
+	DX_NOT_ENOUGH_SYSTEM_MEMORY   = -103,
+	DX_NOT_FIND_DEVICE            = -104,
 	DX_STATUS_NOT_SUPPORTED       = -105,
     DX_CPU_NOT_SUPPORT_ACCELERATE = -106,
     DX_PARAMETER_NOT_INITIALIZED  = -107,
@@ -155,33 +155,33 @@ typedef enum  tagDX_STATUS
 	DX_FILE_CONTENT_MODEL_ERR	  = -204,
 	DX_FILE_CONTENT_NOT_LOAD	  = -205,
 	DX_FILE_CONTENT_ERR			  = -206,
-		
+
 	DX_CALC_ERR					  = -301,
-	
+
 } DX_STATUS;
 
 /// Bayer layout
 typedef enum  tagDX_PIXEL_COLOR_FILTER
 {
-	NONE    = 0,   
-	BAYERRG = 1,   
-	BAYERGB = 2,   
-	BAYERGR = 3,   
-	BAYERBG = 4    
+	NONE    = 0,
+	BAYERRG = 1,
+	BAYERGB = 2,
+	BAYERGR = 3,
+	BAYERBG = 4
 } DX_PIXEL_COLOR_FILTER;
 
 /// image interpolation method
 typedef enum tagDX_BAYER_CONVERT_TYPE
 {
-	RAW2RGB_NEIGHBOUR  = 0,   
-	RAW2RGB_ADAPTIVE   = 1,   
-	RAW2RGB_NEIGHBOUR3 = 2,  
+	RAW2RGB_NEIGHBOUR  = 0,
+	RAW2RGB_ADAPTIVE   = 1,
+	RAW2RGB_NEIGHBOUR3 = 2,
 	RAW2RGB_WEIGHT     = 3
 } DX_BAYER_CONVERT_TYPE;
 
 /// image valid bit
 typedef enum tagDX_VALID_BIT
-{ 
+{
 	DX_BIT_0_7	    = 0,    ///< bit 0~7
 	DX_BIT_1_8	    = 1,    ///< bit 1~8
 	DX_BIT_2_9	    = 2,    ///< bit 2~9
@@ -207,8 +207,8 @@ typedef enum tagDX_ACTUAL_BITS
 ///  image mirror method
 typedef enum DX_IMAGE_MIRROR_MODE
 {
-	HORIZONTAL_MIRROR = 0,     
-	VERTICAL_MIRROR   = 1     
+	HORIZONTAL_MIRROR = 0,
+	VERTICAL_MIRROR   = 1
 }DX_IMAGE_MIRROR_MODE;
 
 /// RGB channel order
@@ -218,34 +218,34 @@ typedef enum DX_RGB_CHANNEL_ORDER
 	DX_ORDER_BGR = 1
 }DX_RGB_CHANNEL_ORDER;
 
-/// mono8 image process struct 
+/// mono8 image process struct
 typedef  struct  MONO_IMG_PROCESS
 {
-	bool            bDefectivePixelCorrect;   
-	bool            bSharpness;               
-	bool            bAccelerate;               
-	float           fSharpFactor;              
-	VxUint8         *pProLut;                  
-	VxUint16        nLutLength;                
-	VxUint8         arrReserved[32];           
+	bool            bDefectivePixelCorrect;
+	bool            bSharpness;
+	bool            bAccelerate;
+	float           fSharpFactor;
+	VxUint8         *pProLut;
+	VxUint16        nLutLength;
+	VxUint8         arrReserved[32];
 } MONO_IMG_PROCESS;
 
-/// Raw8 Image process struct 
+/// Raw8 Image process struct
 typedef  struct  COLOR_IMG_PROCESS
 {
-	bool                   bDefectivePixelCorrect; 
-	bool                   bDenoise;              
-	bool                   bSharpness;             
-	bool                   bAccelerate;            
-	VxInt16                *parrCC;               
-	VxUint8                nCCBufLength;           
-	float                  fSharpFactor;          
-	VxUint8                *pProLut;              
-	VxUint16               nLutLength;            
-    DX_BAYER_CONVERT_TYPE  cvType;                 
-	DX_PIXEL_COLOR_FILTER  emLayOut;               
-	bool                   bFlip;                  
-	VxUint8                arrReserved[32];        
+	bool                   bDefectivePixelCorrect;
+	bool                   bDenoise;
+	bool                   bSharpness;
+	bool                   bAccelerate;
+	VxInt16                *parrCC;
+	VxUint8                nCCBufLength;
+	float                  fSharpFactor;
+	VxUint8                *pProLut;
+	VxUint16               nLutLength;
+    DX_BAYER_CONVERT_TYPE  cvType;
+	DX_PIXEL_COLOR_FILTER  emLayOut;
+	bool                   bFlip;
+	VxUint8                arrReserved[32];
 } COLOR_IMG_PROCESS;
 
 
@@ -258,7 +258,7 @@ typedef struct FLAT_FIELD_CORRECTION_PROCESS
 	VxUint32                     nImgHei;            ///< image height
 	DX_ACTUAL_BITS               nActualBits;        ///< image actual bits
 	DX_PIXEL_COLOR_FILTER        emBayerType;        ///< Bayer Type
-}FLAT_FIELD_CORRECTION_PROCESS; 
+}FLAT_FIELD_CORRECTION_PROCESS;
 
 /// FLAT FIELD CORRECTION PARAMETER struct
 typedef struct FLAT_FIELD_CORRECTION_PARAMETER
@@ -269,7 +269,7 @@ typedef struct FLAT_FIELD_CORRECTION_PARAMETER
     VxInt32                      nImgWid;                      ///< image width
     VxInt32                      nImgHei;                      ///< image height
     VxInt32                      nFFCBlockSize;                ///< block size
-    VxInt32                      nFFCExpectedGray;             ///< FFC expected gray value 
+    VxInt32                      nFFCExpectedGray;             ///< FFC expected gray value
     VxInt32                      arrReserved[64];              ///< reserved value
 }FLAT_FIELD_CORRECTION_PARAMETER;
 
@@ -292,12 +292,12 @@ typedef  struct  COLOR_TRANSFORM_FACTOR
 } COLOR_TRANSFORM_FACTOR;
 #endif
 
-/// static defect pixel correction struct 
+/// static defect pixel correction struct
 typedef  struct  STATIC_DEFECT_CORRECTION
 {
-	VxUint32				nImgWidth;   
-	VxUint32				nImgHeight;               
-	VxUint32				nImgOffsetX;               
+	VxUint32				nImgWidth;
+	VxUint32				nImgHeight;
+	VxUint32				nImgOffsetX;
 	VxUint32				nImgOffsetY;
 	VxUint32				nImgWidthMax;
 	DX_PIXEL_COLOR_FILTER	nBayerType;
@@ -309,22 +309,22 @@ typedef  struct  STATIC_DEFECT_CORRECTION
 typedef enum DX_SYSTEM_PARAM
 {
 	THREAD_NUM   = 0,     ///< thread number
-	SSSE3_ENABLE = 1,     ///< SSSE3 enable 
-	NEON_ENABLE  = 2      ///< NEON enable 
+	SSSE3_ENABLE = 1,     ///< SSSE3 enable
+	NEON_ENABLE  = 2      ///< NEON enable
 }DX_SYSTEM_PARAM;
 
 //--------------------------------------------------
 /**
 \brief  Convert Raw8 to Rgb24
-\param  pInputBuffer   	[in] input buffer 
+\param  pInputBuffer   	[in] input buffer
 \param  pOutputBuffer   [out]output buffer(new buffer)
 \param  nWidth  	    [in] image width
 \param  nHeight   	    [in] image height
-\param  cvtype          [in] Bayer convert type 
-\param  nBayerType      [in] pixel color filter 
+\param  cvtype          [in] Bayer convert type
+\param  nBayerType      [in] pixel color filter
 \param  bFlip           [in] output image flip or not, true:flip false:not flip
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxRaw8toRGB24(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_BAYER_CONVERT_TYPE cvtype, DX_PIXEL_COLOR_FILTER nBayerType, bool bFlip);
@@ -332,16 +332,16 @@ VxInt32 DHDECL DxRaw8toRGB24(void *pInputBuffer, void *pOutputBuffer, VxUint32 n
 //--------------------------------------------------
 /**
 \brief  Convert Raw8 to Rgb24 with chosen RGB channel order
-\param  pInputBuffer   	[in] input buffer 
+\param  pInputBuffer   	[in] input buffer
 \param  pOutputBuffer   [out]output buffer(new buffer)
 \param  nWidth  	    [in] image width
 \param  nHeight   	    [in] image height
-\param  cvtype          [in] Bayer convert type 
-\param  nBayerType      [in] pixel color filter 
+\param  cvtype          [in] Bayer convert type
+\param  nBayerType      [in] pixel color filter
 \param  bFlip           [in] output image flip or not, true:flip false:not flip
 \param  emChannelOrder	[in] RGB channel order of output image
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxRaw8toRGB24Ex(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_BAYER_CONVERT_TYPE cvtype, DX_PIXEL_COLOR_FILTER nBayerType, bool bFlip, DX_RGB_CHANNEL_ORDER emChannelOrder);
@@ -349,12 +349,12 @@ VxInt32 DHDECL DxRaw8toRGB24Ex(void *pInputBuffer, void *pOutputBuffer, VxUint32
 //--------------------------------------------------
 /**
 \brief  Convert Raw12Packed to Raw16
-\param  pInputBuffer   	[in] input Buffer 
+\param  pInputBuffer   	[in] input Buffer
 \param  pOutputBuffer   [out]output Buffer(new buffer)
 \param  nWidth          [in] image width
-\param  nHeight         [in] image height                      
+\param  nHeight         [in] image height
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxRaw12PackedToRaw16(void* pInputBuffer, void* pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight);
@@ -362,10 +362,10 @@ VxInt32 DHDECL DxRaw12PackedToRaw16(void* pInputBuffer, void* pOutputBuffer, VxU
 //-------------------------------------------------
 /**
 \brief  Convert Raw10Packed to Raw16
-\param  pInputBuffer   	[in] input buffer 
+\param  pInputBuffer   	[in] input buffer
 \param  pOutputBuffer   [out]output buffer(new buffer)
 \param  nWidth          [in] image width
-\param  nHeight         [in] image height 
+\param  nHeight         [in] image height
 
 \return emStatus
 */
@@ -375,10 +375,10 @@ VxInt32 DHDECL DxRaw10PackedToRaw16(void* pInputBuffer, void* pOutputBuffer, VxU
 //------------------------------------------------
 /**
 \brief  To rotate the 8-bit image clockwise by 90 degrees
-\param  pInputBuffer  	[in] input buffer 
-\param  pOutputBuffer	[out]output buffer(new buffer)  
+\param  pInputBuffer  	[in] input buffer
+\param  pOutputBuffer	[out]output buffer(new buffer)
 \param  nWidth        	[in] image width
-\param  nHeight       	[in] image height 
+\param  nHeight       	[in] image height
 
 \return emStatus
 */
@@ -388,10 +388,10 @@ VxInt32 DHDECL DxRotate90CW8B(void* pInputBuffer, void* pOutputBuffer, VxUint32 
 //------------------------------------------------
 /**
 \brief  To rotate the 8-bit image counter clockwise by 90 degrees
-\param  pInputBuffer    [in] input buffer 
-\param  pOutputBuffer	[out]output buffer(new buffer) 
+\param  pInputBuffer    [in] input buffer
+\param  pOutputBuffer	[out]output buffer(new buffer)
 \param  nWidth          [in] image width
-\param  nHeight         [in] image height 
+\param  nHeight         [in] image height
 
 \return emStatus
 */
@@ -401,8 +401,8 @@ VxInt32 DHDECL DxRotate90CCW8B(void* pInputBuffer, void* pOutputBuffer, VxUint32
 //-----------------------------------------------
 /**
 \brief  Brightness adjustment (RGB24 or gray image of 8-bit)
-\param  pInputBuffer  	[in] input buffer 
-\param  pOutputBuffer	[out]output buffer 
+\param  pInputBuffer  	[in] input buffer
+\param  pOutputBuffer	[out]output buffer
 \param  nImagesize    	[in] image size,unit:byte(RGB:width * height * 3)
 \param  nFactor        	[in] factor,range(-150~150)
 
@@ -414,7 +414,7 @@ VxInt32 DHDECL DxBrightness(void* pInputBuffer, void* pOutputBuffer, VxUint32 nI
 //--------------------------------------------------
 /**
 \brief  Contrast adjustment(RGB24 or gray image of 8-bit)
-\param  pInputBuffer	[in] input buffer      
+\param  pInputBuffer	[in] input buffer
 \param  pOutputBuffer	[out]output buffer
 \param  nImagesize      [in] image size,unit:byte(RGB:width * height * 3)
 \param  nFactor	        [in] factor,range(-50~100)
@@ -427,10 +427,10 @@ VxInt32 DHDECL DxContrast(void* pInputBuffer, void* pOutputBuffer, VxUint32 nIma
 //--------------------------------------------------
 /**
 \brief  Sharpen adjustment (RGB24)
-\param  pInputBuffer	[in] input buffer      
+\param  pInputBuffer	[in] input buffer
 \param  pOutputBuffer	[out]output buffer
 \param  nWidth          [in] image width
-\param  nHeight         [in] image height 
+\param  nHeight         [in] image height
 \param  fFactor        	[in] factor,range(0.1~5.0)
 
 \return emStatus
@@ -441,10 +441,10 @@ VxInt32 DHDECL DxSharpen24B(void* pInputBuffer, void* pOutputBuffer, VxUint32 nW
 //--------------------------------------------------
 /**
 \brief  Sharpen adjustment (Mono8)
-\param  pInputBuffer	[in] input buffer      
+\param  pInputBuffer	[in] input buffer
 \param  pOutputBuffer	[out]output buffer
 \param  nWidth          [in] image width
-\param  nHeight         [in] image height 
+\param  nHeight         [in] image height
 \param  fFactor        	[in] factor,range(0.1~5.0)
 
 \return emStatus
@@ -455,12 +455,12 @@ VxInt32 DHDECL DxSharpenMono8(void* pInputBuffer, void* pOutputBuffer, VxUint32 
 //--------------------------------------------------
 /**
 \brief  Saturation adjustment (RGB24)
-\param  pInputBuffer	[in] input buffer      
+\param  pInputBuffer	[in] input buffer
 \param  pOutputBuffer	[out]output buffer
 \param  nImageSize     	[in] image size (width * height)
 \param  nFactor        	[in] factor,range(0 ~ 128)
 
-\return emStatus   
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxSaturation(void* pInputBuffer, void* pOutputBuffer, VxUint32 nImagesize, VxInt32 nFactor);
@@ -476,14 +476,14 @@ VxInt32 DHDECL DxSaturation(void* pInputBuffer, void* pOutputBuffer, VxUint32 nI
 \param  dRatioG         [out]G ratio
 \param  dRatioB         [out]B ratio
 
-\return emStatus  
-*/   
+\return emStatus
+*/
 //--------------------------------------------------
 VxInt32 DHDECL DxGetWhiteBalanceRatio(void *pInputBuffer, VxUint32 nWidth, VxUint32 nHeight, double* dRatioR, double* dRatioG, double* dRatioB);
 
 //-----------------------------------------------------
 /**
-\brief  Auto raw defective pixel correct,Support image from Raw8 to Raw16, the bit number is actual bit number, when it is more than 8, the actual bit 
+\brief  Auto raw defective pixel correct,Support image from Raw8 to Raw16, the bit number is actual bit number, when it is more than 8, the actual bit
         can be every number between 9 to 16. And if image format is packed, you need convert it to Raw16.This function should be used in each frame.
 
 \param  pRawImgBuf      [in,out]Raw image buffer
@@ -491,7 +491,7 @@ VxInt32 DHDECL DxGetWhiteBalanceRatio(void *pInputBuffer, VxUint32 nWidth, VxUin
 \param  nHeight       	[in]image height
 \param  nBitNum         [in]image bit number (for example:if image 10bit, nBitNum = 10, if image 12bit,nBitNum = 12,range:8 ~ 16)
 
-\return emStatus  
+\return emStatus
 */
 //-----------------------------------------------------
 VxInt32 DHDECL DxAutoRawDefectivePixelCorrect(void* pRawImgBuf, VxUint32 nWidth, VxUint32 nHeight, VxInt32 nBitNum);
@@ -505,7 +505,7 @@ VxInt32 DHDECL DxAutoRawDefectivePixelCorrect(void* pRawImgBuf, VxUint32 nWidth,
 \param  nHeight         [in] image height
 \param  nValidBits      [in] valid bits
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxRaw16toRaw8(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_VALID_BIT nValidBits);
@@ -517,9 +517,9 @@ VxInt32 DHDECL DxRaw16toRaw8(void *pInputBuffer, void *pOutputBuffer, VxUint32 n
 \param  pOutputBuffer   [out]output buffer(new buffer,size:width * height * 3)
 \param  nWidth          [in] image width
 \param  nHeight         [in] image height
-\param  nValidBits      [in] valid bits 
+\param  nValidBits      [in] valid bits
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxRGB48toRGB24(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_VALID_BIT nValidBits);
@@ -532,11 +532,11 @@ VxInt32 DHDECL DxRGB48toRGB24(void *pInputBuffer, void *pOutputBuffer, VxUint32 
 \param  nWidth  	    [in] image width
 \param  nHeight   	    [in] image height
 \param  nActualBits     [in] image actual bits
-\param  cvtype          [in] Bayer convert type 
+\param  cvtype          [in] Bayer convert type
 \param  nBayerType      [in] pixel color filter
 \param  bFlip           [in] image flip or not, true:flip false:not flip
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxRaw16toRGB48(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, DX_ACTUAL_BITS nActualBits, DX_BAYER_CONVERT_TYPE cvtype, DX_PIXEL_COLOR_FILTER nBayerType, bool bFlip);
@@ -550,12 +550,12 @@ VxInt32 DHDECL DxRaw16toRGB48(void *pInputBuffer, void *pOutputBuffer, VxUint32 
 \param  nHeight   	    [in] image height
 \param  nStride         [in] Android surface stride
 \param  nActualBits     [in] image actual bits
-\param  cvtype          [in] Bayer convert type 
+\param  cvtype          [in] Bayer convert type
 \param  nBayerType      [in] pixel color filter
 \param  bFlip           [in] image flip or not, true:flip false:not flip
 \param  nAlpha			[in] value of channel Alpha
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxRaw8toARGB32(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, int nStride, DX_BAYER_CONVERT_TYPE cvtype, DX_PIXEL_COLOR_FILTER nBayerType, bool bFlip, VxUint8 nAlpha);
@@ -567,7 +567,7 @@ VxInt32 DHDECL DxRaw8toARGB32(void *pInputBuffer, void *pOutputBuffer, VxUint32 
 \param  pContrastLut    [out]contrast lookup table
 \param  pLutLength      [out]contrast lookup table length(unit:byte)
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxGetContrastLut(int nContrastParam, void *pContrastLut, int *pLutLength);
@@ -575,11 +575,11 @@ VxInt32 DHDECL DxGetContrastLut(int nContrastParam, void *pContrastLut, int *pLu
 //--------------------------------------------------
 /**
 \brief  calculating gamma lookup table (RGB24)
-\param  dGammaParam   [in] gamma param,range(0.1 ~ 10) 
+\param  dGammaParam   [in] gamma param,range(0.1 ~ 10)
 \param  pGammaLut     [out]gamma lookup table
 \param  pLutLength    [out]gamma lookup table length(unit:byte)
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxGetGammatLut(double dGammaParam, void *pGammaLut, int *pLutLength);
@@ -595,7 +595,7 @@ VxInt32 DHDECL DxGetGammatLut(double dGammaParam, void *pGammaLut, int *pLutLeng
 \param  pContrastLut          [in] contrast lookup table
 \param  pGammaLut             [in] gamma lookup table
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxImageImprovment(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, VxInt64 nColorCorrectionParam, void *pContrastLut, void *pGammaLut);
@@ -611,7 +611,7 @@ VxInt32 DHDECL DxImageImprovment(void *pInputBuffer, void *pOutputBuffer, VxUint
 \param  pContrastLut          [in] contrast lookup table
 \param  pGammaLut             [in] gamma lookup table
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxARGBImageImprovment(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, VxInt64 nColorCorrectionParam, void *pContrastLut, void *pGammaLut);
@@ -628,14 +628,14 @@ VxInt32 DHDECL DxARGBImageImprovment(void *pInputBuffer, void *pOutputBuffer, Vx
 \param  pGammaLut             [in] gamma lookup table
 \param  emChannelOrder        [in] RGB channel order of output image
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxImageImprovmentEx(void *pInputBuffer, void *pOutputBuffer, VxUint32 nWidth, VxUint32 nHeight, VxInt64 nColorCorrectionParam, void *pContrastLut, void *pGammaLut, DX_RGB_CHANNEL_ORDER emChannelOrder);
 
 //-------------------------------------------------------------
 /**
-\brief  image mirror(Raw8 or 8bit image) 
+\brief  image mirror(Raw8 or 8bit image)
 \param  pInputBuff   	[in] input buffer
 \param  pOutputBuf      [out]output buffer
 \param  nWidth          [in] image width
@@ -649,7 +649,7 @@ VxInt32 DHDECL DxImageMirror(void *pInputBuffer, void *pOutputBuffer, VxUint32 n
 
 //--------------------------------------------------
 /**
-\brief  calculating lookup table of 8bit image 
+\brief  calculating lookup table of 8bit image
 \param  nContrastParam  [in] contrast param,range(-50~100)
 \param  dGamma          [in] gamma param,range(0.1~10)
 \param  nLightness      [in] lightness param,range(-150~150)
@@ -663,7 +663,7 @@ VxInt32 DHDECL DxGetLut(VxInt32 nContrastParam, double dGamma, VxInt32 nLightnes
 
 //--------------------------------------------------
 /**
-\brief  calculating array of image processing color adjustment 
+\brief  calculating array of image processing color adjustment
 \param  nColorCorrectionParam   [in] color correction param address(get from camera)
 \param  nSaturation             [in] saturation factor,Range(0~128)
 \param  parrCC                  [out]array address
@@ -676,28 +676,28 @@ VxInt32 DHDECL DxCalcCCParam(VxInt64 nColorCorrectionParam, VxInt16 nSaturation,
 
 //--------------------------------------------------
 /**
-\brief  Raw8 image process 
+\brief  Raw8 image process
 \param  pRaw8Buf    	      [in] input buffer
 \param  pRgb24Buf             [out]output buffer(new buffer)
 \param  nWidth                [in] image width
 \param  nHeight               [in] image height
 \param  pstClrImgProc         [in] Raw8 image process struct pointer
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxRaw8ImgProcess(void *pRaw8Buf, void *pRgb24Buf, VxUint32 nWidth, VxUint32 nHeight, COLOR_IMG_PROCESS *pstClrImgProc);
 
 //--------------------------------------------------
 /**
-\brief  Mono8 image process 
+\brief  Mono8 image process
 \param  pInputBuf    	      [in] input buffer
 \param  pOutputBuf            [out]output buffer(new buffer)
 \param  nWidth                [in] image width
 \param  nHeight               [in] image height
 \param  pstGrayImgProc        [in] mono8 image process struct pointer
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxMono8ImgProcess(void *pInputBuf, void *pOutputBuf, VxUint32 nWidth, VxUint32  nHeight, MONO_IMG_PROCESS *pstGrayImgProc);
@@ -710,7 +710,7 @@ VxInt32 DHDECL DxMono8ImgProcess(void *pInputBuf, void *pOutputBuf, VxUint32 nWi
 \param  pnlength                      [in]&&[out]flat field correction coefficients length(byte)
 \param  pnTargetValue                 [in] correction target Value
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxGetFFCCoefficients(FLAT_FIELD_CORRECTION_PROCESS stFlatFieldCorrection, void *pFFCCoefficients, int *pnlength, int *pnTargetValue = NULL);
@@ -723,11 +723,11 @@ VxInt32 DHDECL DxGetFFCCoefficients(FLAT_FIELD_CORRECTION_PROCESS stFlatFieldCor
 \param  pOutputBuffer    	  [out]       Image out
 \param  nActualBits           [in]        Image actual cits
 \param  nImgWidth             [in]        Image width
-\param  nImgHeight            [in]        Image height 
+\param  nImgHeight            [in]        Image height
 \param  pFFCCoefficients      [in]        Flat field correction coefficients
 \param  pnlength              [in]        Flat field correction coefficients(byte)
 
-\return emStatus  
+\return emStatus
 */
 //--------------------------------------------------
 VxInt32 DHDECL DxFlatFieldCorrection(void *pInputBuffer, void *pOutputBuffer, DX_ACTUAL_BITS nActualBits, VxUint32 nImgWidth, VxUint32  nImgHeight, void  *pFFCCoefficients, int *pnLength);
@@ -735,7 +735,7 @@ VxInt32 DHDECL DxFlatFieldCorrection(void *pInputBuffer, void *pOutputBuffer, DX
 
 //--------------------------------------------------
 /**
-\brief  calculating array of image processing color adjustment 
+\brief  calculating array of image processing color adjustment
 \param  pstColorTransformFactor [in] color correction param address(user set)
 \param  nSaturation             [in] saturation factor,Range(0~128)
 \param  parrCC                  [out]array address
@@ -748,33 +748,33 @@ VxInt32 DHDECL DxCalcUserSetCCParam(COLOR_TRANSFORM_FACTOR *pstColorTransformFac
 
 //--------------------------------------------------
 /**
-\brief  Image Format Convert Process 
+\brief  Image Format Convert Process
 
-        Supported image format conversion include 
+        Supported image format conversion include
 
         1.Bayer conversion
          a. input image format  GX_PIXEL_FORMAT_BAYER_GR8 GX_PIXEL_FORMAT_BAYER_RG8 GX_PIXEL_FORMAT_BAYER_GB8 GX_PIXEL_FORMAT_BAYER_BG8
-            output image format GX_PIXEL_FORMAT_MONO8 GX_PIXEL_FORMAT_RGB8  GX_PIXEL_FORMAT_BGR8 GX_PIXEL_FORMAT_RGBA8 GX_PIXEL_FORMAT_BGRA8 
+            output image format GX_PIXEL_FORMAT_MONO8 GX_PIXEL_FORMAT_RGB8  GX_PIXEL_FORMAT_BGR8 GX_PIXEL_FORMAT_RGBA8 GX_PIXEL_FORMAT_BGRA8
                                 GX_PIXEL_FORMAT_ARGB8 GX_PIXEL_FORMAT_ABGR8 GX_PIXEL_FORMAT_RGB8_PLANAR
 
-         b. input image format  GX_PIXEL_FORMAT_BAYER_GR10 GX_PIXEL_FORMAT_BAYER_RG10 GX_PIXEL_FORMAT_BAYER_GB10 GX_PIXEL_FORMAT_BAYER_BG10 
-                                GX_PIXEL_FORMAT_BAYER_GR12 GX_PIXEL_FORMAT_BAYER_RG12 GX_PIXEL_FORMAT_BAYER_GB12 GX_PIXEL_FORMAT_BAYER_BG12 
+         b. input image format  GX_PIXEL_FORMAT_BAYER_GR10 GX_PIXEL_FORMAT_BAYER_RG10 GX_PIXEL_FORMAT_BAYER_GB10 GX_PIXEL_FORMAT_BAYER_BG10
+                                GX_PIXEL_FORMAT_BAYER_GR12 GX_PIXEL_FORMAT_BAYER_RG12 GX_PIXEL_FORMAT_BAYER_GB12 GX_PIXEL_FORMAT_BAYER_BG12
                                 GX_PIXEL_FORMAT_BAYER_GR14 GX_PIXEL_FORMAT_BAYER_RG14 GX_PIXEL_FORMAT_BAYER_GB14 GX_PIXEL_FORMAT_BAYER_BG14
                                 GX_PIXEL_FORMAT_BAYER_GR16 GX_PIXEL_FORMAT_BAYER_RG16 GX_PIXEL_FORMAT_BAYER_GB16 GX_PIXEL_FORMAT_BAYER_BG16
             output image format GX_PIXEL_FORMAT_BAYER_GR8 GX_PIXEL_FORMAT_BAYER_RG8 GX_PIXEL_FORMAT_BAYER_GB8 GX_PIXEL_FORMAT_BAYER_BG8
-			                    GX_PIXEL_FORMAT_MONO16 GX_PIXEL_FORMAT_RGB16  GX_PIXEL_FORMAT_BGR16 GX_PIXEL_FORMAT_RGB16_PLANAR 
+			                    GX_PIXEL_FORMAT_MONO16 GX_PIXEL_FORMAT_RGB16  GX_PIXEL_FORMAT_BGR16 GX_PIXEL_FORMAT_RGB16_PLANAR
 			                    GX_PIXEL_FORMAT_RGB8 GX_PIXEL_FORMAT_BGR8
 
         2.RGB conversion
          a. input image format  GX_PIXEL_FORMAT_RGB8 GX_PIXEL_FORMAT_BGR8
-            output image format GX_PIXEL_FORMAT_YUV444_8 GX_PIXEL_FORMAT_YUV422_8 GX_PIXEL_FORMAT_YUV411_8 GX_PIXEL_FORMAT_YUV420_8_PLANAR 
+            output image format GX_PIXEL_FORMAT_YUV444_8 GX_PIXEL_FORMAT_YUV422_8 GX_PIXEL_FORMAT_YUV411_8 GX_PIXEL_FORMAT_YUV420_8_PLANAR
                                 GX_PIXEL_FORMAT_YCBCR444_8 GX_PIXEL_FORMAT_YCBCR422_8 GX_PIXEL_FORMAT_YCBCR411_8 GX_PIXEL_FORMAT_MONO8 GX_PIXEL_FORMAT_RGB8
 
          b. input image format  GX_PIXEL_FORMAT_RGB16 GX_PIXEL_FORMAT_BGR16
-            output image format GX_PIXEL_FORMAT_MONO16 
+            output image format GX_PIXEL_FORMAT_MONO16
 
         3.Packed conversion(GVSP)
-         a. input image format  GX_PIXEL_FORMAT_MONO10_PACKED GX_PIXEL_FORMAT_MONO12_PACKED 
+         a. input image format  GX_PIXEL_FORMAT_MONO10_PACKED GX_PIXEL_FORMAT_MONO12_PACKED
 		                        GX_PIXEL_FORMAT_BAYER_RG10_PACKED GX_PIXEL_FORMAT_BAYER_GR10_PACKED GX_PIXEL_FORMAT_BAYER_BG10_PACKED GX_PIXEL_FORMAT_BAYER_GB10_PACKED
 								GX_PIXEL_FORMAT_BAYER_RG12_PACKED GX_PIXEL_FORMAT_BAYER_GR12_PACKED GX_PIXEL_FORMAT_BAYER_BG12_PACKED GX_PIXEL_FORMAT_BAYER_GB12_PACKED
             output image format GX_PIXEL_FORMAT_MONO8 GX_PIXEL_FORMAT_MONO10 GX_PIXEL_FORMAT_MONO12 GX_PIXEL_FORMAT_MONO16 GX_PIXEL_FORMAT_RGB8 GX_PIXEL_FORMAT_BGR8
@@ -787,19 +787,19 @@ VxInt32 DHDECL DxCalcUserSetCCParam(COLOR_TRANSFORM_FACTOR *pstColorTransformFac
          a. input image format  GX_PIXEL_FORMAT_MONO10_P GX_PIXEL_FORMAT_MONO12_P GX_PIXEL_FORMAT_MONO14_P
 		                        GX_PIXEL_FORMAT_BAYER_RG10_P GX_PIXEL_FORMAT_BAYER_GR10_P GX_PIXEL_FORMAT_BAYER_BG10_P GX_PIXEL_FORMAT_BAYER_GB10_P
 								GX_PIXEL_FORMAT_BAYER_RG12_P GX_PIXEL_FORMAT_BAYER_GR12_P GX_PIXEL_FORMAT_BAYER_BG12_P GX_PIXEL_FORMAT_BAYER_GB12_P
-   								GX_PIXEL_FORMAT_BAYER_RG14_P GX_PIXEL_FORMAT_BAYER_GR14_P GX_PIXEL_FORMAT_BAYER_BG14_P GX_PIXEL_FORMAT_BAYER_GB14_P                            
+								GX_PIXEL_FORMAT_BAYER_RG14_P GX_PIXEL_FORMAT_BAYER_GR14_P GX_PIXEL_FORMAT_BAYER_BG14_P GX_PIXEL_FORMAT_BAYER_GB14_P
             output image format GX_PIXEL_FORMAT_MONO8 GX_PIXEL_FORMAT_MONO10 GX_PIXEL_FORMAT_MONO12 GX_PIXEL_FORMAT_MONO14 GX_PIXEL_FORMAT_MONO16 GX_PIXEL_FORMAT_RGB8
                                 GX_PIXEL_FORMAT_BAYER_RG8 GX_PIXEL_FORMAT_BAYER_GR8 GX_PIXEL_FORMAT_BAYER_BG8 GX_PIXEL_FORMAT_BAYER_GB8
                                 GX_PIXEL_FORMAT_BAYER_RG10 GX_PIXEL_FORMAT_BAYER_GR10 GX_PIXEL_FORMAT_BAYER_BG10 GX_PIXEL_FORMAT_BAYER_GB10
                                 GX_PIXEL_FORMAT_BAYER_RG12 GX_PIXEL_FORMAT_BAYER_GR12 GX_PIXEL_FORMAT_BAYER_BG12 GX_PIXEL_FORMAT_BAYER_GB12
-                                GX_PIXEL_FORMAT_BAYER_RG14 GX_PIXEL_FORMAT_BAYER_GR14 GX_PIXEL_FORMAT_BAYER_BG14 GX_PIXEL_FORMAT_BAYER_GB14	
+                                GX_PIXEL_FORMAT_BAYER_RG14 GX_PIXEL_FORMAT_BAYER_GR14 GX_PIXEL_FORMAT_BAYER_BG14 GX_PIXEL_FORMAT_BAYER_GB14
                                 GX_PIXEL_FORMAT_BAYER_RG16 GX_PIXEL_FORMAT_BAYER_GR16 GX_PIXEL_FORMAT_BAYER_BG16 GX_PIXEL_FORMAT_BAYER_GB16
         5.Mono conversion
          a. input image format  GX_PIXEL_FORMAT_MONO8 GX_PIXEL_FORMAT_R8 GX_PIXEL_FORMAT_G8 GX_PIXEL_FORMAT_B8
             output image format GX_PIXEL_FORMAT_RGB8 GX_PIXEL_FORMAT_BGR8
 
          b. input image format  GX_PIXEL_FORMAT_MONO10 GX_PIXEL_FORMAT_MONO12 GX_PIXEL_FORMAT_MONO14 GX_PIXEL_FORMAT_MONO16
-            output image format GX_PIXEL_FORMAT_RGB8 GX_PIXEL_FORMAT_MONO8 GX_PIXEL_FORMAT_BGR8 
+            output image format GX_PIXEL_FORMAT_RGB8 GX_PIXEL_FORMAT_MONO8 GX_PIXEL_FORMAT_BGR8
 
 		6.Coord3D conversion
 		 a. input image format  GX_PIXEL_FORMAT_COORD3D_C16
@@ -807,7 +807,7 @@ VxInt32 DHDECL DxCalcUserSetCCParam(COLOR_TRANSFORM_FACTOR *pstColorTransformFac
 
 		 b. input image format  GX_PIXEL_FORMAT_COORD3D_C16
 			output image format GX_PIXEL_FORMAT_COORD3D_ABC32F_PLANAR
-			
+
 		7.YUV conversion
 		 a. input image format  GX_PIXEL_FORMAT_YUV422_8 GX_PIXEL_FORMAT_YUV422_8_UYVY
 		    output image format GX_PIXEL_FORMAT_RGB8 GX_PIXEL_FORMAT_BGR8
@@ -820,7 +820,7 @@ VxInt32 DHDECL DxCalcUserSetCCParam(COLOR_TRANSFORM_FACTOR *pstColorTransformFac
 \param  nOutBufferSize  [in]     Output Image buffer size
 \param  emInPixelFormat [in]     Input Image Pixel Type
 \param  nImgWidth       [in]     Image width
-\param  nImgHeight      [in]     Image height 
+\param  nImgHeight      [in]     Image height
 \param  bFlip           [in]     Image flip or not, true:flip false:not flip
 
 \return emStatus
@@ -830,7 +830,7 @@ VxInt32 DHDECL DxImageFormatConvert(DX_IMAGE_FORMAT_CONVERT_HANDLE handle, void 
 
 //--------------------------------------------------
 /**
-\brief  Create handle for Image Format Convert 
+\brief  Create handle for Image Format Convert
 \param  phandle          [in] Image Format convert handle
 
 \return emStatus
@@ -840,7 +840,7 @@ VxInt32 DHDECL DxImageFormatConvertCreate(DX_IMAGE_FORMAT_CONVERT_HANDLE *phandl
 
 //--------------------------------------------------
 /**
-\brief  Destroy handle for Image Format Convert  
+\brief  Destroy handle for Image Format Convert
 \param  handle          [in] Image Format convert handle
 
 \return emStatus
@@ -850,7 +850,7 @@ VxInt32 DHDECL DxImageFormatConvertDestroy(DX_IMAGE_FORMAT_CONVERT_HANDLE handle
 
 //--------------------------------------------------
 /**
-\brief  Load 3D Calibration Parameters 
+\brief  Load 3D Calibration Parameters
 \param  handle				[in]     Image Format convert handle
 \param  pCalibParamBuffer   [in]     Calibration Parameters
 \param  nBufferSize			[in]     Calibration Parameters size
@@ -862,7 +862,7 @@ VxInt32 DHDECL DxImageFormatConvertSet3DCalibParam(DX_IMAGE_FORMAT_CONVERT_HANDL
 
 //--------------------------------------------------
 /**
-\brief  Set Y-direction step 
+\brief  Set Y-direction step
 \param  handle				[in]     Image Format convert handle
 \param  dY					[in]     Y-direction step
 
@@ -873,7 +873,7 @@ VxInt32 DHDECL DxImageFormatConvertSetYStep(DX_IMAGE_FORMAT_CONVERT_HANDLE handl
 
 //--------------------------------------------------
 /**
-\brief  Set Output Pixel type 
+\brief  Set Output Pixel type
 \param  handle          [in] Image Format convert handle
 \param  emPixelFormat   [in] Pixel Format
 
@@ -884,7 +884,7 @@ VxInt32 DHDECL DxImageFormatConvertSetOutputPixelFormat(DX_IMAGE_FORMAT_CONVERT_
 
 //--------------------------------------------------
 /**
-\brief  Set Alpha channel value 
+\brief  Set Alpha channel value
 \param  handle          [in] Image Format convert handle
 \param  nAlphaValue     [in] Alpha channel value(range of 0~255)
 
@@ -895,7 +895,7 @@ VxInt32 DHDECL DxImageFormatConvertSetAlphaValue(DX_IMAGE_FORMAT_CONVERT_HANDLE 
 
 //--------------------------------------------------
 /**
-\brief  Set Valid Bits 
+\brief  Set Valid Bits
 \param  handle          [in] Image Format convert handle
 \param  emValidBits     [in] Valid Bits value
 
@@ -917,7 +917,7 @@ VxInt32 DHDECL DxImageFormatConvertSetInterpolationType(DX_IMAGE_FORMAT_CONVERT_
 
 //--------------------------------------------------
 /**
-\brief  Calculating Buffer size for conversion 
+\brief  Calculating Buffer size for conversion
 \param  handle          [in]   Image Format convert handle
 \param  emPixelFormat   [in]   Pixel Format
 \param  nImgWidth       [in]   Image Width
@@ -931,7 +931,7 @@ VxInt32 DHDECL DxImageFormatConvertGetBufferSizeForConversion(DX_IMAGE_FORMAT_CO
 
 //--------------------------------------------------
 /**
-\brief  Set Output Pixel type 
+\brief  Set Output Pixel type
 \param  handle           [in]  Image Format convert handle
 \param  pemPixelFormat   [out] Pixel Format
 
@@ -943,7 +943,7 @@ VxInt32 DHDECL DxImageFormatConvertGetOutputPixelFormat(DX_IMAGE_FORMAT_CONVERT_
 
 //-------------------------------------------------------------
 /**
-\brief  Image defect pixel correction  
+\brief  Image defect pixel correction
 \param  pInputBuffer		[in]  Image in
 \param  pOutputBuffer		[out] Image out
 \param  stDefectCorrection  [in]  Image parameter used to do defect correction
@@ -958,7 +958,7 @@ VxInt32 DHDECL DxStaticDefectCorrection(void *pInputBuffer, void *pOutputBuffer,
 
 //--------------------------------------------------
 /**
-\brief  calculating lookup table of camera 
+\brief  calculating lookup table of camera
 \param  nContrastParam  [in]     contrast param,range(-50~100)
 \param  dGamma          [in]     gamma param,range(0.1~10)
 \param  nLightness      [in]     lightness param,range(-150~150)
@@ -976,16 +976,16 @@ VxInt32 DHDECL DxCalcCameraLutBuffer(VxInt32 nContrastParam, double dGamma, VxIn
 //--------------------------------------------------
 /**
 \brief  read lut file
-\param  pchLutFilePath  [in]     Lut file path. Lut file(xxx.lut) can be obtained from Lut 
-                                 Create Tool Plugin,which can be get by select Plugin->Lut 
+\param  pchLutFilePath  [in]     Lut file path. Lut file(xxx.lut) can be obtained from Lut
+                                 Create Tool Plugin,which can be get by select Plugin->Lut
                                  Create Tool Plugin from the menu bar in GalaxyView.
-\param  pLut            [in&out] Lookup table. Users need to apply for memory in advance.The 
-                                 memory size is also lookup table length(nLutLength),should be 
+\param  pLut            [in&out] Lookup table. Users need to apply for memory in advance.The
+                                 memory size is also lookup table length(nLutLength),should be
                                  obtained through the interface GXGetBufferLength,
-                                 e.g. GXGetBufferLength(m_hDevice, GX_BUFFER_LUT_VALUEALL,&nLutLength),                               
+                                 e.g. GXGetBufferLength(m_hDevice, GX_BUFFER_LUT_VALUEALL,&nLutLength),
 \param  pnLutLength     [in]     Lookup table length(unit:byte),which should be obtained through
-                                 the interface GXGetBufferLength, e.g. 
-                                 GXGetBufferLength(m_hDevice, GX_BUFFER_LUT_VALUEALL,&nLutLength), 
+                                 the interface GXGetBufferLength, e.g.
+                                 GXGetBufferLength(m_hDevice, GX_BUFFER_LUT_VALUEALL,&nLutLength),
 
 \return   DX_OK                       success
           DX_PARAMETER_INVALID        the input parameter is invalid
@@ -1001,10 +1001,10 @@ VxInt32 DHDECL DxReadLutFile(const char *pchLutFilePath, void *pLut, VxUint32 *p
 //------------------------------------------------
 /**
 \brief  To rotate the 16-bit image clockwise by 90 degrees
-\param  pInputBuffer  	[in] input buffer 
-\param  pOutputBuffer	[out]output buffer(new buffer)  
+\param  pInputBuffer  	[in] input buffer
+\param  pOutputBuffer	[out]output buffer(new buffer)
 \param  nWidth        	[in] image width
-\param  nHeight       	[in] image height 
+\param  nHeight       	[in] image height
 
 \return emStatus
 */
@@ -1014,10 +1014,10 @@ VxInt32 DHDECL DxRotate90CW16B(void* pInputBuffer, void* pOutputBuffer, VxUint32
 //------------------------------------------------
 /**
 \brief  To rotate the 16-bit image counter clockwise by 90 degrees
-\param  pInputBuffer    [in] input buffer 
-\param  pOutputBuffer	[out]output buffer(new buffer) 
+\param  pInputBuffer    [in] input buffer
+\param  pOutputBuffer	[out]output buffer(new buffer)
 \param  nWidth          [in] image width
-\param  nHeight         [in] image height 
+\param  nHeight         [in] image height
 
 \return emStatus
 */
@@ -1026,7 +1026,7 @@ VxInt32 DHDECL DxRotate90CCW16B(void* pInputBuffer, void* pOutputBuffer, VxUint3
 
 //-------------------------------------------------------------
 /**
-\brief  image mirror(Raw16 or 16bit image) 
+\brief  image mirror(Raw16 or 16bit image)
 \param  pInputBuff   	[in] input buffer
 \param  pOutputBuf      [out]output buffer
 \param  nWidth          [in] image width
@@ -1040,7 +1040,7 @@ VxInt32 DHDECL DxImageMirror16B(void *pInputBuffer, void *pOutputBuffer, VxUint3
 
 //-------------------------------------------------------------
 /**
-\brief  Set system parameter 
+\brief  Set system parameter
 \param  emSystemParam   [in] system parameter
 \param  nValue       	[in] system value
 
@@ -1051,7 +1051,7 @@ VxInt32 DHDECL DxSetSystem(DX_SYSTEM_PARAM emSystemParam, int nValue);
 
 //-------------------------------------------------------------
 /**
-\brief  Get system parameter 
+\brief  Get system parameter
 \param  emSystemParam   [in] system parameter
 \param  pnValue         [out]system value
 
@@ -1085,9 +1085,9 @@ VxInt32 DHDECL DxFFCDestroy(DX_FLAT_FIELD_CORRECTION_HANDLE handle);
 \brief  Calculate flat field correction coefficients
 \param  handle                  [in] flat field correction handle
 \param  pstFFCParam             [in] flat field correction parameter
-                                Setting nFFCBlockSize to -1 enables the software-side algorithm, 
+                                Setting nFFCBlockSize to -1 enables the software-side algorithm,
                                 while any other value obtained from the camera activates the camera-side algorithm.
-                                Setting nFFCExpectedGray to -1 selects the default gray value, 
+                                Setting nFFCExpectedGray to -1 selects the default gray value,
                                 while any other value applies the user-defined setting.
 \param  pFFCCoefficients        [out]flat field correction coefficients
 \param  nFFCCoefficientsSize    [in] flat field correction coefficients size

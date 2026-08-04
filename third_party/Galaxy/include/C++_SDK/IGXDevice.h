@@ -138,8 +138,8 @@ public:
 
 	//----------------------------------------------------------------------------------
 	/**
-	\brief    Returns a CImageProcessConfigPointer object, 
-	which contains a set of set parameters for image processing. e.g. IImageData::ImageProcess 
+	\brief    Returns a CImageProcessConfigPointer object,
+	which contains a set of set parameters for image processing. e.g. IImageData::ImageProcess
 	\return   A CImageProcessConfigPointer object
 	*/
 	//----------------------------------------------------------------------------------
@@ -162,7 +162,7 @@ public:
 	*/
 	//----------------------------------------------------------------------------------
 	virtual void ImportConfigFileW(const wchar_t*  pchWFilePath) = 0;
-	
+
 	//----------------------------------------------------------------------------------
 	/**
 	\brief      Get parent interface pointer

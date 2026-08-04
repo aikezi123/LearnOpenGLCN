@@ -229,7 +229,7 @@ typedef struct GX_FRAME_CALLBACK_PARAM
 	uint64_t            nTimestamp;						///< \Chinese 图像的时间戳																\English Timestamp of image
 	void_64             pChunkDataHandle;               ///< \Chinese 帧信息句柄                                   \chunk data handle
     int32_t             reserved[64];                   ///< \Chinese 保留												\English reserved
-}GX_FRAME_CALLBACK_PARAM;       
+}GX_FRAME_CALLBACK_PARAM;
 
 typedef struct GX_FRAME_DATA
 {
@@ -446,7 +446,7 @@ typedef struct GX_REGISTER_STACK_ENTRY
 typedef struct GX_GIGE_ACTION_COMMAND_RESULT
 {
     char strDeviceAddress[16];	                            ///< \Chinese 设备IP	12 + 3 + 1                                                                                   \English IP address of the device
-    
+
     ///< \Chinese 由设备返回的ACTION状态有如下几种情况
     ///<1. 0: 标识命令发送成功。
     ///<2. 0x8013: 设备未与主时钟进行时间同步。在执行该接口前，必须起用”PtpEnable”，
@@ -456,14 +456,14 @@ typedef struct GX_GIGE_ACTION_COMMAND_RESULT
     ///<4. 0x8016: GXGigEIssueScheduledActionCommand发出的Scheduled Action Command 已过时。
     ///< \English GigE Vision status code returned by the device, There are several situations:
     ///<1. 0: Indicates that the command was sent successfully.
-    ///<2. 0x8013: The device is not synchronized with the master clock. 
-    ///<            Before executing this interface, you must enable "PtpEnable" and ensure 
+    ///<2. 0x8013: The device is not synchronized with the master clock.
+    ///<            Before executing this interface, you must enable "PtpEnable" and ensure
     ///<           that "PtpStatus" is "Master" or "Slave" (indicating that it has been synchronized with the master clock).
-    ///<3. 0x8015: The device queue or packet data has overflowed. When the device corresponding 
+    ///<3. 0x8015: The device queue or packet data has overflowed. When the device corresponding
     ///<            to strDeviceAddress is executing the previous GXGigEIssueScheduledActionCommand request,
     ///<            it receives a new GXGigEIssueScheduledActionCommand request again and returns this error.
     ///<4. 0x8016: The Scheduled Action Command issued by GXGigEIssueScheduledActionCommand is outdated.
-    int32_t nStatus;	                                    
+    int32_t nStatus;
 } GX_GIGE_ACTION_COMMAND_RESULT;
 //------------------------------------------------------------------------------
 //Chinese   回调函数类型定义

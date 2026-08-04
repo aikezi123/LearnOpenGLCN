@@ -63,6 +63,19 @@ set_target_properties(
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
+foreach(galaxy_runtime_file IN LISTS GALAXY_RUNTIME_FILES)
+    add_custom_command(
+        TARGET LearnOpenGLCN_Qt
+        POST_BUILD
+        COMMAND
+            ${CMAKE_COMMAND} -E copy_if_different
+            "${galaxy_runtime_file}"
+            "$<TARGET_FILE_DIR:LearnOpenGLCN_Qt>"
+        COMMENT "Deploying ${galaxy_runtime_file}"
+        VERBATIM
+    )
+endforeach()
+
 if(LEARNOPENGL_ENABLE_ASAN)
     get_filename_component(MSVC_COMPILER_DIRECTORY "${CMAKE_CXX_COMPILER}" DIRECTORY)
     set(

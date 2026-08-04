@@ -43,11 +43,11 @@ public:
 	/**
 	\brief  Calculate flat field correction coefficients size
 	\param  pstFFCParam                  [in] flat field correction parameter
-	\return  pnFFCCoefficientsSize        
+	\return  pnFFCCoefficientsSize
 	*/
 	//--------------------------------------------------
 	virtual int32_t GetCoefficientsSize(const GX_FLAT_FIELD_CORRECTION_PARAMETER *pstFFCParam) = 0;
-    
+
 
 	//--------------------------------------------------
 	/**
@@ -66,16 +66,16 @@ public:
 	\param  pOutputBuffer    	  [out]       Image out
 	\param  nActualBits           [in]        Image actual cits
 	\param  nImgWidth             [in]        Image width
-	\param  nImgHeight            [in]        Image height 
+	\param  nImgHeight            [in]        Image height
 	\param  pFFCCoefficients      [in]        Flat field correction coefficients
 	\param  pnlength              [in]        Flat field correction coefficients(byte)
 
-	\return emStatus  
+	\return emStatus
 	*/
 	//--------------------------------------------------
-	virtual void FlatFieldCorrection(void *pSrcBuffer, void *pDstBuffer, 
-		GX_ACTUAL_BITS emActualBits, uint32_t ui64SrcWidth, 
-		uint32_t  ui64SrcHeight, void  *pFFCCoefficients, 
+	virtual void FlatFieldCorrection(void *pSrcBuffer, void *pDstBuffer,
+		GX_ACTUAL_BITS emActualBits, uint32_t ui64SrcWidth,
+		uint32_t  ui64SrcHeight, void  *pFFCCoefficients,
 		int *pnFFCCoefficientsSize) = 0;
 };
 

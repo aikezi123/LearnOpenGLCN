@@ -26,7 +26,7 @@ class IFeatureEventHandler
 	Only very short processing tasks can be performed in this function. Otherwise, the event notification will block the
 	receiving of events.
 	\param[in]  strFeatureName The feature name registered.
-	\param[in]  pUserParam     The user param passed when registering for the event. It can be used to distinguish between different events.	
+	\param[in]  pUserParam     The user param passed when registering for the event. It can be used to distinguish between different events.
     */
     //---------------------------------------------------------
 	virtual void DoOnFeatureEvent(const GxIAPICPP::gxstring& strFeatureName, void* pUserParam) = 0;

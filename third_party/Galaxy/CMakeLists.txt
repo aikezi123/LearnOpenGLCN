@@ -3,14 +3,30 @@
 # 这样 SDK 路径始终相对于仓库，不依赖某台电脑上的绝对安装路径。
 set(GALAXY_ROOT "${CMAKE_CURRENT_SOURCE_DIR}")
 
-# 大恒 Galaxy SDK 当前分成两套头文件/库：
-# - VC_SDK / VC_Lib：C API，包含 GxIAPI、DxImageProc 等基础接口和图像处理库。
-# - C++_SDK / VC++_Lib：C++ 封装，包含 GalaxyIncludes.h 和 GxIAPICPPEx.lib。
+# 大恒 Galaxy SDK 当前使用两套头文件和一套 C++ import library：
+# - VC_SDK：C++ 头文件间接包含的基础类型与图像处理声明。
+# - C++_SDK / VC++_Lib：当前适配器直接使用的 C++ 封装和 GxIAPICPPEx.lib。
 # 这里先把路径集中成变量，下面检查文件、设置 include、设置 link 时复用，避免同一目录写很多遍。
 set(GALAXY_VC_INCLUDE_DIR "${GALAXY_ROOT}/include/VC_SDK")
 set(GALAXY_CPP_INCLUDE_DIR "${GALAXY_ROOT}/include/C++_SDK")
-set(GALAXY_VC_LIB_DIR "${GALAXY_ROOT}/libs/VC_Lib")
 set(GALAXY_CPP_LIB_DIR "${GALAXY_ROOT}/libs/VC++_Lib")
+set(GALAXY_RUNTIME_DIR "${GALAXY_ROOT}/bin/Win64")
+
+set(GALAXY_RUNTIME_FILES
+    "${GALAXY_RUNTIME_DIR}/GxIAPICPPEx.dll"
+    "${GALAXY_RUNTIME_DIR}/DxImageProc.dll"
+    "${GALAXY_RUNTIME_DIR}/GCBase_MD_VC120_v3_0.dll"
+    "${GALAXY_RUNTIME_DIR}/GenApi_MD_VC120_v3_0.dll"
+    "${GALAXY_RUNTIME_DIR}/Log_MD_VC120_v3_0.dll"
+    "${GALAXY_RUNTIME_DIR}/MathParser_MD_VC120_v3_0.dll"
+    "${GALAXY_RUNTIME_DIR}/NodeMapData_MD_VC120_v3_0.dll"
+    "${GALAXY_RUNTIME_DIR}/XmlParser_MD_VC120_v3_0.dll"
+    "${GALAXY_RUNTIME_DIR}/msvcp100.dll"
+    "${GALAXY_RUNTIME_DIR}/msvcr100.dll"
+    "${GALAXY_RUNTIME_DIR}/vcomp100.dll"
+    "${GALAXY_RUNTIME_DIR}/msvcp120.dll"
+    "${GALAXY_RUNTIME_DIR}/msvcr120.dll"
+)
 
 # 这些是当前接入大恒 SDK 必须存在的文件。
 # set(...) 在这里创建一个 CMake 列表变量 GALAXY_REQUIRED_FILES。
@@ -21,9 +37,8 @@ set(GALAXY_REQUIRED_FILES
     "${GALAXY_VC_INCLUDE_DIR}/GxIAPI.h"
     "${GALAXY_VC_INCLUDE_DIR}/DxImageProc.h"
     "${GALAXY_CPP_INCLUDE_DIR}/GalaxyIncludes.h"
-    "${GALAXY_VC_LIB_DIR}/GxIAPI.lib"
-    "${GALAXY_VC_LIB_DIR}/DxImageProc.lib"
     "${GALAXY_CPP_LIB_DIR}/GxIAPICPPEx.lib"
+    ${GALAXY_RUNTIME_FILES}
 )
 
 # foreach(_galaxy_file IN LISTS GALAXY_REQUIRED_FILES)
@@ -78,7 +93,9 @@ target_include_directories(galaxy_sdk
 # 当前项目约定是把大恒运行时 .dll 直接放在 out/build/<preset>/bin，与 exe 同目录。
 target_link_libraries(galaxy_sdk
     INTERFACE
-        "${GALAXY_VC_LIB_DIR}/GxIAPI.lib"
-        "${GALAXY_VC_LIB_DIR}/DxImageProc.lib"
         "${GALAXY_CPP_LIB_DIR}/GxIAPICPPEx.lib"
 )
+
+# Export the runtime files to the parent directory so executable targets can
+# deploy the SDK beside the generated .exe without relying on a machine-wide PATH.
+set(GALAXY_RUNTIME_FILES "${GALAXY_RUNTIME_FILES}" PARENT_SCOPE)

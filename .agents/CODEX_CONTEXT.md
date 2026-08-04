@@ -110,8 +110,8 @@ application 层流程对象统一使用 `Service` 命名，例如 `CameraCapture
 - `lessons/`：LearnOpenGL 教程示例集合。
 - `infrastructure/`：现有 OpenGL Shader 等基础设施。
 - `domain/`、`application/`：已形成相机预览所需的最小 target，当前包含图像帧模型、二维轨迹纯算法、相机端口和预览 service。
-- `third_party/`：GLAD、GLFW、GLM、stb_image 等第三方依赖。
-- `third_party/Galaxy/`：大恒 Galaxy SDK 的第三方依赖包装目录，当前 CMake target 为 `Galaxy::SDK`。现有文件覆盖 VC/C API 的 `GxIAPI`、`DxImageProc`，以及 C++ SDK 的 `GalaxyIncludes.h`、`GxIAPICPPEx.lib`；运行时 DLL 直接放在 `out/build/<preset>/bin`，随 exe/pdb 一起提交。
+- `third_party/`：GLAD、GLFW、GLM、stb_image 等第三方依赖；GLFW 3.4 的 Windows x64 VC2022 静态库与许可证保存在仓库中，课程构建不依赖本机安装 GLFW。
+- `third_party/Galaxy/`：大恒 Galaxy SDK 的第三方依赖包装目录，当前 CMake target 为 `Galaxy::SDK`。仓库保存同一版本的 VC/C API 与 C++ SDK 头文件、当前适配器实际链接的 `GxIAPICPPEx.lib`，以及 `GxIAPICPPEx.dll` 的 13 个 Win64 递归运行依赖；CMake 自动部署这些 DLL，不依赖本机 SDK 安装路径。
 - `assets/`：Shader、纹理和后续模型资源。
 
 当前 `LearnOpenGLCN_Lessons.exe` 不带参数会打开 Qt 课程导航器。课程清单来自 `lessons/catalog` 的 `LessonRegistry`，左侧按 LearnOpenGL 入门章节顺序列出已实现课程，右侧显示课程信息、运行按钮和子进程输出。点击运行时，导航器启动同一个 exe 并传入课程 ID，实际 GLFW 课程画面仍在独立窗口中运行；传入课程 ID 时仍可直接运行，例如 `LearnOpenGLCN_Lessons.exe transform`。导航窗口实现已拆到 `composition_root/lesson_launcher`，`lesson_main.cpp` 只保留入口与命令行选择逻辑。

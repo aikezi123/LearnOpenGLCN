@@ -1,4 +1,4 @@
-//---------------------------------------------------------------
+﻿//---------------------------------------------------------------
 /**
 \file         IGXImageProcess.h
 \brief        Image Process class
@@ -36,14 +36,14 @@ public:
 
 	//-------------------------------------------------------------
 	/**
-	\brief  Image defect pixel correction  
+	\brief  Image defect pixel correction
 	\param  pInputBuffer		[in]  Image in
 	\param  pOutputBuffer		[out] Image out
 	\param  stDefectCorrection  [in]  Image parameter used to do defect correction
 	\param  pDefectPosBuffer	[in]  Defect Pixel position file buffer
 	\param  nDefectPosBufferSize[in]  Defect Pixel position file buffer size
 
-	\return  DX_STATUS 
+	\return  DX_STATUS
 	*/
 	//-------------------------------------------------------------
 	virtual void  StaticDefectCorrection(void *pInputBuffer, void *pOutputBuffer, const GX_STATIC_DEFECT_CORRECTION stDefectCorrection, void* pDefectPosBuffer, int32_t nDefectPosBufferSize) = 0;

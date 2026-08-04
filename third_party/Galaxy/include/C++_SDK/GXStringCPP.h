@@ -25,7 +25,7 @@ namespace GxIAPICPP
 	{
 #if defined(_MSC_VER) && !defined(PHARLAP_WIN32)
 		/// Helper class for returning wchar_t* on the stack
-		class GXIAPICPP_API gxwchar 
+		class GXIAPICPP_API gxwchar
 		{
 		public:
 			/// Constructor taking ownership of the memory block allocated with new on the heap

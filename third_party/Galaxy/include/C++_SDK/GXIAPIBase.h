@@ -11,7 +11,7 @@
 #define GXIAPI_BASE_H
 
 #if defined(_WIN32)
-#ifndef _STDINT_H 
+#ifndef _STDINT_H
 #ifdef _MSC_VER // Microsoft compiler
 #if _MSC_VER < 1600
 typedef __int8            int8_t;   ///< makes int 8 portable across different platforms
@@ -23,14 +23,14 @@ typedef unsigned __int16  uint16_t; ///< makes unsigned short portable across di
 typedef unsigned __int32  uint32_t; ///< makes unsigned int32 portable across different platforms
 typedef unsigned __int64  uint64_t; ///< makes unsigned int64 portable across different platforms
 #else
-// stdint.h is already included in Visual Studio 2010 
+// stdint.h is already included in Visual Studio 2010
 #include <stdint.h>
 #endif
 #else
 // Not a Microsoft compiler
 #include <stdint.h>
 #endif
-#endif 
+#endif
 #else
 // Linux
 #include <stdint.h>
@@ -62,7 +62,7 @@ typedef enum GX_STATUS_LIST
     GX_STATUS_OUT_OF_RANGE           = -11,          ///< A given value is out of range; e.g. IIntFeautre::SetValue() had been set an value bigger than the Max Value.
     GX_STATUS_NOT_IMPLEMENTED        = -12,          ///< Requested operation is not implemented; e.g. no color feature on Mono Camera.
     GX_STATUS_NOT_INIT_API           = -13,          ///< A module or resource is not initialized; e.g. IGXFactory::Init was not called.
-    GX_STATUS_TIMEOUT                = -14,          ///< An operation's timeout time expired before it could be completed.     
+    GX_STATUS_TIMEOUT                = -14,          ///< An operation's timeout time expired before it could be completed.
 }GX_STATUS_LIST;
 typedef int32_t GX_STATUS;
 
@@ -117,7 +117,7 @@ typedef enum  GX_ACCESS_STATUS
 typedef int32_t GX_ACCESS_STATUS_CMD;
 
 //------------------------------------------------------------------------------
-//  Used for IImageData::GetStatus 
+//  Used for IImageData::GetStatus
 //------------------------------------------------------------------------------
 typedef enum GX_FRAME_STATUS_LIST
 {
@@ -139,7 +139,7 @@ enum GX_IP_CONFIGURE_MODE_LIST
 typedef int32_t GX_IP_CONFIGURE_MODE;
 
 //------------------------------------------------------------------------------
-//  Used for IGXFeatureControl::GetFeatureType 
+//  Used for IGXFeatureControl::GetFeatureType
 //------------------------------------------------------------------------------
 typedef enum GX_FEATURE_TYPE
 {
@@ -169,7 +169,7 @@ typedef enum GX_FEATURE_TYPE
 #define GX_PIXEL_96BIT                 ( 0x00600000 )
 
 //------------------------------------------------------------------------------
-//  Used for IImageData::GetPixelFormat 
+//  Used for IImageData::GetPixelFormat
 //------------------------------------------------------------------------------
 #ifndef GX_PIXEL_FORMAT_ENTRY_DEFINED
 #define GX_PIXEL_FORMAT_ENTRY_DEFINED
@@ -186,39 +186,39 @@ typedef enum GX_PIXEL_FORMAT_ENTRY
     GX_PIXEL_FORMAT_MONO14_P           = (GX_PIXEL_MONO  | GX_PIXEL_14BIT | 0x0104),//0x010E0104,
     GX_PIXEL_FORMAT_MONO16             = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0007),//0x1100007,
 
-    GX_PIXEL_FORMAT_BAYER_GR8          = (GX_PIXEL_MONO  | GX_PIXEL_8BIT  | 0x0008),//0x1080008,               
-    GX_PIXEL_FORMAT_BAYER_RG8          = (GX_PIXEL_MONO  | GX_PIXEL_8BIT  | 0x0009),//0x1080009,                
+    GX_PIXEL_FORMAT_BAYER_GR8          = (GX_PIXEL_MONO  | GX_PIXEL_8BIT  | 0x0008),//0x1080008,
+    GX_PIXEL_FORMAT_BAYER_RG8          = (GX_PIXEL_MONO  | GX_PIXEL_8BIT  | 0x0009),//0x1080009,
     GX_PIXEL_FORMAT_BAYER_GB8          = (GX_PIXEL_MONO  | GX_PIXEL_8BIT  | 0x000A),//0x108000A,
     GX_PIXEL_FORMAT_BAYER_BG8          = (GX_PIXEL_MONO  | GX_PIXEL_8BIT  | 0x000B),//0x108000B,
 
-    GX_PIXEL_FORMAT_BAYER_GR10         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x000C),//0x110000C, 
+    GX_PIXEL_FORMAT_BAYER_GR10         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x000C),//0x110000C,
     GX_PIXEL_FORMAT_BAYER_GR10_P       = (GX_PIXEL_MONO  | GX_PIXEL_10BIT | 0x0056),//0x010A0056,
     GX_PIXEL_FORMAT_BAYER_RG10         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x000D),//0x110000D,
     GX_PIXEL_FORMAT_BAYER_RG10_P       = (GX_PIXEL_MONO  | GX_PIXEL_10BIT | 0x0058),//0x010A0058,
     GX_PIXEL_FORMAT_BAYER_GB10         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x000E),//0x110000E,
     GX_PIXEL_FORMAT_BAYER_GB10_P       = (GX_PIXEL_MONO  | GX_PIXEL_10BIT | 0x0054),//0x010A0054,
     GX_PIXEL_FORMAT_BAYER_BG10         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x000F),//0x110000F,
-    GX_PIXEL_FORMAT_BAYER_BG10_P       = (GX_PIXEL_MONO  | GX_PIXEL_10BIT | 0x0052),//0x010A0052,  
+    GX_PIXEL_FORMAT_BAYER_BG10_P       = (GX_PIXEL_MONO  | GX_PIXEL_10BIT | 0x0052),//0x010A0052,
 
-    GX_PIXEL_FORMAT_BAYER_GR12         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0010),//0x1100010,  
+    GX_PIXEL_FORMAT_BAYER_GR12         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0010),//0x1100010,
     GX_PIXEL_FORMAT_BAYER_GR12_P       = (GX_PIXEL_MONO  | GX_PIXEL_12BIT | 0x0057),//0x010C0057,
     GX_PIXEL_FORMAT_BAYER_RG12         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0011),//0x1100011,
     GX_PIXEL_FORMAT_BAYER_RG12_P       = (GX_PIXEL_MONO  | GX_PIXEL_12BIT | 0x0059),//0x010C0059,
     GX_PIXEL_FORMAT_BAYER_GB12         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0012),//0x1100012,
     GX_PIXEL_FORMAT_BAYER_GB12_P       = (GX_PIXEL_MONO  | GX_PIXEL_12BIT | 0x0055),//0x010C0055,
     GX_PIXEL_FORMAT_BAYER_BG12         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0013),//0x1100013,
-    GX_PIXEL_FORMAT_BAYER_BG12_P       = (GX_PIXEL_MONO  | GX_PIXEL_12BIT | 0x0053),//0x010C0053,   
+    GX_PIXEL_FORMAT_BAYER_BG12_P       = (GX_PIXEL_MONO  | GX_PIXEL_12BIT | 0x0053),//0x010C0053,
 
-    GX_PIXEL_FORMAT_BAYER_GR14         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0109),//0x01100109, 
+    GX_PIXEL_FORMAT_BAYER_GR14         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0109),//0x01100109,
     GX_PIXEL_FORMAT_BAYER_GR14_P       = (GX_PIXEL_MONO  | GX_PIXEL_14BIT | 0x0105),//0x010E0105,
-    GX_PIXEL_FORMAT_BAYER_RG14         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x010A),//0x0110010A, 
+    GX_PIXEL_FORMAT_BAYER_RG14         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x010A),//0x0110010A,
     GX_PIXEL_FORMAT_BAYER_RG14_P       = (GX_PIXEL_MONO  | GX_PIXEL_14BIT | 0x0106),//0x010E0106,
-    GX_PIXEL_FORMAT_BAYER_GB14         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x010B),//0x0110010B,  
+    GX_PIXEL_FORMAT_BAYER_GB14         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x010B),//0x0110010B,
     GX_PIXEL_FORMAT_BAYER_GB14_P       = (GX_PIXEL_MONO  | GX_PIXEL_14BIT | 0x0107),//0x010E0107,
     GX_PIXEL_FORMAT_BAYER_BG14         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x010C),//0x0110010C,
-    GX_PIXEL_FORMAT_BAYER_BG14_P       = (GX_PIXEL_MONO  | GX_PIXEL_14BIT | 0x0108),//0x010E0108, 
+    GX_PIXEL_FORMAT_BAYER_BG14_P       = (GX_PIXEL_MONO  | GX_PIXEL_14BIT | 0x0108),//0x010E0108,
 
-    GX_PIXEL_FORMAT_BAYER_GR16         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x002E),//0x110002E,                
+    GX_PIXEL_FORMAT_BAYER_GR16         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x002E),//0x110002E,
     GX_PIXEL_FORMAT_BAYER_RG16         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x002F),//0x110002F,
     GX_PIXEL_FORMAT_BAYER_GB16         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0030),//0x1100030,
     GX_PIXEL_FORMAT_BAYER_BG16         = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x0031),//0x1100031,
@@ -242,25 +242,25 @@ typedef enum GX_PIXEL_FORMAT_ENTRY
 
     GX_PIXEL_FORMAT_RGBA8              = (GX_PIXEL_COLOR | GX_PIXEL_32BIT | 0x0016),//0x2200016,
     GX_PIXEL_FORMAT_BGRA8              = (GX_PIXEL_COLOR | GX_PIXEL_32BIT | 0x0017),//0x2200017,
-    GX_PIXEL_FORMAT_ARGB8              = (GX_PIXEL_COLOR | GX_PIXEL_32BIT | 0x0018),//0x2200018,    The standard agreement is undefined   
-    GX_PIXEL_FORMAT_ABGR8              = (GX_PIXEL_COLOR | GX_PIXEL_32BIT | 0x0019),//0x2200019,    The standard agreement is undefined  
+    GX_PIXEL_FORMAT_ARGB8              = (GX_PIXEL_COLOR | GX_PIXEL_32BIT | 0x0018),//0x2200018,    The standard agreement is undefined
+    GX_PIXEL_FORMAT_ABGR8              = (GX_PIXEL_COLOR | GX_PIXEL_32BIT | 0x0019),//0x2200019,    The standard agreement is undefined
 
     GX_PIXEL_FORMAT_R8                 = (GX_PIXEL_MONO | GX_PIXEL_8BIT | 0x00C9),//0x010800C9,
     GX_PIXEL_FORMAT_G8                 = (GX_PIXEL_MONO | GX_PIXEL_8BIT | 0x00CD),//0x010800CD,
     GX_PIXEL_FORMAT_B8                 = (GX_PIXEL_MONO | GX_PIXEL_8BIT | 0x00D1),//0x010800D1,
 
-    GX_PIXEL_FORMAT_COORD3D_ABC32F           = (GX_PIXEL_COLOR | GX_PIXEL_96BIT | 0X00C0),//0x021800C0,     3D coordinate A-B-C 32-bit floating point 
+    GX_PIXEL_FORMAT_COORD3D_ABC32F           = (GX_PIXEL_COLOR | GX_PIXEL_96BIT | 0X00C0),//0x021800C0,     3D coordinate A-B-C 32-bit floating point
     GX_PIXEL_FORMAT_COORD3D_ABC32F_PLANAR    = (GX_PIXEL_COLOR | GX_PIXEL_96BIT | 0X00C1),//0x021800C1,     3D coordinate A-B-C 32-bit floating point planar
     GX_PIXEL_FORMAT_COORD3D_C16              = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0x00B8),//0x011000B8,     3D coordinate C 16-bit
     GX_PIXEL_FORMAT_COORD3D_C16_I16          = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0xFF02),//0x0110FF02,     Vendor-defined format
     GX_PIXEL_FORMAT_COORD3D_C16_S16          = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0xFF03),//0x0110FF03,     Vendor-defined format
     GX_PIXEL_FORMAT_COORD3D_C16_I16_S16      = (GX_PIXEL_MONO  | GX_PIXEL_16BIT | 0xFF04),//0x0110FF04,     Vendor-defined format
-    
+
     GX_PIXEL_FORMAT_YUV444_8           = (GX_PIXEL_COLOR | GX_PIXEL_24BIT | 0x0020),//0x2180020,
     GX_PIXEL_FORMAT_YUV422_8           = (GX_PIXEL_COLOR | GX_PIXEL_16BIT | 0x0032),//0x2100032,
     GX_PIXEL_FORMAT_YUV422_8_UYVY      = (GX_PIXEL_COLOR | GX_PIXEL_16BIT | 0x001F),//0x210001F,
     GX_PIXEL_FORMAT_YUV411_8           = (GX_PIXEL_COLOR | GX_PIXEL_12BIT | 0x001E),//0x20C001E,
-    GX_PIXEL_FORMAT_YUV420_8_PLANAR    = (GX_PIXEL_COLOR | GX_PIXEL_12BIT | 0x0040),//0x20C0040,    The standard agreement is undefined 
+    GX_PIXEL_FORMAT_YUV420_8_PLANAR    = (GX_PIXEL_COLOR | GX_PIXEL_12BIT | 0x0040),//0x20C0040,    The standard agreement is undefined
 
     GX_PIXEL_FORMAT_YCBCR444_8         = (GX_PIXEL_COLOR | GX_PIXEL_24BIT | 0x005B),//0x218005B,
     GX_PIXEL_FORMAT_YCBCR422_8         = (GX_PIXEL_COLOR | GX_PIXEL_16BIT | 0x003B),//0x210003B,
@@ -292,7 +292,7 @@ typedef enum GX_PIXEL_FORMAT_ENTRY
 #endif
 
 //------------------------------------------------------------------------------
-//  Image interpolation method; Used for IImageProcessConfig::SetConvertType 
+//  Image interpolation method; Used for IImageProcessConfig::SetConvertType
 //------------------------------------------------------------------------------
 typedef enum  GX_BAYER_CONVERT_TYPE_LIST
 {
@@ -302,7 +302,7 @@ typedef enum  GX_BAYER_CONVERT_TYPE_LIST
 }GX_BAYER_CONVERT_TYPE_LIST;
 
 //------------------------------------------------------------------------------
-//  Image valid bit; Used for IImageData::ConvertToRaw8/IImageData::ConvertToRGB24/IImageProcessConfig.SetValidBit 
+//  Image valid bit; Used for IImageData::ConvertToRaw8/IImageData::ConvertToRGB24/IImageProcessConfig.SetValidBit
 //------------------------------------------------------------------------------
 typedef enum  GX_VALID_BIT_LIST
 {
@@ -324,7 +324,7 @@ typedef enum  GX_VALID_BIT_LIST
 typedef enum GX_RESET_DEVICE_MODE
 {
     GX_MANUFACTURER_SPECIFIC_RECONNECT   = 0x1,    ///< reconnect Device
-    GX_MANUFACTURER_SPECIFIC_RESET     = 0x2     ///< reset Device 
+    GX_MANUFACTURER_SPECIFIC_RESET     = 0x2     ///< reset Device
 }GX_RESET_DEVICE_MODE;
 
 //------------------------------------------------------------------------------
@@ -364,8 +364,8 @@ typedef uint32_t GX_LOG_TYPE;
 //------------------------------------------------------------------------------
 //  Call back handles
 //------------------------------------------------------------------------------
-typedef void* GX_DEVICE_OFFLINE_CALLBACK_HANDLE;    ///< Retrieve from IGXDevice::RegisterDeviceOfflineCallback 
-typedef void* GX_FEATURE_CALLBACK_HANDLE;           ///< Retrieve from IGXFeatureControl::RegisterFeatureCallback 
+typedef void* GX_DEVICE_OFFLINE_CALLBACK_HANDLE;    ///< Retrieve from IGXDevice::RegisterDeviceOfflineCallback
+typedef void* GX_FEATURE_CALLBACK_HANDLE;           ///< Retrieve from IGXFeatureControl::RegisterFeatureCallback
 
 //------------------------------------------------------------------------------
 //  Batch operation register structure
@@ -392,11 +392,11 @@ typedef struct GX_IMAGE_INFO
 /// Bayer layout
 typedef enum  GX_PIXEL_COLOR_FILTER
 {
-    GX_NONE    = 0,   
-    GX_BAYERRG = 1,   
-    GX_BAYERGB = 2,   
-    GX_BAYERGR = 3,   
-    GX_BAYERBG = 4    
+    GX_NONE    = 0,
+    GX_BAYERRG = 1,
+    GX_BAYERGB = 2,
+    GX_BAYERGR = 3,
+    GX_BAYERBG = 4
 } GX_PIXEL_COLOR_FILTER;
 
 /// image actual bits
@@ -410,12 +410,12 @@ typedef enum GX_ACTUAL_BITS
 } GX_ACTUAL_BITS;
 
 
-/// static defect pixel correction struct 
+/// static defect pixel correction struct
 typedef  struct  GX_STATIC_DEFECT_CORRECTION
 {
-    uint32_t                ui32ImgWidth;   
-    uint32_t                ui32ImgHeight;               
-    uint32_t                ui32ImgOffsetX;               
+    uint32_t                ui32ImgWidth;
+    uint32_t                ui32ImgHeight;
+    uint32_t                ui32ImgOffsetX;
     uint32_t                ui32ImgOffsetY;
     uint32_t                ui32ImgWidthMax;
     GX_PIXEL_COLOR_FILTER   emBayerType;
@@ -448,7 +448,7 @@ typedef struct GX_FLAT_FIELD_CORRECTION_PARAMETER
 	int32_t                      nImgWid;                      ///< image width
 	int32_t                      nImgHei;                      ///< image height
 	int32_t                      nFFCBlockSize;                ///< block size
-	int32_t                      nFFCExpectedGray;             ///< FFC expected gray value 
+	int32_t                      nFFCExpectedGray;             ///< FFC expected gray value
 	int32_t                      arrReserved[64];              ///< reserved value
 }GX_FLAT_FIELD_CORRECTION_PARAMETER;
 

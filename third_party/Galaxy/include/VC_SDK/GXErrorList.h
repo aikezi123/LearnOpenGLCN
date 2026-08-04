@@ -1,6 +1,6 @@
 ﻿/**
 @File      GXErrorList.h
-@Brief     the errorn list for the GxIAPI dll module. 
+@Brief     the errorn list for the GxIAPI dll module.
 @Author    Software Department
 @Date      2023-06-20
 @Version   1.0.2306.9201
@@ -19,7 +19,7 @@
 //////////////////////////////////////////////////////////////////////////
 
 #if defined(_WIN32)
-	#ifndef _STDINT_H 
+	#ifndef _STDINT_H
 		#ifdef _MSC_VER // Microsoft compiler
 			#if _MSC_VER < 1600
 				typedef __int8            int8_t;
@@ -38,7 +38,7 @@
 			// Not a Microsoft compiler
 			#include <stdint.h>
 		#endif
-	#endif 
+	#endif
 #else
 	// Linux
 	#include <stdint.h>

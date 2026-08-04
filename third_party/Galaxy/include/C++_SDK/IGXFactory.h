@@ -60,7 +60,7 @@ public:
 
 	//----------------------------------------------------------------------------------
 	/**
-	\brief    Retrieve a list of available devices. If GigE cameras are connected, this can enumerate all GigE camera devices in the same subnet. 
+	\brief    Retrieve a list of available devices. If GigE cameras are connected, this can enumerate all GigE camera devices in the same subnet.
 	\param    nTimeout[in]        Timeout for the waits in ms.
 	\param    vectorDeviceInfo[int,out] A list of available devices
 	\return   void
@@ -70,7 +70,7 @@ public:
 
 	//----------------------------------------------------------------------------------
 	/**
-	\brief    Retrieve a list of available devices. If GigE cameras are connected, this can enumerate all GigE camera devices in all subnets. 
+	\brief    Retrieve a list of available devices. If GigE cameras are connected, this can enumerate all GigE camera devices in all subnets.
 	\param    nTimeout[in]        Timeout for the waits in ms.
 	\param    vectorDeviceInfo[int,out] A list of available devices
 	\return   void
@@ -131,10 +131,10 @@ public:
 		\retrun     void
 		*/
        // ---------------------------------------------------------------------------
-		virtual void GigEIpConfiguration(const GxIAPICPP::gxstring& strDeviceMacAddress, 
+		virtual void GigEIpConfiguration(const GxIAPICPP::gxstring& strDeviceMacAddress,
 			GX_IP_CONFIGURE_MODE emIpConfigMode,
 			const GxIAPICPP::gxstring& strIpAddress,
-			const GxIAPICPP::gxstring& strSubnetMask, 
+			const GxIAPICPP::gxstring& strSubnetMask,
 			const GxIAPICPP::gxstring& strDefaultGateway,
 			const GxIAPICPP::gxstring& strUserID) = 0;
 
@@ -149,9 +149,9 @@ public:
 		\retrun      void
 		*/
         // ---------------------------------------------------------------------------
-		virtual void GigEForceIp(const GxIAPICPP::gxstring& pszDeviceMacAddress, 
+		virtual void GigEForceIp(const GxIAPICPP::gxstring& pszDeviceMacAddress,
 			const GxIAPICPP::gxstring& strIpAddress,
-			const GxIAPICPP::gxstring& strSubnetMask, 
+			const GxIAPICPP::gxstring& strSubnetMask,
 			const GxIAPICPP::gxstring& strDefaultGateway) = 0;
 
 		// ---------------------------------------------------------------------------
@@ -164,7 +164,7 @@ public:
 		*/
 		// ---------------------------------------------------------------------------
 		virtual void GigEResetDevice(const GxIAPICPP::gxstring& strDeviceMacAddress, GX_RESET_DEVICE_MODE ui32FeatureInfo) = 0;
-		
+
 		// ---------------------------------------------------------------------------
 		/**
 		\brief       create new convert pointer
@@ -172,7 +172,7 @@ public:
 		*/
 		// ---------------------------------------------------------------------------
 		virtual CGXImageFormatConvertPointer CreateImageFormatConvert() = 0;
-		
+
 		// ---------------------------------------------------------------------------
 		/**
 		\brief       create new specail function pointer
@@ -180,10 +180,10 @@ public:
 		*/
 		// ---------------------------------------------------------------------------
 		virtual CGXImageSpecialFunctionPointer CreateImageSpecialFunction() = 0;
-		
+
 		//----------------------------------------------------------------------------------
 	    /**
-	    \brief    Retrieve a list of available devices. If GigE cameras are connected, this can enumerate all GigE camera devices in all subnets. 
+	    \brief    Retrieve a list of available devices. If GigE cameras are connected, this can enumerate all GigE camera devices in all subnets.
 	    \param    u32DeviceType[in]   update device type
 	    \param    nTimeout[in]        Timeout for the waits in ms.
 	    \param    vectorDeviceInfo[int,out] A list of available devices
@@ -200,7 +200,7 @@ public:
 	    */
 	    //----------------------------------------------------------------------------------
         virtual void GetAllInterfaceInfo(GxIAPICPP::gxinterfaceinfo_vector& vectorInterfaceInfo) = 0;
-        
+
         //----------------------------------------------------------------------------------
 	    /**
 	    \brief    Get interface by index,call enumeration interface first

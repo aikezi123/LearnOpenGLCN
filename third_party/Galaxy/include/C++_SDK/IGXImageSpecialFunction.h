@@ -30,14 +30,14 @@ public:
     */
     //---------------------------------------------------------
     IGXImageSpecialFunction(void){};
-    
+
     //---------------------------------------------------------
     /**
     \brief Destructor
     */
     //---------------------------------------------------------
     virtual ~IGXImageSpecialFunction(void){};
-    
+
     //----------------------------------------------------------------------------------
 	/**
 	\brief     calculating lookup table of camera
@@ -49,30 +49,30 @@ public:
 	\return    void
 	*/
 	//----------------------------------------------------------------------------------
-	virtual void CalculaLut(int32_t nContrastParam, double dGamma, int32_t nLightness, 
+	virtual void CalculaLut(int32_t nContrastParam, double dGamma, int32_t nLightness,
 	    void* pLut, uint32_t* pnLutLength) = 0;
-	
+
     //--------------------------------------------------
     /**
     \brief  read lut file
-    \param  pchLutFilePath  [in]     Lut file path. Lut file(xxx.lut) can be obtained from Lut 
-    Create Tool Plugin,which can be get by select Plugin->Lut 
+    \param  pchLutFilePath  [in]     Lut file path. Lut file(xxx.lut) can be obtained from Lut
+    Create Tool Plugin,which can be get by select Plugin->Lut
     Create Tool Plugin from the menu bar in GalaxyView.
-    \param  pLut                [in&out] Lookup table. Users need to apply for memory in advance.The 
-                                        memory size is also lookup table length(nLutLength),should be 
-                                        obtained through the interface 
-                                        GetRegisterFeature("LUTValueAll")->GetLength(),e.g.                          
+    \param  pLut                [in&out] Lookup table. Users need to apply for memory in advance.The
+                                        memory size is also lookup table length(nLutLength),should be
+                                        obtained through the interface
+                                        GetRegisterFeature("LUTValueAll")->GetLength(),e.g.
     \param  pnLutLength   [in] Lookup table length(unit:byte),which should be obtained through
-                                       the interface GetRegisterFeature("LUTValueAll")->GetLength(), e.g. 
+                                       the interface GetRegisterFeature("LUTValueAll")->GetLength(), e.g.
 
     \return void
     */
     //--------------------------------------------------
     virtual void ReadLutFile(const GxIAPICPP::gxstring&  strLutFilePath, void *pLut, uint32_t *pnLutLength) = 0;
-	
+
     //The extended adjustment parameters are added below and cannot be added to existing functions
     //...
-    
+
 };
 
 template class GXIAPICPP_API  GXSmartPtr<IGXImageSpecialFunction>;

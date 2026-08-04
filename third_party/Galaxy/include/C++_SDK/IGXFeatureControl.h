@@ -59,7 +59,7 @@ public:
 	\return     True if the feature was implemented
 	*/
 	//---------------------------------------------------------
-	virtual bool IsImplemented(const GxIAPICPP::gxstring& strFeatureName) = 0;	
+	virtual bool IsImplemented(const GxIAPICPP::gxstring& strFeatureName) = 0;
 
 	//---------------------------------------------------------
 	/**
@@ -176,7 +176,7 @@ public:
 	\return The call back handle
 	*/
 	//----------------------------------------------------------------------------------
-	virtual GX_FEATURE_CALLBACK_HANDLE RegisterFeatureCallback(const GxIAPICPP::gxstring& strFeatureName, 
+	virtual GX_FEATURE_CALLBACK_HANDLE RegisterFeatureCallback(const GxIAPICPP::gxstring& strFeatureName,
 		IFeatureEventHandler* pEventHandler, void* pUserParam) = 0;
 
 	//----------------------------------------------------------------------------------
@@ -187,7 +187,7 @@ public:
 	*/
 	//----------------------------------------------------------------------------------
 	virtual void UnregisterFeatureCallback(GX_FEATURE_CALLBACK_HANDLE hCallback) = 0;
-	
+
 	//---------------------------------------------------------
 	/**
 	\brief      Batch read specified register value
@@ -210,7 +210,7 @@ public:
 	*/
 	//---------------------------------------------------------
 	virtual void WritePortStacked(const GX_REGISTER_STACK_ENTRY* pstEntries, size_t *piNumEntries) = 0;
-	
+
 	//---------------------------------------------------------
     /**
     \brief Get interface feature control pointer
@@ -218,7 +218,7 @@ public:
     */
     //---------------------------------------------------------
     virtual void FeatureSave(const GxIAPICPP::gxstring& strFilePath) = 0;
-    
+
     //---------------------------------------------------------
     /**
     \brief Get interface feature control pointer
@@ -226,7 +226,7 @@ public:
     */
     //---------------------------------------------------------
     virtual void FeatureLoad(const GxIAPICPP::gxstring& strFilePath, bool bVerify = false) = 0;
-    
+
     //---------------------------------------------------------
     /**
     \brief Get interface feature control pointer
@@ -234,7 +234,7 @@ public:
     */
     //---------------------------------------------------------
     virtual void FeatureSaveW(const wchar_t* pchWFilePath) = 0;
-    
+
     //---------------------------------------------------------
     /**
     \brief Get interface feature control pointer

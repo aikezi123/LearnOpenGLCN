@@ -1,7 +1,7 @@
 ﻿//------------------------------------------------------------------------
 /**
 \file		IGXInterfaceInfo.h
-\brief		The Interface enumeration process creates a list of CGXInterfaceInfo objects 
+\brief		The Interface enumeration process creates a list of CGXInterfaceInfo objects
             (GxIAPICPP::gxinterfaceinfo_vector). Each CGXInterfaceInfo object stores the information of a Interface.
             The information is retrieved during the Interface enumeration process (IGXFactory::UpdateDeviceList)
 \Date       2022-08-30
@@ -31,7 +31,7 @@ public:
 	*/
 	//---------------------------------------------------------
 	virtual ~IGXInterfaceInfo(){};
-	
+
 	//---------------------------------------------------------
 	/**
 	\brief Get interface type
@@ -39,7 +39,7 @@ public:
 	*/
 	//---------------------------------------------------------
 	virtual GX_TL_TYPE_LIST GetType() const = 0;
-	
+
 	//---------------------------------------------------------
 	/**
 	\brief Get interface vendor name
@@ -47,7 +47,7 @@ public:
 	*/
 	//---------------------------------------------------------
 	virtual GxIAPICPP::gxstring GetVendorName() const = 0;
-	
+
 	//---------------------------------------------------------
 	/**
 	\brief Get interface model name
@@ -55,7 +55,7 @@ public:
 	*/
 	//---------------------------------------------------------
 	virtual GxIAPICPP::gxstring GetModelName() const = 0;
-	
+
 	//---------------------------------------------------------
 	/**
 	\brief Get interface serial number
@@ -63,7 +63,7 @@ public:
 	*/
 	//---------------------------------------------------------
 	virtual GxIAPICPP::gxstring GetSerialNumber() const = 0;
-	
+
 	//---------------------------------------------------------
 	/**
 	\brief Get interface display name
@@ -71,7 +71,7 @@ public:
 	*/
 	//---------------------------------------------------------
 	virtual GxIAPICPP::gxstring GetDisplayName() const = 0;
-	
+
 	//---------------------------------------------------------
 	/**
 	\brief Get interface ID (CXP)
@@ -79,7 +79,7 @@ public:
 	*/
 	//---------------------------------------------------------
 	virtual GxIAPICPP::gxstring GetInterfaceID() const = 0;
-	
+
 	//---------------------------------------------------------
 	/**
 	\brief Get interface init flag (CXP)

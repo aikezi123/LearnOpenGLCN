@@ -25,23 +25,23 @@ public:
 	/**
 	\brief      Get a feature value
 	*/
-	//--------------------------------------------------------- 
+	//---------------------------------------------------------
 	virtual GxIAPICPP::gxstring GetValue() = 0;
 
 	//---------------------------------------------------------
 	/**
 	\brief      Set a feature value
-	\param      strValue[in]   The value to be set 
+	\param      strValue[in]   The value to be set
 	\return     void
 	*/
-	//--------------------------------------------------------- 
+	//---------------------------------------------------------
 	virtual void SetValue(const GxIAPICPP::gxstring& strValue) = 0;
 
 	//---------------------------------------------------------
 	/**
 	\brief      Retrieves the maximum length of the string in bytes
 	*/
-	//--------------------------------------------------------- 
+	//---------------------------------------------------------
 	virtual int64_t GetStringMaxLength() = 0;
 };
 

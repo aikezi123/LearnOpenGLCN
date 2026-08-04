@@ -2,9 +2,6 @@
 # Build outputs
 # =========================
 out/**
-!out/
-!out/build/
-!out/build/*/
 /build/
 cmake-build-*/
 CMakeFiles/
@@ -49,19 +46,27 @@ CMakeUserPresets.json
 *.ilk
 *.exp
 
-# =========================
-# Runtime bin artifacts
-# =========================
-# Only keep runnable artifacts from out/build/<preset>/bin.
-# CMake/Ninja intermediate files, .obj, .lib and .ilk stay ignored.
-!out/build/*/bin/
-!out/build/*/bin/**/
-!out/build/*/bin/*.exe
-!out/build/*/bin/*.dll
-!out/build/*/bin/*.pdb
-!out/build/*/bin/**/*.exe
-!out/build/*/bin/**/*.dll
-!out/build/*/bin/**/*.pdb
+# Galaxy SDK x64 binaries are vendored for reproducible Windows builds.
+!third_party/Galaxy/libs/
+!third_party/Galaxy/libs/VC++_Lib/
+!third_party/Galaxy/libs/VC++_Lib/GxIAPICPPEx.lib
+!third_party/Galaxy/bin/
+!third_party/Galaxy/bin/Win64/
+!third_party/Galaxy/bin/Win64/GxIAPICPPEx.dll
+!third_party/Galaxy/bin/Win64/DxImageProc.dll
+!third_party/Galaxy/bin/Win64/GCBase_MD_VC120_v3_0.dll
+!third_party/Galaxy/bin/Win64/GenApi_MD_VC120_v3_0.dll
+!third_party/Galaxy/bin/Win64/Log_MD_VC120_v3_0.dll
+!third_party/Galaxy/bin/Win64/MathParser_MD_VC120_v3_0.dll
+!third_party/Galaxy/bin/Win64/NodeMapData_MD_VC120_v3_0.dll
+!third_party/Galaxy/bin/Win64/XmlParser_MD_VC120_v3_0.dll
+!third_party/Galaxy/bin/Win64/msvcp100.dll
+!third_party/Galaxy/bin/Win64/msvcr100.dll
+!third_party/Galaxy/bin/Win64/vcomp100.dll
+!third_party/Galaxy/bin/Win64/msvcp120.dll
+!third_party/Galaxy/bin/Win64/msvcr120.dll
+!third_party/glfw/lib-vc2022/
+!third_party/glfw/lib-vc2022/glfw3.lib
 
 # =========================
 # Logs

@@ -68,7 +68,9 @@ infrastructure (static library)
 
 `LearnOpenGLCN_Lessons.exe` 不带参数会打开 Qt 课程导航器；课程列表来自 `lessons/catalog` 的 `LessonRegistry`，导航窗口实现位于 `composition_root/lesson_launcher`。传入课程 ID 时仍可直接运行对应 GLFW 课程，例如 `LearnOpenGLCN_Lessons.exe transform`。
 
-当前 `third_party/Galaxy` 已包装出 `Galaxy::SDK`。现有目录包含大恒 VC/C API 与 C++ SDK 的头文件和 import library，可支持 `GxIAPI`、`DxImageProc`、`GalaxyIncludes.h`、`IGXFactory`、`CGXDevicePointer` 等接口。大恒运行时 DLL 直接放在 `out/build/<preset>/bin`，和 exe 一起提交运行。
+`third_party/glfw` 保存 GLFW 3.4 官方 Windows x64 预编译包中的 VC2022 静态库及 zlib/libpng 许可证，因此课程构建不依赖本机单独安装 GLFW。
+
+当前 `third_party/Galaxy` 已包装出 `Galaxy::SDK`。现有目录包含大恒 VC/C API 与 C++ SDK 的头文件、`GxIAPICPPEx.lib`，以及 `GxIAPICPPEx.dll` 的最小 Win64 递归运行依赖，可支持 `GalaxyIncludes.h`、`IGXFactory`、`CGXDevicePointer` 等当前接口。构建 `LearnOpenGLCN_Qt` 后，CMake 会把 13 个运行 DLL 从 `third_party/Galaxy/bin/Win64` 自动复制到可执行文件目录。
 
 ## 构建入口
 

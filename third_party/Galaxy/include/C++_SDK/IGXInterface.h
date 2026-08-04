@@ -29,14 +29,14 @@ class GXIAPICPP_API IGXInterface
 {
 
 public:
-    
+
     //---------------------------------------------------------
 	/**
 	\brief Destructor
 	*/
 	//---------------------------------------------------------
     virtual ~IGXInterface(){};
-    
+
     //---------------------------------------------------------
     /**
     \brief Get interface info
@@ -44,7 +44,7 @@ public:
     */
     //---------------------------------------------------------
     virtual IGXInterfaceInfoPointer GetInterfaceInfo() = 0;
-    
+
     //---------------------------------------------------------
     /**
     \brief Get all device information under the interface
@@ -53,7 +53,7 @@ public:
     */
     //---------------------------------------------------------
     virtual void GetAllDeviceInfo( GxIAPICPP::gxdeviceinfo_vector& vectorDeviceInfo) = 0;
-    
+
     //---------------------------------------------------------
     /**
     \brief Get interface feature control pointer

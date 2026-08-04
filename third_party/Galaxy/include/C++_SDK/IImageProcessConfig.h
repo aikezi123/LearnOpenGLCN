@@ -57,7 +57,7 @@ public:
 	//---------------------------------------------------------
 	/**
 	\brief      Set contrast value param.
-	\param      [in]nParam  The contrast value param  
+	\param      [in]nParam  The contrast value param
 	\return     void
 	*/
 	//---------------------------------------------------------
@@ -145,7 +145,7 @@ public:
 
 	//---------------------------------------------------------
 	/**
-	\brief       Special for more than 8 bits data image, that indicates which 8 bits should be processed.              
+	\brief       Special for more than 8 bits data image, that indicates which 8 bits should be processed.
 	\return      The segment bits
 	*/
 	//---------------------------------------------------------
@@ -211,7 +211,7 @@ public:
 	//---------------------------------------------------------
 	/**
 	\brief      True if enable pixel reduction [Does not support the Mono camera]
-	\return     True if enable pixel reduction 
+	\return     True if enable pixel reduction
 	*/
 	//---------------------------------------------------------
 	virtual bool IsDenoise() = 0;
@@ -227,7 +227,7 @@ public:
 	//---------------------------------------------------------
 	/**
 	\brief      Get the current convert type for image interpolation [Does not support the Mono camera]
-	\return     The the current convert type for image interpolation 
+	\return     The the current convert type for image interpolation
 	*/
 	//---------------------------------------------------------
 	virtual GX_BAYER_CONVERT_TYPE_LIST GetConvertType() = 0;
@@ -235,7 +235,7 @@ public:
 	//---------------------------------------------------------
 	/**
 	\brief      Get the current flip mode for image interpolation. True means to flip, False not. [Does not support the Mono camera]
-	\return     The the current flip mode for image interpolation. True means to flip, False not. 
+	\return     The the current flip mode for image interpolation. True means to flip, False not.
 	*/
 	//---------------------------------------------------------
 	virtual bool IsConvertFlip() = 0;
@@ -246,16 +246,16 @@ public:
 	\return     void
 	*/
 	//---------------------------------------------------------
-	virtual void Reset() = 0; 
+	virtual void Reset() = 0;
 
 
 	//---------------------------------------------------------
 	/**
-	\brief      Get the current Color Correctiong mode for image processing. 
+	\brief      Get the current Color Correctiong mode for image processing.
 	\return     True means to user mode, False means to Default
 	*/
 	//---------------------------------------------------------
-	virtual bool IsUserSetCCParam() = 0; 
+	virtual bool IsUserSetCCParam() = 0;
 
 
 	//---------------------------------------------------------
@@ -264,7 +264,7 @@ public:
 	\param[in] bIsUser  If true to allow, else not.
 	*/
 	//---------------------------------------------------------
-	virtual void EnableUserSetCCParam(bool bIsUserMode) = 0; 
+	virtual void EnableUserSetCCParam(bool bIsUserMode) = 0;
 
 
 	//---------------------------------------------------------
@@ -273,7 +273,7 @@ public:
 	\return     void
 	*/
 	//---------------------------------------------------------
-	virtual void SetUserCCParam(COLOR_TRANSFORM_FACTOR stColorTransformFactor) = 0; 
+	virtual void SetUserCCParam(COLOR_TRANSFORM_FACTOR stColorTransformFactor) = 0;
 
 
 	//---------------------------------------------------------
@@ -282,7 +282,7 @@ public:
 	\return     void
 	*/
 	//---------------------------------------------------------
-	virtual COLOR_TRANSFORM_FACTOR GetUserCCParam() = 0; 
+	virtual COLOR_TRANSFORM_FACTOR GetUserCCParam() = 0;
 
 };
 
