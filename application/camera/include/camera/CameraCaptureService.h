@@ -2,6 +2,9 @@
 #include <camera/ICameraDevice.h>
 #include <memory>
 #include <string>
+#include <thread>
+#include <mutex>
+#include <condition_variable>
 
 namespace learnopengl::application {
 
@@ -18,9 +21,18 @@ public:
     CameraCaptureService(const CameraCaptureService &) = delete;
     CameraCaptureService& operator=(const CameraCaptureService &) = delete;
 
-    // 当前阶段还没有线程，因此移动Service是安全的
-    CameraCaptureService(CameraCaptureService &&) noexcept;
-    CameraCaptureService& operator=(CameraCaptureService &&) noexcept;
+    // 控制线程保存了this指针，移动对象会使该指针失效，因此禁止移动
+    CameraCaptureService(CameraCaptureService &&) = delete;
+    CameraCaptureService& operator=(CameraCaptureService &&) = delete;
+
+    // 请求控制线程退出，并等待线程结束
+    void shutdown();
+
+private:
+    // 控制线程的主函数
+    // cameraDevice按值传入，使设备所有权从构造线程转移到控制线程的函数参数中。
+    // run()返回时，设备也在控制线程析构。
+    void run(std::unique_ptr<ICameraDevice> cameraDevice);
 
     CameraResult openFirstCamera();
     CameraResult openCameraById(std::string deviceId);
@@ -39,7 +51,12 @@ public:
 
 
 private:
-    std::unique_ptr<ICameraDevice> m_cameraDevice;
+    std::thread m_controlThread;
+
+    // 条件变量、锁以及锁保护的变量通常组合使用。
+    std::mutex m_mutex;
+    std::condition_variable m_conditionVariable;
+    bool m_shutdownRequested{false};                // 控制线程是否退出
 
 };
 
