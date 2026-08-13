@@ -6,11 +6,15 @@
 
 
 #include <QCheckBox>
+#include <QDoubleSpinBox>
+#include <QLabel>
+#include <QLineEdit>
 #include <QMetaObject>
 #include <QPushButton>
 #include <QSignalBlocker>
 #include <QSlider>
 #include <QString>
+#include <QStringList>
 
 #include <iostream>
 #include <utility>
@@ -22,7 +26,9 @@ CameraImageCaptureView::CameraImageCaptureView(std::unique_ptr<application::Came
 {
     m_ui->setupUi(this);
     connectViewControls();
+    updateCameraControls();
 
+    // 保留原来的行为：页面创建后自动打开第一台相机并开始采集。
     startCamera();
 }
 
@@ -30,11 +36,19 @@ CameraImageCaptureView::~CameraImageCaptureView()
 {
     if (m_cameraCaptureService != nullptr) {
         // 先注销帧回调，避免相机线程继续向正在析构的 QWidget 投递图像。
-        m_cameraCaptureService->setFrameCallback({});
+        const application::CameraResult callbackResult =
+            m_cameraCaptureService->requestSetFrameCallback({}).get();
+        if (!callbackResult.succeeded) {
+            std::cerr << callbackResult.errorMessage << std::endl;
+        }
 
-        const application::CameraResult result = m_cameraCaptureService->close();
-        if (!result.succeeded) {
-            std::cerr << result.errorMessage << std::endl;
+        if (m_cameraCaptureService->state()
+            != application::CameraCaptureService::State::Closed) {
+            const application::CameraResult closeResult =
+                m_cameraCaptureService->requestClose().get();
+            if (!closeResult.succeeded) {
+                std::cerr << closeResult.errorMessage << std::endl;
+            }
         }
     }
 
@@ -83,6 +97,53 @@ void CameraImageCaptureView::connectViewControls()
         m_ui->zoomValueLabel->setText(QStringLiteral("100%"));
         m_ui->widget->resetViewTransform();
     });
+
+    connect(m_ui->openFirstCameraButton, &QPushButton::clicked, this, [this]() {
+        showCameraResult(
+            m_cameraCaptureService->requestOpen().get(),
+            QStringLiteral("相机已打开")
+        );
+    });
+    connect(m_ui->openByIdButton, &QPushButton::clicked, this, [this]() {
+        showCameraResult(
+            m_cameraCaptureService->requestOpenById(
+                m_ui->cameraIdEdit->text().trimmed().toStdString()
+            ).get(),
+            QStringLiteral("已按ID打开相机")
+        );
+    });
+    connect(m_ui->openByNameButton, &QPushButton::clicked, this, [this]() {
+        showCameraResult(
+            m_cameraCaptureService->requestOpenByName(
+                m_ui->cameraNameEdit->text().trimmed().toStdString()
+            ).get(),
+            QStringLiteral("已按名称打开相机")
+        );
+    });
+    connect(m_ui->startCaptureButton, &QPushButton::clicked, this, [this]() {
+        showCameraResult(
+            m_cameraCaptureService->requestStartCapture().get(),
+            QStringLiteral("正在采集图像")
+        );
+    });
+    connect(m_ui->stopCaptureButton, &QPushButton::clicked, this, [this]() {
+        showCameraResult(
+            m_cameraCaptureService->requestStopCaptrue().get(),
+            QStringLiteral("已停止采集")
+        );
+    });
+    connect(m_ui->closeCameraButton, &QPushButton::clicked, this, [this]() {
+        showCameraResult(
+            m_cameraCaptureService->requestClose().get(),
+            QStringLiteral("相机已关闭")
+        );
+    });
+    connect(
+        m_ui->applyCameraParametersButton,
+        &QPushButton::clicked,
+        this,
+        &CameraImageCaptureView::applyCameraParameters
+    );
 }
 
 float CameraImageCaptureView::currentZoomScale() const
@@ -97,37 +158,173 @@ void CameraImageCaptureView::startCamera()
         return;
     }
 
-    m_cameraCaptureService->setFrameCallback(
+    application::CameraResult result = m_cameraCaptureService->requestSetFrameCallback(
         [this](domain::ImageFrame frame) {
-            if (frame.pixelFormat != domain::PixelFormat::Rgb24) {
-                return;
-            }
-
-            // 相机回调可能来自 SDK 线程，通过 Qt 队列切换到 UI 线程。
-            QMetaObject::invokeMethod(
-                this,
-                [this, frame = std::move(frame)]() mutable {
-                    m_ui->widget->setRgb24Frame(
-                        frame.width,
-                        frame.height,
-                        std::move(frame.pixels)
-                    );
-                },
-                Qt::QueuedConnection
-            );
+            submitLatestFrame(std::move(frame));
         }
-    );
+    ).get();
 
-    application::CameraResult result = m_cameraCaptureService->openFirstCamera();
     if (!result.succeeded) {
         std::cerr << result.errorMessage << std::endl;
         return;
     }
 
-    result = m_cameraCaptureService->startCapture();
+    result = m_cameraCaptureService->requestOpen().get();
     if (!result.succeeded) {
+        showCameraResult(result, {});
+        return;
+    }
+
+    result = m_cameraCaptureService->requestStartCapture().get();
+    showCameraResult(result, QStringLiteral("正在采集图像"));
+}
+
+void CameraImageCaptureView::submitLatestFrame(domain::ImageFrame frame)
+{
+    if (frame.pixelFormat != domain::PixelFormat::Rgb24) {
+        return;
+    }
+
+    bool needPostDisplayTask = false;
+    {
+        std::lock_guard<std::mutex> lock(m_latestFrameMutex);
+
+        // 永远覆盖尚未显示的旧帧，避免相机帧在Qt事件队列中不断累积。
+        m_latestFrame = std::move(frame);
+
+        if (!m_frameDisplayPending) {
+            m_frameDisplayPending = true;
+            needPostDisplayTask = true;
+        }
+    }
+
+    if (!needPostDisplayTask) {
+        return;
+    }
+
+    // 相机回调可能来自SDK线程；Qt只排入一个任务，任务执行时再取最新帧。
+    const bool posted = QMetaObject::invokeMethod(
+        this,
+        [this]() {
+            displayLatestFrame();
+        },
+        Qt::QueuedConnection
+    );
+
+    if (!posted) {
+        // 投递失败时允许下一帧重新尝试，不让pending标志永久保持true。
+        std::lock_guard<std::mutex> lock(m_latestFrameMutex);
+        m_frameDisplayPending = false;
+    }
+}
+
+void CameraImageCaptureView::displayLatestFrame()
+{
+    domain::ImageFrame frame;
+    {
+        std::lock_guard<std::mutex> lock(m_latestFrameMutex);
+
+        frame = std::move(m_latestFrame);
+        m_frameDisplayPending = false;
+    }
+
+    if (frame.width <= 0 || frame.height <= 0 || frame.pixels.empty()) {
+        return;
+    }
+
+    m_ui->widget->setRgb24Frame(
+        frame.width,
+        frame.height,
+        std::move(frame.pixels)
+    );
+}
+
+void CameraImageCaptureView::applyCameraParameters()
+{
+    if (m_cameraCaptureService == nullptr) {
+        return;
+    }
+
+    QStringList errorMessages;
+
+    application::CameraResult result =
+        m_cameraCaptureService->requestSetAutoWhiteBalance(
+            m_ui->autoWhiteBalanceCheckBox->isChecked()
+        ).get();
+    if (!result.succeeded) {
+        errorMessages.push_back(QString::fromStdString(result.errorMessage));
+    }
+
+    result = m_cameraCaptureService->requestSetExposeTimeUs(
+        m_ui->exposureSpinBox->value()
+    ).get();
+    if (!result.succeeded) {
+        errorMessages.push_back(QString::fromStdString(result.errorMessage));
+    }
+
+    result = m_cameraCaptureService->requestSetGainDb(
+        m_ui->gainSpinBox->value()
+    ).get();
+    if (!result.succeeded) {
+        errorMessages.push_back(QString::fromStdString(result.errorMessage));
+    }
+
+    result = m_cameraCaptureService->requestSetFps(
+        m_ui->fpsSpinBox->value()
+    ).get();
+    if (!result.succeeded) {
+        errorMessages.push_back(QString::fromStdString(result.errorMessage));
+    }
+
+    if (errorMessages.isEmpty()) {
+        showCameraResult(result, QStringLiteral("相机参数已应用"));
+        return;
+    }
+
+    application::CameraResult combinedResult;
+    combinedResult.errorMessage = errorMessages.join(QStringLiteral("；")).toStdString();
+    showCameraResult(combinedResult, {});
+}
+
+void CameraImageCaptureView::showCameraResult(
+    const application::CameraResult& result,
+    const QString& successMessage
+)
+{
+    if (result.succeeded) {
+        m_ui->cameraStatusLabel->setText(successMessage);
+        m_ui->cameraStatusLabel->setStyleSheet(QStringLiteral("color: #207a37;"));
+    }
+    else {
+        const QString errorMessage = QString::fromStdString(result.errorMessage);
+        m_ui->cameraStatusLabel->setText(errorMessage);
+        m_ui->cameraStatusLabel->setStyleSheet(QStringLiteral("color: #b42318;"));
         std::cerr << result.errorMessage << std::endl;
     }
+
+    updateCameraControls();
+}
+
+void CameraImageCaptureView::updateCameraControls()
+{
+    if (m_cameraCaptureService == nullptr) {
+        m_ui->cameraControlPanel->setEnabled(false);
+        return;
+    }
+
+    const application::CameraCaptureService::State state = m_cameraCaptureService->state();
+    const bool isClosed = state == application::CameraCaptureService::State::Closed;
+    const bool isCaptured = state == application::CameraCaptureService::State::Captured;
+
+    m_ui->openFirstCameraButton->setEnabled(isClosed);
+    m_ui->openByIdButton->setEnabled(isClosed);
+    m_ui->openByNameButton->setEnabled(isClosed);
+    m_ui->cameraIdEdit->setEnabled(isClosed);
+    m_ui->cameraNameEdit->setEnabled(isClosed);
+    m_ui->startCaptureButton->setEnabled(!isClosed && !isCaptured);
+    m_ui->stopCaptureButton->setEnabled(isCaptured);
+    m_ui->closeCameraButton->setEnabled(!isClosed);
+    m_ui->applyCameraParametersButton->setEnabled(!isClosed);
 }
 
 } // namespace learnopengl::ui

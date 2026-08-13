@@ -33,9 +33,15 @@ public:
     State state() const;
 
     std::future<CameraResult> requestOpen();
+    std::future<CameraResult> requestOpenById(std::string deviceId);
+    std::future<CameraResult> requestOpenByName(std::string deviceName);
     std::future<CameraResult> requestClose();
     std::future<CameraResult> requestStartCapture();
     std::future<CameraResult> requestStopCaptrue();
+    std::future<CameraResult> requestSetAutoWhiteBalance(bool enable);
+    std::future<CameraResult> requestSetExposeTimeUs(double usTime);
+    std::future<CameraResult> requestSetGainDb(double gain);
+    std::future<CameraResult> requestSetFps(double fps);
     std::future<CameraResult> requestSetFrameCallback(ICameraDevice::FrameCallback callback);
 
 private:

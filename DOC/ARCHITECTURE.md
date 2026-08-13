@@ -186,12 +186,12 @@ LearnOpenGLCN_Lessons.exe --list
 
 职责：
 
-- 编排用例和程序流程；本项目应用层流程对象统一采用 `Service` 命名，例如 `CameraPreviewService`。
+- 编排用例和程序流程；本项目应用层流程对象统一采用 `Service` 命名，例如 `CameraCaptureService`。
 - 定义外部能力端口，例如 `ICameraDevice`、`IRenderer`、`IImageLoader`、`IClock`。
 - 使用 `domain` 模型表达输入和输出。
 - 定义与具体 OpenGL 实现无关的课程运行协议。
 
-端口接口应和使用它的 application service 放在同一层。application 通过端口描述“为了完成这个流程，需要外部世界提供什么能力”；具体实现由 infrastructure 提供。比如 `CameraPreviewService` 使用 `ICameraDevice`，而大恒的 `GalaxyCameraController` 在 infrastructure 中实现 `ICameraDevice`。
+端口接口应和使用它的 application service 放在同一层。application 通过端口描述“为了完成这个流程，需要外部世界提供什么能力”；具体实现由 infrastructure 提供。比如 `CameraCaptureService` 使用 `ICameraDevice`，而大恒的 `GalaxyCameraController` 在 infrastructure 中实现 `ICameraDevice`。
 
 允许依赖：
 
@@ -567,11 +567,15 @@ target_link_libraries(LearnOpenGLCN_Qt PRIVATE
 - 相机相关模型进入 `domain`：当前以 `ImageFrame` / `PixelFormat` 表达与具体相机 SDK、Qt、OpenGL 无关的稳定图像帧概念。
 - 二维轨迹纯算法进入 `domain`：当前以 `ArchimedeanSpiral2DGenerator` 生成固定阿基米德螺旋上的 XOY 平面采样点，不处理文件、UI、OpenGL 或三维曲面映射。
 - Qt 轨迹导出页面进入 `ui`：`TrajectoryExportView` 负责参数输入、分段编辑和后台 txt 导出；Qt Concurrent、文件写入和页面生命周期只属于外层实现，不进入 domain。
-- 相机采集流程进入 `application`：`ICameraDevice` 作为外部相机能力端口，`CameraCaptureService` 负责编排采集流程。端口接口和使用它的 service 放在 application，不放 domain。
+- 相机采集流程进入 `application`：`ICameraDevice` 作为外部相机能力端口，`CameraCaptureService` 使用纯 C++17 的独立控制线程、FIFO 命令队列、条件变量和 `Closed / Opened / Captured` 状态串行编排采集流程；当前 `Captured` 表示“正在采集”。每条控制命令携带一个 `std::promise<CameraResult>`，调用方通过 `std::future<CameraResult>` 获得实际执行结果；命令被拒绝、状态非法或设备操作抛出异常时也会完成对应 future。端口接口和使用它的 service 放在 application，不放 domain。
+- `CameraCaptureService` 当前支持打开第一个设备、按 ID/名称打开、开始/停止采集、关闭设备，以及曝光时间、增益、帧率、自动白平衡和帧回调设置。`shutdown()` 停止接收新命令，排空已经接受的命令，然后依次注销帧回调、停止采集、关闭并销毁设备；这些流程不依赖 Qt。
+- 当前学习实现保留原有的 `m_thread + queue + condition_variable + promise/future` 骨架，不额外增加关闭互斥锁或第二层命令包装。Qt 相机页面仍会在创建后自动尝试打开第一台设备并开始采集，也提供按 ID/名称打开、开始/停止/关闭和参数设置控件；UI 只调用 application 请求接口，不接触 Galaxy SDK。
+- 相机 SDK 回调线程不会直接操作 QWidget/OpenGL。`CameraImageCaptureView` 使用互斥锁保护的单槽“最新帧邮箱”，只在没有待执行显示任务时向 Qt 事件队列投递一次；UI 处理不过来时新帧覆盖旧帧，避免逐帧事件无限积压。当前 UI 对控制请求返回的 future 仍立即调用 `.get()`，因此设备操作在控制线程执行，但 UI 会同步等待结果。
 - 大恒相机适配进入 `infrastructure/camera/galaxy`：`GalaxyCameraController` 实现 application 端口，并用 Pimpl 隐藏大恒 SDK 头文件、句柄和回调类，避免 SDK 类型穿透公共头文件。
 - Qt 组合根负责装配：`CameraComposition` 创建大恒适配器，将其作为 `ICameraDevice` 注入 `CameraCaptureService`，再把 service 注入 `CameraImageCaptureView`；`AppComposition` 负责把相机与轨迹页面注册到 `MainWindow`。
 - Qt 主窗口已改为左侧导航树和右侧页面栈，后续功能页面优先独立成 QWidget 后注册到导航中。
 - 相机图像显示控件支持水平翻转、垂直翻转、左右 90 度旋转、缩放、平移和重置；这些仍属于 UI 原型交互，由 `DisplayOpenGLImage` 通过 shader uniform 矩阵完成。控件显示形状可在默认矩形与圆形之间切换；圆形外观只通过 QWidget mask 裁剪并露出圆外父窗口背景。圆形模式在渲染前从原始纹理中心裁取最大正方形，并输出到居中的正方形 viewport，再对该 1:1 图像执行观察变换，避免 90 度旋转后因宽高比变化而拉伸。
+- 相机控制线程、任务队列、条件变量、各把锁、原子状态、promise/future、shutdown 和最新帧机制的详细设计见[相机采集与 OpenGL 显示链路](./CAMERA_ARCHITECTURE.md)。本阶段明确不继续拆分 `DisplayOpenGLImage`。
 - LearnOpenGL 课程入口已形成 `LessonRegistry` 和 Qt 课程导航器；`lesson_main.cpp` 只保留命令行选择和启动导航窗口，导航窗口实现放在 `composition_root/lesson_launcher`。
 
 本阶段仍然保留的阶段性做法：

@@ -9,6 +9,7 @@
 ## 文档索引
 
 - [代码架构与依赖关系](./ARCHITECTURE.md)：当前结构、目标分层、依赖规则及各模块职责。
+- [相机采集与 OpenGL 显示链路](./CAMERA_ARCHITECTURE.md)：相机分层、控制线程、FIFO 任务队列、条件变量、锁、原子状态、promise/future 和最新帧投递机制。
 - [编码规范](./CODING_STYLE.md)：C++、OpenGL、CMake、资源和注释约定。
 - [扩展指南](./EXTENDING.md)：新增课程、基础设施适配器和架构演进的推荐步骤。
 - [二维阿基米德螺旋轨迹](./TRAJECTORY_2D.md)：当前二维轨迹模型、分段生成、点距求解、导出和后续扩展边界。
@@ -62,7 +63,7 @@ infrastructure (static library)
     └── glm::glm
 ```
 
-`domain/` 与 `application/` 已形成相机预览所需的最小 target：`learnopengl_domain` 提供 `VideoFrame` / `PixelFormat` 等稳定模型，并包含 `domain/trajectory` 中的二维阿基米德螺旋点生成纯算法；`learnopengl_application` 提供 `ICameraDevice` 和 `CameraPreviewService`。`infrastructure/camera/galaxy` 提供大恒相机适配器，`ui/` 承载当前 Qt/OpenGL 显示原型。
+`domain/` 与 `application/` 已形成相机预览所需的最小 target：`learnopengl_domain` 提供 `ImageFrame` / `PixelFormat` 等稳定模型，并包含 `domain/trajectory` 中的二维阿基米德螺旋点生成纯算法；`learnopengl_application` 提供 `ICameraDevice` 和 `CameraCaptureService`。`infrastructure/camera/galaxy` 提供大恒相机适配器，`ui/` 承载当前 Qt/OpenGL 显示原型。相机线程与帧投递的详细说明见[相机采集与 OpenGL 显示链路](./CAMERA_ARCHITECTURE.md)。
 
 当前 Qt 主窗口还包含“轨迹算法 / 螺旋线导出”页面：它使用 domain 中的二维算法生成多段轨迹，并在后台导出合并 txt 和分段 txt。轨迹公式、分段规则、残差二分求解和边界点行为见 [二维阿基米德螺旋轨迹](./TRAJECTORY_2D.md)。
 

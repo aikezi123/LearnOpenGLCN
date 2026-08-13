@@ -34,7 +34,7 @@
 | CMake target alias | 命名空间形式 | `learnopengl::application` |
 | Shader uniform | camelCase | `modelMatrix` |
 
-application 层中负责编排流程的对象统一使用 `Service` 后缀，例如 `CameraPreviewService`。application 层端口接口使用 `I` 前缀，例如 `ICameraDevice`；端口接口和使用它的 service 放在 application，不放 domain。domain 层只放稳定概念、值对象和纯规则，例如 `VideoFrame`、`PixelFormat`。
+application 层中负责编排流程的对象统一使用 `Service` 后缀，例如 `CameraCaptureService`。application 层端口接口使用 `I` 前缀，例如 `ICameraDevice`；端口接口和使用它的 service 放在 application，不放 domain。domain 层只放稳定概念、值对象和纯规则，例如 `ImageFrame`、`PixelFormat`。
 
 课程入口应统一命名，例如 `runCoordinateTransformationLesson()`。避免继续引入 `transform()` 这类含义过宽的全局函数。
 
@@ -56,15 +56,15 @@ include 应从模块公开根目录开始：
 
 ```cpp
 #include <shader/ShaderProgram.hpp>
-#include <camera/CameraPreviewService.h>
+#include <camera/CameraCaptureService.h>
 ```
 
 分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构。先按功能模块分组，再在模块内放公开头文件和实现文件，例如：
 
 ```text
 application/camera/include/camera/ICameraDevice.h
-application/camera/src/CameraPreviewService.cpp
-domain/video/include/video/VideoFrame.h
+application/camera/src/CameraCaptureService.cpp
+domain/image/include/imageframe/ImageFrame.h
 infrastructure/camera/galaxy/include/camera/galaxy/GalaxyCameraController.h
 infrastructure/camera/galaxy/src/GalaxyCameraController.cpp
 infrastructure/shader/include/shader/Shader.hpp
@@ -118,7 +118,7 @@ private:
 不需要使用 Pimpl 的情况：
 
 - 类型只包含标准库、domain/application 稳定类型或简单值对象。
-- 该类型本身就是轻量数据模型，例如 `VideoFrame`、`PixelFormat`。
+- 该类型本身就是轻量数据模型，例如 `ImageFrame`、`PixelFormat`。
 
 Pimpl 的代价是多一个实现类、一层转发和一次指针间接访问；只有当依赖隔离收益明确时再使用。
 

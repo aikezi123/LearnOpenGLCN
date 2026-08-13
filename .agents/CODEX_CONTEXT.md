@@ -76,11 +76,17 @@ stb_image
 assets/textures/ui/display_image.png
 ```
 
-当前已建立相机采集的最小分层切片：`domain` 提供 `ImageFrame` / `PixelFormat`，`application` 提供 `ICameraDevice` 和 `CameraCaptureService`，`infrastructure/camera/galaxy` 提供 `GalaxyCameraController` 大恒适配器。大恒 SDK 头文件只出现在 infrastructure 的 `.cpp` 中，不再暴露给 UI 或 application。
+当前已建立相机采集的最小分层切片：`domain` 提供 `ImageFrame` / `PixelFormat`，`application` 提供 `ICameraDevice` 和 `CameraCaptureService`，`infrastructure/camera/galaxy` 提供 `GalaxyCameraController` 大恒适配器。大恒 SDK 头文件只出现在 infrastructure 的 `.cpp` 中，不再暴露给 UI 或 application。`CameraCaptureService` 已使用纯 C++17 独立控制线程、FIFO 命令队列、条件变量和 `Closed / Opened / Captured` 状态串行访问设备，当前 `Captured` 的语义是“正在采集”；命令由一个 `std::function<CameraResult(ICameraDevice&)>` 与 `std::promise<CameraResult>` 组成，公开请求返回 `std::future<CameraResult>`。已接受、拒绝、非法状态和设备异常路径都会完成 future；`shutdown()` 采用停止入队、排空队列、注销回调、停止采集、关闭设备和同线程销毁设备的顺序。
 
-当前 Qt 主窗口为左侧 `QTreeWidget` 导航 + 右侧 `QStackedWidget` 页面容器。`composition_root/AppComposition` 组织应用页面，`modules/CameraComposition` 创建 `GalaxyCameraController`，将其作为 `ICameraDevice` 注入 `CameraCaptureService`，再创建 `CameraImageCaptureView`；`modules/TrajectoryComposition` 创建轨迹页面。`qt_main.cpp` 只负责 Qt/OpenGL 初始化、显示窗口和进入事件循环。相机窗口通过 Qt queued invoke 把 SDK 线程中的 `domain::ImageFrame` 投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。UI 不直接处理相机 SDK 类型。
+`CameraCaptureService` 当前公开打开第一个设备、按 ID/名称打开、开始/停止采集、关闭、曝光时间、增益、帧率、自动白平衡和帧回调设置请求。只有控制线程写相机状态，外部通过原子状态读取最近一次已完成操作的快照。Qt UI 只在现有相机页面边界调用这些纯 C++ 接口，并在最终图像帧进入 `DisplayOpenGLImage` 前使用 Qt queued invoke 切回 UI 线程。控制请求当前在 UI 中立即调用 `future.get()`，所以设备操作在线程外执行但 UI 同步等待；这是当前阶段保留的简化。
 
-分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构。当前使用 `application/camera/include/camera/...`、`domain/video/include/video/...`、`infrastructure/camera/galaxy/include/camera/galaxy/...`、`infrastructure/shader/include/shader/...`。公共头文件目录保持简洁，不重复嵌套项目名和当前层名。
+当前学习版本保留用户原有的 `CameraCaptureService` 代码骨架：成员线程仍为 `m_thread`，命令继续由 `queue + condition_variable + promise/future` 处理，没有增加关闭互斥锁或新的命令包装层。`CameraImageCaptureView` 创建后仍自动尝试打开第一台设备并开始采集，同时提供按 ID/名称打开、开始/停止/关闭，以及自动白平衡、曝光时间、增益和 FPS 参数控件；无相机时只显示错误状态，不阻止程序启动。
+
+当前 Qt 主窗口为左侧 `QTreeWidget` 导航 + 右侧 `QStackedWidget` 页面容器。`composition_root/AppComposition` 组织应用页面，`modules/CameraComposition` 创建 `GalaxyCameraController`，将其作为 `ICameraDevice` 注入 `CameraCaptureService`，再创建 `CameraImageCaptureView`；`modules/TrajectoryComposition` 创建轨迹页面。`qt_main.cpp` 只负责 Qt/OpenGL 初始化、显示窗口和进入事件循环。相机窗口通过 Qt queued invoke 把 SDK 线程中的 `domain::ImageFrame` 投递到 UI 线程，再调用提升控件 `DisplayOpenGLImage::setRgb24Frame(...)`。UI 使用互斥锁保护的单槽最新帧邮箱：已有显示任务排队时只覆盖旧帧，不逐帧追加 Qt 事件。UI 不直接处理相机 SDK 类型。
+
+相机控制线程、命令队列、条件变量、锁、原子状态、promise/future、shutdown 和最新帧投递机制已经集中记录在 `DOC/CAMERA_ARCHITECTURE.md`。当前相机控制阶段到此结束；本阶段明确不拆分 `DisplayOpenGLImage`，它继续作为 UI 原型控件承担现有 OpenGL 显示职责。
+
+分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构。当前使用 `application/camera/include/camera/...`、`domain/image/include/imageframe/...`、`infrastructure/camera/galaxy/include/camera/galaxy/...`、`infrastructure/shader/include/shader/...`。公共头文件目录保持简洁，不重复嵌套项目名和当前层名。
 
 application 层流程对象统一使用 `Service` 命名，例如 `CameraCaptureService`。端口接口和使用它的 service 放在 application，例如 `ICameraDevice`；它表达 application 为完成流程需要外部系统提供的能力，由 infrastructure 实现。domain 层只放稳定概念和值对象，例如 `ImageFrame`、`PixelFormat`，不放需要驱动外部系统干活的接口。
 

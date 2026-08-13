@@ -1,5 +1,10 @@
 #include <camera/CameraCaptureService.h>
 
+#include <cmath>
+#include <exception>
+#include <stdexcept>
+#include <utility>
+
 namespace learnopengl::application {
 
 namespace {
@@ -91,13 +96,24 @@ void CameraCaptureService::run(std::unique_ptr<ICameraDevice> cameraDevice) {
         }
 
         CameraResult result;
-        try{
+        try {
             result = command.action(*cameraDevice);
-            command.promiseResult.set_value(std::move(result));   // promise异步修改命令执行结果
-        } catch(...) {
-
+        }
+        catch (const std::exception& exception) {
+            // 设备操作抛出标准异常时，将异常转换成普通失败结果。
+            // 这样调用方仍然可以通过future.get()得到CameraResult，
+            // 不会因为promise未完成而收到broken_promise。
+            result = failure(
+                std::string("执行相机命令时发生异常：") + exception.what()
+            );
+        }
+        catch (...) {
+            // 第三方SDK也可能抛出非std::exception异常。
+            result = failure("执行相机命令时发生未知异常");
         }
 
+        // 每一条已经从队列取出的命令都只在这里完成一次promise。
+        command.promiseResult.set_value(std::move(result));
     }
     
     // 此时请求退出，并且任务队列中的任务已经处理完成，关闭相机设备
@@ -122,6 +138,40 @@ std::future<CameraResult> CameraCaptureService::requestOpen() {
         CameraResult result = cameraDevice.openFirstCamera();
         if (result.succeeded) {
             m_state.store(State::Opened);;
+        }
+        return result;
+    });
+}
+
+std::future<CameraResult> CameraCaptureService::requestOpenById(std::string deviceId) {
+    return submit([this, deviceId = std::move(deviceId)](ICameraDevice &cameraDevice)->CameraResult {
+        if (m_state.load() != State::Closed) {
+            return failure("相机已打开，忽略重复打开命令");
+        }
+        if (deviceId.empty()) {
+            return failure("相机ID不能为空");
+        }
+
+        CameraResult result = cameraDevice.openById(deviceId);
+        if (result.succeeded) {
+            m_state.store(State::Opened);
+        }
+        return result;
+    });
+}
+
+std::future<CameraResult> CameraCaptureService::requestOpenByName(std::string deviceName) {
+    return submit([this, deviceName = std::move(deviceName)](ICameraDevice &cameraDevice) mutable ->CameraResult {
+        if (m_state.load() != State::Closed) {
+            return failure("相机已打开，忽略重复打开命令");
+        }
+        if (deviceName.empty()) {
+            return failure("相机名称不能为空");
+        }
+
+        CameraResult result = cameraDevice.openCameraByName(std::move(deviceName));
+        if (result.succeeded) {
+            m_state.store(State::Opened);
         }
         return result;
     });
@@ -174,6 +224,51 @@ std::future<CameraResult> CameraCaptureService::requestStopCaptrue() {
             m_state.store(State::Opened);
         }
         return result;
+    });
+}
+
+std::future<CameraResult> CameraCaptureService::requestSetAutoWhiteBalance(bool enable) {
+    return submit([this, enable](ICameraDevice &cameraDevice)->CameraResult {
+        if (m_state.load() == State::Closed) {
+            return failure("设置自动白平衡失败，请先打开相机");
+        }
+        return cameraDevice.setAutoWhiteBalance(enable);
+    });
+}
+
+std::future<CameraResult> CameraCaptureService::requestSetExposeTimeUs(double usTime) {
+    return submit([this, usTime](ICameraDevice &cameraDevice)->CameraResult {
+        if (m_state.load() == State::Closed) {
+            return failure("设置曝光时间失败，请先打开相机");
+        }
+        if (!std::isfinite(usTime) || usTime <= 0.0) {
+            return failure("曝光时间必须是大于0的有限数值");
+        }
+        return cameraDevice.setExposeTimeUs(usTime);
+    });
+}
+
+std::future<CameraResult> CameraCaptureService::requestSetGainDb(double gain) {
+    return submit([this, gain](ICameraDevice &cameraDevice)->CameraResult {
+        if (m_state.load() == State::Closed) {
+            return failure("设置增益失败，请先打开相机");
+        }
+        if (!std::isfinite(gain)) {
+            return failure("增益必须是有限数值");
+        }
+        return cameraDevice.setGainDb(gain);
+    });
+}
+
+std::future<CameraResult> CameraCaptureService::requestSetFps(double fps) {
+    return submit([this, fps](ICameraDevice &cameraDevice)->CameraResult {
+        if (m_state.load() == State::Closed) {
+            return failure("设置帧率失败，请先打开相机");
+        }
+        if (!std::isfinite(fps) || fps <= 0.0) {
+            return failure("帧率必须是大于0的有限数值");
+        }
+        return cameraDevice.setFps(fps);
     });
 }
 
