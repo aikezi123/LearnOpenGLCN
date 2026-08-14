@@ -20,7 +20,7 @@
 
 当前工程使用 CMake 3.21+、C++17、Ninja 和 MSVC 构建，主要依赖 OpenGL、GLFW、GLAD、GLM、stb_image、Qt Widgets/OpenGLWidgets，并已为大恒 Galaxy SDK 建立第三方 CMake target。
 
-工程已接入 GoogleTest 1.17.0 和 CTest 测试框架。测试由标准 `BUILD_TESTING` 开关控制，测试代码统一放在根目录 `tests/`；当前只完成框架搭建，尚未加入具体测试用例。详细说明见[自动化测试](./TESTING.md)。
+工程已接入 GoogleTest 1.17.0 和 CTest 测试框架。测试由标准 `BUILD_TESTING` 开关控制，测试代码统一放在根目录 `tests/`；当前已建立 domain、application 和 infrastructure 三个测试 target，其中线程池包含 9 个单元测试，轨迹与相机测试暂为可编译占位框架。详细说明见[自动化测试](./TESTING.md)。
 
 现有主要构建链路为：
 
@@ -59,11 +59,15 @@ learnopengl_ui (static library)
 
 infrastructure (static library)
     ├── learnopengl_application
+    ├── learnopengl_concurrency (static library)
     ├── Galaxy::SDK
     ├── glad
     ├── glfw3
     ├── OpenGL::GL
     └── glm::glm
+
+learnopengl_concurrency (static library)
+    └── Threads::Threads
 ```
 
 `domain/` 与 `application/` 已形成相机预览所需的最小 target：`learnopengl_domain` 提供 `ImageFrame` / `PixelFormat` 等稳定模型，并包含 `domain/trajectory` 中的二维阿基米德螺旋点生成纯算法；`learnopengl_application` 提供 `ICameraDevice` 和 `CameraCaptureService`。`infrastructure/camera/galaxy` 提供大恒相机适配器，`ui/` 承载当前 Qt/OpenGL 显示原型。相机线程与帧投递的详细说明见[相机采集与 OpenGL 显示链路](./CAMERA_ARCHITECTURE.md)。

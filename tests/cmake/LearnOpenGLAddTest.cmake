@@ -72,11 +72,15 @@ function(learnopengl_add_gtest target_name)
     )
 
     if(ARG_LABELS)
+        # gtest_discover_tests() 的 PROPERTIES 参数按“属性/值”成对解析，
+        # 因此标签列表中的分号必须转义为单个 LABELS 属性值。
+        string(JOIN "\\;" test_labels ${ARG_LABELS})
+
         gtest_discover_tests(${target_name}
             TEST_PREFIX "${target_name}."
             DISCOVERY_MODE PRE_TEST
             PROPERTIES
-                LABELS "${ARG_LABELS}"
+                LABELS "${test_labels}"
         )
     else()
         gtest_discover_tests(${target_name}

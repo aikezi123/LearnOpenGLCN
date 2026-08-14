@@ -1,5 +1,10 @@
 {
   "version": 3,
+  "cmakeMinimumRequired": {
+    "major": 3,
+    "minor": 21,
+    "patch": 0
+  },
   "configurePresets": [
     {
       "name": "ninja-msvc-debug",
@@ -47,6 +52,41 @@
     {
       "name": "ninja-msvc-asan",
       "configurePreset": "ninja-msvc-asan"
+    }
+  ],
+  "testPresets": [
+    {
+      "name": "ninja-msvc-debug",
+      "displayName": "Ninja + MSVC Debug Tests",
+      "configurePreset": "ninja-msvc-debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "ninja-msvc-release",
+      "displayName": "Ninja + MSVC Release Tests",
+      "configurePreset": "ninja-msvc-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "ninja-msvc-asan",
+      "displayName": "Ninja + MSVC AddressSanitizer Tests",
+      "configurePreset": "ninja-msvc-asan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
     }
   ]
 }

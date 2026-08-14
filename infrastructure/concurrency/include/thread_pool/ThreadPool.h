@@ -22,8 +22,11 @@ public:
 
     using Task = std::function<void()>;
     
-    // 投递任务
+    // 投递无需返回完成结果任务
     void post(Task task);
+    // 投递需要返回结果任务
+    std::future<int> submit(std::function<int()> task);
+
 
     // 结束任务
     void shutdown();

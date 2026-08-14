@@ -128,7 +128,9 @@ application 层流程对象统一使用 `Service` 命名，例如 `CameraCapture
 powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Debug -NoPause
 ```
 
-当前已接入 GoogleTest 1.17.0 与 CTest 测试框架。GoogleTest 源码固定保存在 `third_party/googletest`；根目录 `tests/` 提供 `learnopengl_add_gtest()` 公共注册函数，测试由标准 `BUILD_TESTING` 开关控制。当前只完成测试架构，尚未添加具体测试用例或测试 executable；后续测试必须作为最外层消费者单向依赖生产 target，生产模块不得反向依赖 GoogleTest。
+当前已接入 GoogleTest 1.17.0 与 CTest 测试框架。GoogleTest 源码固定保存在 `third_party/googletest`；根目录 `tests/` 提供 `learnopengl_add_gtest()` 公共注册函数，测试由标准 `BUILD_TESTING` 开关控制。当前已建立 domain、application 和 infrastructure 三个测试 executable：轨迹与相机测试暂为可编译占位框架，线程池测试通过独立的 `learnopengl::concurrency` 生产 target 覆盖 9 个行为。测试必须作为最外层消费者单向依赖生产 target，生产模块不得反向依赖 GoogleTest。
+
+`CMakePresets.json` 已为 Debug、Release 和 AddressSanitizer 配置建立对应 test preset；`.vscode/settings.json` 固定启用 CMake Presets、MSVC Developer Environment 自动注入和 CTest Test Explorer。日常开发优先通过 CMake Tools 选择 preset、构建 target 和运行测试；命令行与 CI 使用相同 preset，Ninja + MSVC 的外部终端仍必须先初始化 Visual Studio Developer Environment。
 
 项目提供独立的 `ninja-msvc-asan` CMake preset，用于在 VS Code + CMake Tools 中构建和调试 MSVC AddressSanitizer 版本。ASan 构建目录为 `out/build/ninja-msvc-asan`，不会改变普通 Debug/Release 配置；构建后自动把 x64 Debug ASan 运行时 DLL 部署到 `bin`。
 

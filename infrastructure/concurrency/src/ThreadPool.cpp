@@ -17,13 +17,14 @@ ThreadPool::ThreadPool(size_t count) {
         {
             std::lock_guard<std::mutex> locker(m_mutex);
             m_requireShutdown = true;
-
-            for (auto &worker : m_workers) {
-                if (worker.joinable()) {
-                    worker.join();
-                }
+        }
+        m_condition.notify_all();
+        for (auto &worker : m_workers) {
+            if (worker.joinable()) {
+                worker.join();
             }
         }
+        // 异常继续向上层传递
         throw;
     }
 
@@ -101,6 +102,42 @@ void ThreadPool::post(Task task) {
     }
     // 唤醒一个worker线程工作
     m_condition.notify_one();
+
+}
+
+std::future<int> ThreadPool::submit(std::function<int()> task) {
+    if (!task) {
+        throw std::runtime_error("不能向线程池投递一个空的任务");
+    }
+
+// 这里使用shared_ptr主要有两个原因：
+//
+// 1. promise必须存活到Worker执行set_value/set_exception。
+//    如果捕获局部promise的引用，submit返回后promise已经析构，
+//    Worker之后访问该引用会产生悬空引用，属于未定义行为。
+//
+// 2. std::promise本身不可复制。
+//    如果把promise move捕获进lambda，该lambda会成为move-only对象；
+//    而当前Task使用std::function<void()>，要求保存的Callable可复制。
+//    因此使用可复制的shared_ptr间接管理唯一的promise对象。
+    auto promise = std::make_shared<std::promise<int>>();
+    std::future<int> future = promise->get_future();
+
+    post([task = std::move(task), promise]() {
+        try {
+            int result = task();
+            promise->set_value(result);
+        } catch(...) {
+            promise->set_exception(std::current_exception());
+        }
+    });
+
+    return future;
+    // auto packagedTask = std::make_shared<std::packaged_task<int()>>(std::move(task));
+    // std::future<int> future = packagedTask->get_future();
+    // post([packagedTask]() {
+    //     (*packagedTask)();
+    // });
 
 }
 

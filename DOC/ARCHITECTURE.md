@@ -77,7 +77,8 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 | `LearnOpenGLCN_Qt` | Executable | Qt/OpenGL 工程原型入口与对象装配 | `learnopengl_ui`、`infrastructure` |
 | `lessons` | Static | 收集并编译所有课程示例 | `infrastructure`、`stb_image` |
 | `learnopengl_ui` | Static | 当前 Qt/OpenGL 显示原型、相机页面与轨迹导出页面 | `learnopengl_application`、`learnopengl_domain`、Qt6 Widgets/OpenGLWidgets、Qt6 Concurrent、Qt6 OpenGL、GLAD、OpenGL、stb_image |
-| `infrastructure` | Static | 提供 Shader、OpenGL 公共技术能力和大恒相机适配器 | `learnopengl_application`、GLAD、GLFW、OpenGL、GLM；实现私有依赖 Galaxy::SDK |
+| `infrastructure` | Static | 提供 Shader、OpenGL 公共技术能力和大恒相机适配器 | `learnopengl_application`、`learnopengl_concurrency`、GLAD、GLFW、OpenGL、GLM；实现私有依赖 Galaxy::SDK |
+| `learnopengl_concurrency` | Static | 提供不依赖 GUI/OpenGL 的线程池并发工具 | `Threads::Threads` |
 | `learnopengl_application` | Static | 相机预览 service 与相机端口接口 | `learnopengl_domain` |
 | `learnopengl_domain` | Static | 与外部技术无关的图像帧模型和二维轨迹纯算法 | 无项目内依赖 |
 | `glad` | Static | 加载 OpenGL 函数地址 | 无项目内依赖 |
@@ -86,8 +87,9 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 | `glm::glm` | Interface | 数学类型和矩阵运算 | 无项目内依赖 |
 | `Galaxy::SDK` | Interface | 大恒 Galaxy SDK 的 CMake 包装 target | `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib` |
 | `GTest::gtest_main` / `GTest::gmock_main` | Static | 后续测试 executable 的测试入口与 Mock 支持 | GoogleTest 1.17.0；只允许测试 target 依赖 |
+| `learnopengl_infrastructure_concurrency_tests` | Executable | `ThreadPool` 单元测试 | `learnopengl_concurrency`、`GTest::gtest_main` |
 
-`tests/` 位于所有生产模块之外，并在生产 target 全部定义完成后加载。当前只包含公共测试 target 注册函数，还没有具体测试 executable 或测试用例。后续测试只允许单向依赖被测生产 target；`domain`、`application`、`infrastructure`、`ui`、`lessons` 和组合根均不得反向依赖 GoogleTest 或 `tests/`。完整使用方式见[自动化测试](./TESTING.md)。
+`tests/` 位于所有生产模块之外，并在生产 target 全部定义完成后加载。当前已建立 domain、application 和 infrastructure 三个测试 executable；其中 `learnopengl_infrastructure_concurrency_tests` 包含 9 个 `ThreadPool` 用例，另外两个 target 暂为可编译占位框架。测试只允许单向依赖被测生产 target；`domain`、`application`、`infrastructure`、`ui`、`lessons` 和组合根均不得反向依赖 GoogleTest 或 `tests/`。完整使用方式见[自动化测试](./TESTING.md)。
 
 `third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。大恒运行时 DLL 不再由 CMake 查找或复制，而是直接放在 `out/build/<preset>/bin`，随 exe、pdb 等运行产物一起提交。
 

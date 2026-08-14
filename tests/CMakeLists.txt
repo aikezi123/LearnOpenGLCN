@@ -1,13 +1,50 @@
 # 测试目录只负责组织测试 target，不向生产模块传播任何依赖。
-# 当前阶段先提供框架，具体测试文件和 target 后续按模块逐步加入。
 
 include("${CMAKE_CURRENT_SOURCE_DIR}/cmake/LearnOpenGLAddTest.cmake")
 
-# 后续推荐按生产模块镜像组织：
-#
-# tests/
-# ├── domain/
-# ├── application/
-# └── infrastructure/
-#
-# 模块测试目录创建后在这里使用 add_subdirectory(...) 加入。
+add_library(learnopengl_test_support INTERFACE)
+add_library(learnopengl::test_support ALIAS learnopengl_test_support)
+
+target_include_directories(learnopengl_test_support
+    INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/support
+)
+
+target_link_libraries(learnopengl_test_support
+    INTERFACE
+        learnopengl::application
+)
+
+# 轨迹和相机目前只有可编译测试骨架，暂不注册具体 TEST 用例。
+learnopengl_add_gtest(learnopengl_domain_trajectory_tests
+    SOURCES
+        domain/trajectory/ArchimedeanSpiral2DGeneratorTest.cpp
+    LIBRARIES
+        learnopengl::domain
+    LABELS
+        unit
+        domain
+)
+
+learnopengl_add_gtest(learnopengl_application_camera_tests
+    SOURCES
+        application/camera/CameraCaptureServiceTest.cpp
+        support/camera/FakeCameraDevice.h
+    LIBRARIES
+        learnopengl::application
+        learnopengl::test_support
+    LABELS
+        unit
+        application
+)
+
+learnopengl_add_gtest(learnopengl_infrastructure_concurrency_tests
+    SOURCES
+        infrastructure/concurrency/ThreadPoolTest.cpp
+    LIBRARIES
+        learnopengl::concurrency
+    LABELS
+        unit
+        infrastructure
+        concurrency
+)
