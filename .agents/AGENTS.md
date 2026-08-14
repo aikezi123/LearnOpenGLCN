@@ -331,7 +331,7 @@ Debug 运行：
 
 - 修改 C++、CMake、公共头文件或 target 关系后，至少完成 Debug configure/build。
 - 修改 Shader、纹理、窗口或渲染行为后，应在支持 GUI/OpenGL 的环境中运行验证；无法运行时明确说明。
-- 当前没有自动化测试配置，不得声称运行了 `ctest`。
+- 当前已接入 GoogleTest/CTest 测试框架，但尚无具体测试用例；可以运行 `ctest` 验证测试注册状态，必须如实报告当前为空测试集，不得声称已经执行具体单元测试。
 - 验证结束后运行 `git status --short` 和 `git diff --check`。
 
 ## 14. 明确禁止事项

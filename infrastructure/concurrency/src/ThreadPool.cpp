@@ -8,24 +8,49 @@ ThreadPool::ThreadPool(size_t count) {
         throw std::invalid_argument("线程池初始化失败，线程池中线程数量应大于0");
     }
     m_workers.reserve(count);
-    for (int i = 0; i < count; ++i) {
-        m_workers.emplace_back(&ThreadPool::workerLoop, this);
+
+    try {
+        for (std::size_t i = 0; i < count; ++i) {
+            m_workers.emplace_back(&ThreadPool::workerLoop, this);
+        }
+    } catch(...) {
+        {
+            std::lock_guard<std::mutex> locker(m_mutex);
+            m_requireShutdown = true;
+
+            for (auto &worker : m_workers) {
+                if (worker.joinable()) {
+                    worker.join();
+                }
+            }
+        }
+        throw;
     }
+
 }
 
 ThreadPool::~ThreadPool() {
-    {
-        std::lock_guard<std::mutex> locker(m_mutex);
-        m_requireShutdown = true;
-    }
-    m_condition.notify_all();
+    shutdown();
+}
 
-    // thread对象不可复制不可移动，因此这里必须加&
-    for (auto &worker : m_workers) {
-        if (worker.joinable()) {
-            worker.join();
+void ThreadPool::shutdown() {
+    {
+        std::lock_guard<std::mutex> shutdownlocker(m_shutdownMutex);
+        {
+            std::lock_guard<std::mutex> locker(m_mutex);
+            m_requireShutdown = true;
+        } // locker
+        m_condition.notify_all();
+
+
+        // thread对象不可复制可以移动，因此这里必须加&
+        for (auto &worker : m_workers) {
+            if (worker.joinable()) {
+                worker.join();
+            }
         }
-    }
+    } // shutdownlocker
+
 }
 
 void ThreadPool::workerLoop() {

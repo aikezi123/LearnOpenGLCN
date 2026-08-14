@@ -128,6 +128,8 @@ application 层流程对象统一使用 `Service` 命名，例如 `CameraCapture
 powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Debug -NoPause
 ```
 
+当前已接入 GoogleTest 1.17.0 与 CTest 测试框架。GoogleTest 源码固定保存在 `third_party/googletest`；根目录 `tests/` 提供 `learnopengl_add_gtest()` 公共注册函数，测试由标准 `BUILD_TESTING` 开关控制。当前只完成测试架构，尚未添加具体测试用例或测试 executable；后续测试必须作为最外层消费者单向依赖生产 target，生产模块不得反向依赖 GoogleTest。
+
 项目提供独立的 `ninja-msvc-asan` CMake preset，用于在 VS Code + CMake Tools 中构建和调试 MSVC AddressSanitizer 版本。ASan 构建目录为 `out/build/ninja-msvc-asan`，不会改变普通 Debug/Release 配置；构建后自动把 x64 Debug ASan 运行时 DLL 部署到 `bin`。
 
 当前 Debug 运行入口：

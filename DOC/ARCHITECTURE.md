@@ -67,6 +67,7 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 9. `lessons`
 10. `ui`
 11. `composition_root`
+12. 当 `BUILD_TESTING=ON` 时加载 `tests`
 
 当前目标及依赖为：
 
@@ -84,6 +85,9 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 | `stb_image` | Static | 图片解码 | 无项目内依赖 |
 | `glm::glm` | Interface | 数学类型和矩阵运算 | 无项目内依赖 |
 | `Galaxy::SDK` | Interface | 大恒 Galaxy SDK 的 CMake 包装 target | `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib` |
+| `GTest::gtest_main` / `GTest::gmock_main` | Static | 后续测试 executable 的测试入口与 Mock 支持 | GoogleTest 1.17.0；只允许测试 target 依赖 |
+
+`tests/` 位于所有生产模块之外，并在生产 target 全部定义完成后加载。当前只包含公共测试 target 注册函数，还没有具体测试 executable 或测试用例。后续测试只允许单向依赖被测生产 target；`domain`、`application`、`infrastructure`、`ui`、`lessons` 和组合根均不得反向依赖 GoogleTest 或 `tests/`。完整使用方式见[自动化测试](./TESTING.md)。
 
 `third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。大恒运行时 DLL 不再由 CMake 查找或复制，而是直接放在 `out/build/<preset>/bin`，随 exe、pdb 等运行产物一起提交。
 

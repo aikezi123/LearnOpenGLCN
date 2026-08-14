@@ -103,8 +103,7 @@ void CameraCaptureService::run(std::unique_ptr<ICameraDevice> cameraDevice) {
             // 设备操作抛出标准异常时，将异常转换成普通失败结果。
             // 这样调用方仍然可以通过future.get()得到CameraResult，
             // 不会因为promise未完成而收到broken_promise。
-            result = failure(
-                std::string("执行相机命令时发生异常：") + exception.what()
+            result = failure(std::string("执行相机命令时发生异常：") + exception.what()
             );
         }
         catch (...) {

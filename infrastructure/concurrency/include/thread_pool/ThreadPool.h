@@ -25,6 +25,9 @@ public:
     // 投递任务
     void post(Task task);
 
+    // 结束任务
+    void shutdown();
+
 private:
     // 每个线程都长期运行这个函数
     void workerLoop();
@@ -38,6 +41,9 @@ private:
     
     // 线程队列
     std::vector<std::thread> m_workers;
+
+    // 保护shutdown函数只能被一个线程调用。
+    std::mutex m_shutdownMutex;    
 
 };
 

@@ -12,12 +12,15 @@
 - [相机采集与 OpenGL 显示链路](./CAMERA_ARCHITECTURE.md)：相机分层、控制线程、FIFO 任务队列、条件变量、锁、原子状态、promise/future 和最新帧投递机制。
 - [编码规范](./CODING_STYLE.md)：C++、OpenGL、CMake、资源和注释约定。
 - [扩展指南](./EXTENDING.md)：新增课程、基础设施适配器和架构演进的推荐步骤。
+- [自动化测试](./TESTING.md)：GoogleTest/CTest 框架、测试边界、target 注册和运行方式。
 - [二维阿基米德螺旋轨迹](./TRAJECTORY_2D.md)：当前二维轨迹模型、分段生成、点距求解、导出和后续扩展边界。
 - [Codex 上下文](../.agents/CODEX_CONTEXT.md)：记录当前长期目标、阶段性决策和最近上下文，避免后续对话过长后丢失背景。
 
 ## 当前工程状态
 
 当前工程使用 CMake 3.21+、C++17、Ninja 和 MSVC 构建，主要依赖 OpenGL、GLFW、GLAD、GLM、stb_image、Qt Widgets/OpenGLWidgets，并已为大恒 Galaxy SDK 建立第三方 CMake target。
+
+工程已接入 GoogleTest 1.17.0 和 CTest 测试框架。测试由标准 `BUILD_TESTING` 开关控制，测试代码统一放在根目录 `tests/`；当前只完成框架搭建，尚未加入具体测试用例。详细说明见[自动化测试](./TESTING.md)。
 
 现有主要构建链路为：
 
