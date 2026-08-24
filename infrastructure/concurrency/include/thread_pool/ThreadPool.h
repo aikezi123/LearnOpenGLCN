@@ -1,18 +1,24 @@
 #pragma once
-#include <thread>
 #include <condition_variable>
-#include <memory>
-#include <future>
-#include <queue>
-#include <mutex>
+#include <cstddef>
+#include <exception>
 #include <functional>
+#include <future>
+#include <memory>
+#include <mutex>
+#include <queue>
+#include <utility>
+#include <type_traits>
 #include <vector>
 
 namespace learnopengl::infrastructure {
 
 class ThreadPool {
 public:
-    explicit ThreadPool(size_t count);
+    using Task = std::function<void()>;
+
+public:
+    explicit ThreadPool(std::size_t count);
     ~ThreadPool();
 
     ThreadPool(const ThreadPool &) = delete;
@@ -20,33 +26,52 @@ public:
     ThreadPool(ThreadPool &&) = delete;
     ThreadPool& operator=(ThreadPool &&) = delete;
 
-    using Task = std::function<void()>;
-    
-    // 投递无需返回完成结果任务
+    // 投递无需返回结果的任务
     void post(Task task);
-    // 投递需要返回结果任务
-    std::future<int> submit(std::function<int()> task);
 
+    // 投递需要返回结果的任务
+    // 当前阶段
+    // 1. 支持任意非void返回类型
+    // 2. 暂时只支持无参数Callable
+    // 3. 暂时按值接收Callable，后续在学习F&&和std::forward
+    template<typename F>
+    std::future<std::invoke_result_t<F>> submit(F task) {
+        using ReturnType = std::invoke_result_t<F>;
 
-    // 结束任务
+        // 当前阶段暂不处理void返回值
+        static_assert(!std::is_void_v<ReturnType>, "当前阶段submit暂时不支持void返回类型");
+
+        // promise负责保存wokrer线程最终产生的结果或异常
+        auto promise = std::make_shared<std::promise<ReturnType>>();
+        std::future<std::invoke_result_t<F>> future = promise->get_future();
+
+        post([promise, task = std::move(task)]() mutable {
+            try {
+                std::invoke_result_t<F> result = task();
+                promise->set_value(std::move(result));
+            } catch (...) {
+                promise->set_exception(std::current_exception());
+            }
+        });
+
+        return future;
+        
+    }
+
     void shutdown();
 
 private:
-    // 每个线程都长期运行这个函数
     void workerLoop();
 
 private:
-    // 锁保护请求退出变量以及任务队列
     std::mutex m_mutex;
-    std::condition_variable m_condition;
-    bool m_requireShutdown{false};
+    std::condition_variable m_cv;
     std::queue<Task> m_tasks;
-    
-    // 线程队列
+    bool m_requireShutdown{false};
+
+    std::mutex m_shutdownMutex;
     std::vector<std::thread> m_workers;
 
-    // 保护shutdown函数只能被一个线程调用。
-    std::mutex m_shutdownMutex;    
 
 };
 
