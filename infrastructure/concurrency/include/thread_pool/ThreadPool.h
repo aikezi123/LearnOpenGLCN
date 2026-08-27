@@ -29,35 +29,46 @@ public:
     // 投递无需返回结果的任务
     void post(Task task);
 
-    // 投递需要返回结果的任务
-    // 当前阶段
-    // 1. 支持任意非void返回类型
-    // 2. 暂时只支持无参数Callable
-    // 3. 暂时按值接收Callable，后续在学习F&&和std::forward
-    template<typename F>
-    std::future<std::invoke_result_t<F>> submit(F task) {
-        using ReturnType = std::invoke_result_t<F>;
+template<typename F, typename... Args>
+auto submit(F&& function, Args&&... args)
+    -> std::future<std::invoke_result_t<std::decay_t<F>&, std::decay_t<Args>...>>
+{
+    using StoredFunction = std::decay_t<F>;
+    using ArgsTuple = std::make_tuple<std::decay_t<Args>...>;
+    using ReturnType = std::invoke_result_t<StoredFunction&, std::decay_t<Args>...>;
 
-        // 当前阶段暂不处理void返回值
-        static_assert(!std::is_void_v<ReturnType>, "当前阶段submit暂时不支持void返回类型");
+    auto promise = std::make_shared<std::promise<ReturnType>>();
+    std::future<ReturnType> future = promise->get_future();
 
-        // promise负责保存wokrer线程最终产生的结果或异常
-        auto promise = std::make_shared<std::promise<ReturnType>>();
-        std::future<std::invoke_result_t<F>> future = promise->get_future();
+    auto invocationTask = [
+        promise,
+        function = StoredFunction(std::forward<F>(function)),
+        argsTuple = ArgsTuple(std::forward<Args>(args)...)
+    ]() mutable {
+        try {
+            auto invokeFunction = [&function](auto&&... unpacked) -> decltype(auto) {
+                return std::invoke(function, std::forward<decltype(unpacked)>(unpacked)...);
+            };
 
-        post([promise, task = std::move(task)]() mutable {
-            try {
-                std::invoke_result_t<F> result = task();
-                promise->set_value(std::move(result));
-            } catch (...) {
-                promise->set_exception(std::current_exception());
+            if constexpr (std::is_void_v<ReturnType>) {
+                std::apply(invokeFunction, std::move(argsTuple));
+                promise->set_value();
+            } else {
+                promise->set_value(std::apply(invokeFunction, std::move(argsTuple)));
             }
-        });
+        } catch (...) {
+            promise->set_exception(std::current_exception());
+        }
+    };
 
-        return future;
-        
-    }
+    auto taskHolder = std::make_shared<decltype(invocationTask)>(std::move(invocationTask));
 
+    post([taskHolder]() {
+        (*taskHolder)();
+    });
+
+    return future;
+}
     void shutdown();
 
 private:
