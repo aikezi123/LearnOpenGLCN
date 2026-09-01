@@ -10,6 +10,8 @@
 #include <utility>
 #include <type_traits>
 #include <vector>
+#include <thread>
+#include <tuple>
 
 namespace learnopengl::infrastructure {
 
@@ -29,46 +31,40 @@ public:
     // 投递无需返回结果的任务
     void post(Task task);
 
-template<typename F, typename... Args>
-auto submit(F&& function, Args&&... args)
-    -> std::future<std::invoke_result_t<std::decay_t<F>&, std::decay_t<Args>...>>
-{
-    using StoredFunction = std::decay_t<F>;
-    using ArgsTuple = std::make_tuple<std::decay_t<Args>...>;
-    using ReturnType = std::invoke_result_t<StoredFunction&, std::decay_t<Args>...>;
 
-    auto promise = std::make_shared<std::promise<ReturnType>>();
-    std::future<ReturnType> future = promise->get_future();
-
-    auto invocationTask = [
-        promise,
-        function = StoredFunction(std::forward<F>(function)),
-        argsTuple = ArgsTuple(std::forward<Args>(args)...)
-    ]() mutable {
-        try {
-            auto invokeFunction = [&function](auto&&... unpacked) -> decltype(auto) {
-                return std::invoke(function, std::forward<decltype(unpacked)>(unpacked)...);
-            };
-
-            if constexpr (std::is_void_v<ReturnType>) {
-                std::apply(invokeFunction, std::move(argsTuple));
-                promise->set_value();
-            } else {
-                promise->set_value(std::apply(invokeFunction, std::move(argsTuple)));
+    template<typename F, typename... Args>
+    auto submit(F&& function, Args&&... args)->std::future<std::invoke_result_t<std::decay_t<F>&, std::decay_t<Args>...>> {
+        using StoredFunctionType = std::decay_t<F>;
+        using ArgsTuple = std::tuple<std::decay_t<Args>...>;
+        using ReturnType = std::invoke_result_t<StoredFunctionType&, std::decay_t<Args>...>;
+        auto promise = std::make_shared<std::promise<ReturnType>>();
+        std::future<ReturnType> future = promise->get_future();
+        
+        auto functionTask = [
+            promise, 
+            function = StoredFunctionType(std::forward<F>(function)),
+            argsTuple = ArgsTuple(std::forward<Args>(args)...)
+        ]() mutable {
+            try {
+                if constexpr (std::is_void_v<ReturnType>) {
+                    std::apply(function, std::move(argsTuple));
+                    promise->set_value();
+                } else {
+                    promise->set_value(std::apply(function, std::move(argsTuple)));
+                }
+            } catch (...) {
+                promise->set_exception(std::current_exception());
             }
-        } catch (...) {
-            promise->set_exception(std::current_exception());
-        }
-    };
+        };
 
-    auto taskHolder = std::make_shared<decltype(invocationTask)>(std::move(invocationTask));
+        auto taskHold = std::make_shared<decltype(functionTask)>(std::move(functionTask));
 
-    post([taskHolder]() {
-        (*taskHolder)();
-    });
+        post([taskHold]() {
+            (*taskHold)();
+        });
+        return future;
+    }
 
-    return future;
-}
     void shutdown();
 
 private:
