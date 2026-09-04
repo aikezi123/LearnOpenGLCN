@@ -36,7 +36,7 @@
       "inherits": "ninja-msvc-debug",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "cacheVariables": {
-        "LEARNOPENGL_ENABLE_ASAN": "ON"
+        "ENGINEERINGLAB_ENABLE_ASAN": "ON"
       }
     }
   ],

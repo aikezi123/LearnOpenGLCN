@@ -14,11 +14,11 @@ namespace {
 
 int runShaderExercise()
 {
-    learnopengl::getting_started::runShaderExercise();
+    engineeringlab::getting_started::runShaderExercise();
     return 0;
 }
 
-constexpr learnopengl::lessons::LessonEntry kLessons[] = {
+constexpr engineeringlab::lessons::LessonEntry kLessons[] = {
     {
         "hello_window",
         "入门",
@@ -65,7 +65,7 @@ constexpr learnopengl::lessons::LessonEntry kLessons[] = {
 
 } // namespace
 
-namespace learnopengl::lessons {
+namespace engineeringlab::lessons {
 
 const LessonEntry* lessonsBegin()
 {
@@ -100,4 +100,4 @@ std::string_view defaultLessonId()
     return "start_textures";
 }
 
-} // namespace learnopengl::lessons
+} // namespace engineeringlab::lessons

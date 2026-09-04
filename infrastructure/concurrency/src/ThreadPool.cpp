@@ -1,7 +1,7 @@
 #include <thread_pool/ThreadPool.h>
 #include <stdexcept>
 
-namespace learnopengl::infrastructure {
+namespace engineeringlab::infrastructure {
 
 ThreadPool::ThreadPool(std::size_t count) {
     if (count == 0) {
@@ -98,5 +98,5 @@ void ThreadPool::workerLoop() {
 
 
 
-} // learnopengl::infrastructure
+} // engineeringlab::infrastructure
 

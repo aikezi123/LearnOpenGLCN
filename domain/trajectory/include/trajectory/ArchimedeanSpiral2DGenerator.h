@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <vector>
 
-namespace learnopengl::domain::trajectory {
+namespace engineeringlab::domain::trajectory {
 
 // 固定阿基米德螺旋线二维采样点生成器。
 //
@@ -131,4 +131,4 @@ private:
     std::vector<double> m_distancesMm;           // 最近一次结果中相邻点的二维距离，数量通常为 m_points.size()-1。
 };
 
-} // namespace learnopengl::domain::trajectory
+} // namespace engineeringlab::domain::trajectory

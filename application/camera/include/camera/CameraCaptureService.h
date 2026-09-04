@@ -9,7 +9,7 @@
 #include <functional>
 #include <memory>
 
-namespace learnopengl::application {
+namespace engineeringlab::application {
 
 class CameraCaptureService final {
 public:
@@ -74,4 +74,4 @@ private:
 
 
 
-} // learnopengl::application
+} // engineeringlab::application

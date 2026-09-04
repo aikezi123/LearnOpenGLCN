@@ -3,7 +3,7 @@
 #include <cstdint>
 #include <vector>
 
-namespace learnopengl::domain {
+namespace engineeringlab::domain {
 
 // 描述图像像素在内存中的排列格式。
 enum class PixelFormat {
@@ -20,4 +20,4 @@ struct ImageFrame final {
     std::vector<unsigned char> pixels;                 // 由本对象拥有的连续像素数据。
 };
 
-} // namespace learnopengl::domain
+} // namespace engineeringlab::domain

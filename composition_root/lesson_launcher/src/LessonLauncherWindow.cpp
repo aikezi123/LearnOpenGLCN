@@ -37,21 +37,21 @@ std::string_view toStringView(const QByteArray& value)
     return std::string_view(value.constData(), static_cast<std::size_t>(value.size()));
 }
 
-const learnopengl::lessons::LessonEntry* findLesson(const QString& id)
+const engineeringlab::lessons::LessonEntry* findLesson(const QString& id)
 {
     const QByteArray utf8Id = id.toUtf8();
-    return learnopengl::lessons::findLesson(toStringView(utf8Id));
+    return engineeringlab::lessons::findLesson(toStringView(utf8Id));
 }
 
 } // namespace
 
-namespace learnopengl::app {
+namespace engineeringlab::app {
 
 LessonLauncherWindow::LessonLauncherWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_process(new QProcess(this))
 {
-    setWindowTitle(QStringLiteral("LearnOpenGLCN Lessons"));
+    setWindowTitle(QStringLiteral("OpenGL Lessons"));
     resize(1180, 760);
 
     setupUi();
@@ -319,8 +319,8 @@ void LessonLauncherWindow::populateLessons()
     QString currentChapter;
     QTreeWidgetItem* chapterItem = nullptr;
 
-    for (const auto* lesson = learnopengl::lessons::lessonsBegin();
-         lesson != learnopengl::lessons::lessonsEnd();
+    for (const auto* lesson = engineeringlab::lessons::lessonsBegin();
+         lesson != engineeringlab::lessons::lessonsEnd();
          ++lesson) {
         const QString chapter = toQString(lesson->chapter);
         if (chapter != currentChapter) {
@@ -337,8 +337,8 @@ void LessonLauncherWindow::populateLessons()
 
     m_navigationTree->expandAll();
 
-    const learnopengl::lessons::LessonEntry* defaultLesson =
-        learnopengl::lessons::findLesson(learnopengl::lessons::defaultLessonId());
+    const engineeringlab::lessons::LessonEntry* defaultLesson =
+        engineeringlab::lessons::findLesson(engineeringlab::lessons::defaultLessonId());
     if (defaultLesson != nullptr) {
         setCurrentLessonById(toQString(defaultLesson->id));
     }
@@ -388,7 +388,7 @@ void LessonLauncherWindow::selectLesson(QTreeWidgetItem* item)
         return;
     }
 
-    const learnopengl::lessons::LessonEntry* lesson = findLesson(id);
+    const engineeringlab::lessons::LessonEntry* lesson = findLesson(id);
     if (lesson == nullptr) {
         return;
     }
@@ -463,4 +463,4 @@ void LessonLauncherWindow::appendLine(const QString& text)
     m_outputText->appendPlainText(text.trimmed());
 }
 
-} // namespace learnopengl::app
+} // namespace engineeringlab::app

@@ -273,7 +273,7 @@ int start_textures() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow * window = glfwCreateWindow(1920, 1080, "LearnOpenGLCN", nullptr, nullptr);
+    GLFWwindow * window = glfwCreateWindow(1920, 1080, "EngineeringLab", nullptr, nullptr);
 
     if (window == nullptr) {
         std::cout << "faile to create GLFW window" << std::endl;
@@ -354,7 +354,7 @@ int start_textures() {
 
     // 3. 加载纹理图片
     int width, height, nrChannels;
-    std::string texPath = LEARNOPENGL_ASSET_DIR + std::string("/textures/getting_started/texture_texture/container.jpg");
+    std::string texPath = ENGINEERINGLAB_ASSET_DIR + std::string("/textures/getting_started/texture_texture/container.jpg");
     unsigned char *data = stbi_load(texPath.c_str(), &width, &height, &nrChannels, 0);
     if (data) {
         // 再GPU中为纹理分配存储空间，并把data指向的CPU像素数据复制到GPU
@@ -391,7 +391,7 @@ int start_textures() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     stbi_set_flip_vertically_on_load(true);
-    std::string tex2Path = LEARNOPENGL_ASSET_DIR + std::string("/textures/getting_started/texture_texture/awesomeface.png");
+    std::string tex2Path = ENGINEERINGLAB_ASSET_DIR + std::string("/textures/getting_started/texture_texture/awesomeface.png");
     data = stbi_load(tex2Path.c_str(), &width, &height, &nrChannels, 0);
     if (data) {
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
@@ -402,10 +402,10 @@ int start_textures() {
     stbi_image_free(data);
     
     // ———————————— 5. 绘制图像 ———————————————
-    std::string shaderPath = LEARNOPENGL_ASSET_DIR + std::string("/shaders/getting_started/shader_texture");
+    std::string shaderPath = ENGINEERINGLAB_ASSET_DIR + std::string("/shaders/getting_started/shader_texture");
     std::string vertexShaderPath = shaderPath + "/texture.vert";
     std::string fragShaderPath = shaderPath + "/texture.frag";
-    learnopengl::infrastructure::Shader myShader(vertexShaderPath.c_str(), fragShaderPath.c_str());
+    engineeringlab::infrastructure::Shader myShader(vertexShaderPath.c_str(), fragShaderPath.c_str());
 
     myShader.use();
 

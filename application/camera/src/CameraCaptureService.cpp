@@ -5,7 +5,7 @@
 #include <stdexcept>
 #include <utility>
 
-namespace learnopengl::application {
+namespace engineeringlab::application {
 
 namespace {
 
@@ -289,4 +289,4 @@ std::future<CameraResult> CameraCaptureService::requestSetFrameCallback(ICameraD
 }
 
 
-} //learnopengl::application
+} //engineeringlab::application

@@ -1,4 +1,4 @@
-# LearnOpenGLCN Agent 入口
+# EngineeringLab Agent 入口
 
 本文件是仓库根目录的自动发现入口，适用于整个项目。详细协作规则与当前状态分别维护在 `.agents/AGENTS.md` 和 `.agents/CODEX_CONTEXT.md`。
 

@@ -7,7 +7,7 @@
 #include <memory>
 #include <utility>
 
-namespace learnopengl::composition {
+namespace engineeringlab::composition {
 
 QWidget* CameraComposition::createPage(QWidget* parent)
 {
@@ -24,4 +24,4 @@ QWidget* CameraComposition::createPage(QWidget* parent)
     );
 }
 
-} // namespace learnopengl::composition
+} // namespace engineeringlab::composition

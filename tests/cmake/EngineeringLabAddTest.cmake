@@ -6,17 +6,17 @@ include(GoogleTest)
 # 注册一个 GoogleTest 可执行文件，并让 CTest 自动发现其中的测试用例。
 #
 # 用法：
-# learnopengl_add_gtest(target_name
+# engineeringlab_add_gtest(target_name
 #     SOURCES
 #         SomeModuleTest.cpp
 #     LIBRARIES
-#         learnopengl::some_module
+#         englab::some_module
 #     LABELS
 #         unit
 #         domain
 #     USE_GMOCK
 # )
-function(learnopengl_add_gtest target_name)
+function(engineeringlab_add_gtest target_name)
     set(options USE_GMOCK)
     set(one_value_arguments)
     set(multi_value_arguments SOURCES LIBRARIES LABELS)
@@ -31,14 +31,14 @@ function(learnopengl_add_gtest target_name)
 
     if(ARG_UNPARSED_ARGUMENTS)
         message(FATAL_ERROR
-            "learnopengl_add_gtest(${target_name}) received unknown arguments: "
+            "engineeringlab_add_gtest(${target_name}) received unknown arguments: "
             "${ARG_UNPARSED_ARGUMENTS}"
         )
     endif()
 
     if(NOT ARG_SOURCES)
         message(FATAL_ERROR
-            "learnopengl_add_gtest(${target_name}) requires at least one source file"
+            "engineeringlab_add_gtest(${target_name}) requires at least one source file"
         )
     endif()
 

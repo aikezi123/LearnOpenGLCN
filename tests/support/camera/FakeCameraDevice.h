@@ -4,7 +4,7 @@
 
 #include <utility>
 
-namespace learnopengl::tests::support::camera {
+namespace engineeringlab::tests::support::camera {
 
 // CameraCaptureService 后续测试使用的最小内存实现，不访问真实相机 SDK。
 class FakeCameraDevice final : public application::ICameraDevice {
@@ -75,4 +75,4 @@ private:
     FrameCallback m_frameCallback;
 };
 
-} // namespace learnopengl::tests::support::camera
+} // namespace engineeringlab::tests::support::camera

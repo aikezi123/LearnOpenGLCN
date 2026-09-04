@@ -15,7 +15,7 @@
 #include <utility>
 #include <vector>
 
-namespace learnopengl::infrastructure {
+namespace engineeringlab::infrastructure {
 namespace {
 
 using namespace std::chrono_literals;
@@ -426,4 +426,4 @@ TEST(ThreadPoolTest, MultipleWorkersCanExecuteTasksConcurrently)
 }
 
 } // namespace
-} // namespace learnopengl::infrastructure
+} // namespace engineeringlab::infrastructure

@@ -5,7 +5,7 @@
 #include <limits>
 #include <stdexcept>
 
-namespace learnopengl::domain::trajectory {
+namespace engineeringlab::domain::trajectory {
 namespace {
 
 constexpr double kPi = 3.141592653589793238462643383279502884;
@@ -378,4 +378,4 @@ std::vector<double> ArchimedeanSpiral2DGenerator::computeDistances(const std::ve
     return distances;
 }
 
-} // namespace learnopengl::domain::trajectory
+} // namespace engineeringlab::domain::trajectory

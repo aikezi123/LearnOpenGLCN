@@ -7,13 +7,13 @@
 对应生产 target 为：
 
 ```text
-learnopengl_concurrency (static library)
+engineeringlab_concurrency (static library)
     └── Threads::Threads
 ```
 
-CMake 别名为 `learnopengl::concurrency`。该 target 不依赖 Qt、OpenGL、GLFW、相机 SDK、application 或 domain，可以被外层模块和独立测试直接使用。
+CMake 别名为 `englab::concurrency`。该 target 不依赖 Qt、OpenGL、GLFW、相机 SDK、application 或 domain，可以被外层模块和独立测试直接使用。
 
-当前项目生产代码尚未创建或调用 `ThreadPool`，只有线程池测试直接消费该公共接口。`infrastructure` 链接 `learnopengl::concurrency` 只是建立可用依赖，不代表 application 已经获得统一异步执行端口。
+当前项目生产代码尚未创建或调用 `ThreadPool`，只有线程池测试直接消费该公共接口。`englab::concurrency` 是独立技术 target，不由聚合 infrastructure target 传播，也不代表 application 已经获得统一异步执行端口。
 
 ## 2. 架构边界
 
@@ -107,7 +107,7 @@ auto submit(F&& task, Args&&... taskArgs) -> std::future<ReturnType>;
 
 ## 5. 测试基线
 
-测试 target 为 `learnopengl_infrastructure_concurrency_tests`。2026-09-03 使用 `ninja-msvc-debug`完成配置、构建并运行：
+测试 target 为 `engineeringlab_infrastructure_concurrency_tests`。2026-09-04 在项目命名和基础设施 target 拆分后，使用 `ninja-msvc-debug` 完成配置、全量构建并运行：
 
 ```text
 20/20 ThreadPoolTest passed
@@ -126,7 +126,7 @@ auto submit(F&& task, Args&&... taskArgs) -> std::future<ReturnType>;
 
 ```powershell
 cmake --preset ninja-msvc-debug
-cmake --build --preset ninja-msvc-debug --target learnopengl_infrastructure_concurrency_tests
+cmake --build --preset ninja-msvc-debug --target engineeringlab_infrastructure_concurrency_tests
 ctest --preset ninja-msvc-debug -R ThreadPoolTest --output-on-failure
 ```
 

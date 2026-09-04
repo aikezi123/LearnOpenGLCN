@@ -12,7 +12,7 @@
 #include <cstddef>
 #include <utility>
 
-namespace learnopengl::infrastructure {
+namespace engineeringlab::infrastructure {
 
 class ThreadPool {
 public:
@@ -89,7 +89,7 @@ private:
 };
 
 
-} // learnopengl::infrastructure
+} // engineeringlab::infrastructure
 
 
 

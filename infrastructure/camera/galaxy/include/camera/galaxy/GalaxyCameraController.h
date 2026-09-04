@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-namespace learnopengl::infrastructure::camera::galaxy {
+namespace engineeringlab::infrastructure::camera::galaxy {
 
 class GalaxyCameraControllerImpl;
 
@@ -35,4 +35,4 @@ private:
     std::unique_ptr<GalaxyCameraControllerImpl> m_impl;
 };
 
-} // namespace learnopengl::infrastructure::camera::galaxy
+} // namespace engineeringlab::infrastructure::camera::galaxy

@@ -8,8 +8,8 @@
 
 本项目有两类扩展：
 
-1. LearnOpenGLCN 教程学习扩展：按章节继续实现网站中的课程与练习。
-2. 工程功能扩展：从某个 OpenGL 知识点出发，扩展为实际功能模块，例如相机实时图像显示、三维轨迹或点云绘制。
+1. 课程学习扩展：继续实现 LearnOpenGL 等课程与练习，保持代码可运行、可对照。
+2. 工程能力扩展：把已经验证的知识用于相机显示、轨迹、点云等实际功能；学习方向可以交叉使用同一组分层能力，不要求一一建立独立模块。
 
 前期允许在 `ui` 层先做完整 Qt/OpenGL 原型，尤其是需要理解 Qt 事件循环、`QOpenGLWidget` 生命周期和渲染流程时。原型跑通后再把稳定逻辑拆分到 application/infrastructure/domain。不要把“先跑通”的临时代码误写成最终分层方案。
 
@@ -53,7 +53,7 @@ assets/
 
 当前 `lessons/CMakeLists.txt` 使用 `GLOB_RECURSE ... CONFIGURE_DEPENDS`，新增 `.cpp` 通常会触发重新配置。目标架构迁移后应改成显式 target 和源文件列表。
 
-当前 `LearnOpenGLCN_Lessons.exe` 不带参数会打开 Qt 课程导航器；选择课程后，导航器通过子进程传入课程 ID 来运行对应 GLFW 课程窗口。导航窗口代码位于 `composition_root/lesson_launcher`，`lesson_main.cpp` 只保留参数解析、直接运行课程和启动导航窗口。传入课程 ID 时仍可直接运行课程，例如 `LearnOpenGLCN_Lessons.exe transform`；`--list` 可查看已注册课程。
+当前 `OpenGLLessons.exe` 不带参数会打开 Qt 课程导航器；选择课程后，导航器通过子进程传入课程 ID 来运行对应 GLFW 课程窗口。导航窗口代码位于 `composition_root/lesson_launcher`，`lesson_main.cpp` 只保留参数解析、直接运行课程和启动导航窗口。传入课程 ID 时仍可直接运行课程，例如 `OpenGLLessons.exe transform`；`--list` 可查看已注册课程。
 
 ## 3. 目标阶段新增课程
 
@@ -71,11 +71,11 @@ target_include_directories(lesson_coordinate_transform PUBLIC
 )
 
 target_link_libraries(lesson_coordinate_transform
-    PUBLIC learnopengl::application
-    PRIVATE learnopengl::opengl
+    PUBLIC englab::application
+    PRIVATE englab::opengl
 )
 
-add_library(learnopengl::lesson_coordinate_transform
+add_library(englab::lesson_coordinate_transform
     ALIAS lesson_coordinate_transform
 )
 ```
@@ -85,8 +85,8 @@ add_library(learnopengl::lesson_coordinate_transform
 课程应通过课程入口列表或命令行参数选择，而不是持续修改 Qt 入口：
 
 ```text
-LearnOpenGLCN_Lessons.exe transform
-LearnOpenGLCN_Lessons.exe --list
+OpenGLLessons.exe transform
+OpenGLLessons.exe --list
 ```
 
 注册信息至少包含：
@@ -170,7 +170,7 @@ infrastructure/
     └── CMakeLists.txt
 ```
 
-分层代码统一采用“层 / 模块 / include + src”的模块优先结构。比如 `application/camera/include/camera/`、`domain/image/include/imageframe/`、`infrastructure/camera/galaxy/include/camera/galaxy/`。公共 include 目录下不要重复项目名或当前层名，不要创建 `learnopengl/application/camera/`、`learnopengl/domain/image/` 这类目录。
+分层代码统一采用“层 / 模块 / include + src”的模块优先结构。比如 `application/camera/include/camera/`、`domain/image/include/imageframe/`、`infrastructure/camera/galaxy/include/camera/galaxy/`。公共 include 目录下不要重复项目名或当前层名，不要创建 `engineeringlab/application/camera/`、`engineeringlab/domain/image/` 这类目录。
 
 步骤：
 
@@ -202,7 +202,7 @@ infrastructure/
 - 帧格式、宽高、stride、通道顺序、线程和缓冲区所有权必须明确。
 - 目标帧率至少满足 30 FPS，避免每帧重复创建纹理或 Program。
 
-当前大恒实现为 `learnopengl::infrastructure::camera::galaxy::GalaxyCameraController`，实现 `application::ICameraDevice`。它负责大恒 SDK 初始化、开关相机和输出 `domain::ImageFrame`，SDK 头文件只出现在 infrastructure 的 `.cpp` 中。`CameraImageCaptureView` 通过 `CameraCaptureService` 接收帧，并用单槽最新帧邮箱与 Qt queued invoke 投递到 UI 线程；OpenGL 上传仍放在 `QOpenGLWidget` 的有效 context 中完成，不在相机 SDK 回调线程中直接调用 `glXXX`。当前图像翻转、旋转、缩放和平移属于 UI 原型交互，由 `CameraImageCaptureView` 控件发起，由 `DisplayOpenGLImage` 在绘制前上传 shader uniform 矩阵完成。线程与同步机制详见[相机采集与 OpenGL 显示链路](../modules/CAMERA_ARCHITECTURE.md)。
+当前大恒实现为 `engineeringlab::infrastructure::camera::galaxy::GalaxyCameraController`，实现 `application::ICameraDevice`。它负责大恒 SDK 初始化、开关相机和输出 `domain::ImageFrame`，SDK 头文件只出现在 infrastructure 的 `.cpp` 中。`CameraImageCaptureView` 通过 `CameraCaptureService` 接收帧，并用单槽最新帧邮箱与 Qt queued invoke 投递到 UI 线程；OpenGL 上传仍放在 `QOpenGLWidget` 的有效 context 中完成，不在相机 SDK 回调线程中直接调用 `glXXX`。当前图像翻转、旋转、缩放和平移属于 UI 原型交互，由 `CameraImageCaptureView` 控件发起，由 `DisplayOpenGLImage` 在绘制前上传 shader uniform 矩阵完成。线程与同步机制详见[相机采集与 OpenGL 显示链路](../modules/CAMERA_ARCHITECTURE.md)。
 
 ## 5.2 三维轨迹与点云显示模块
 
@@ -292,7 +292,7 @@ assets/
 
 - 修正 include 目录，不再公开 `src` 和嵌套目录。
 - 将 `#include "Shader.hpp"` 统一为稳定公开路径，例如 `#include <shader/Shader.hpp>`。
-- 为现有 target 增加 `learnopengl::` 别名。
+- 为现有 target 增加 `englab::` 别名。
 - 将不必要的 `PUBLIC` 依赖改为 `PRIVATE`。
 
 验收结果：现有课程行为不变，但错误的跨模块 include 会在编译期暴露。

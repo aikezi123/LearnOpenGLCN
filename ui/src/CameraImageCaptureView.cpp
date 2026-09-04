@@ -19,7 +19,7 @@
 #include <iostream>
 #include <utility>
 
-namespace learnopengl::ui {
+namespace engineeringlab::ui {
 
 CameraImageCaptureView::CameraImageCaptureView(std::unique_ptr<application::CameraCaptureService> cameraCaptureService,QWidget* parent)
     : QWidget(parent) , m_ui(new Ui::CameraImageCaptureView) , m_cameraCaptureService(std::move(cameraCaptureService))
@@ -327,4 +327,4 @@ void CameraImageCaptureView::updateCameraControls()
     m_ui->applyCameraParametersButton->setEnabled(!isClosed);
 }
 
-} // namespace learnopengl::ui
+} // namespace engineeringlab::ui

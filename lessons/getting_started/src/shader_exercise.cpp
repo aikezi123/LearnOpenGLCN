@@ -40,13 +40,13 @@ namespace
 
     std::string getShaderPath(const std::string& fileName)
     {
-        return std::string(LEARNOPENGL_ASSET_DIR) +
+        return std::string(ENGINEERINGLAB_ASSET_DIR) +
                "/shaders/getting_started/shader_exercise/" +
                fileName;
     }
 }
 
-namespace learnopengl::getting_started
+namespace engineeringlab::getting_started
 {
     void runShaderExercise()
     {
@@ -146,7 +146,7 @@ namespace learnopengl::getting_started
                 break;
         }
         
-        learnopengl::infrastructure::Shader shader(vertexShaderPath.c_str(), fragmentShaderPath.c_str());
+        engineeringlab::infrastructure::Shader shader(vertexShaderPath.c_str(), fragmentShaderPath.c_str());
 
 
         // —————————— 5. 显示 ————————————

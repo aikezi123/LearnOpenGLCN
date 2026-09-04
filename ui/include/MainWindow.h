@@ -11,7 +11,7 @@ class MainWindow;
 }
 QT_END_NAMESPACE
 
-namespace learnopengl::ui {
+namespace engineeringlab::ui {
 
 class MainWindow final : public QMainWindow {
     Q_OBJECT
@@ -46,4 +46,4 @@ private:
     Ui::MainWindow* m_ui;
 };
 
-} // namespace learnopengl::ui
+} // namespace engineeringlab::ui

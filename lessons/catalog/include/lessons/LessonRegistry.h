@@ -3,7 +3,7 @@
 #include <cstddef>
 #include <string_view>
 
-namespace learnopengl::lessons {
+namespace engineeringlab::lessons {
 
 using LessonRunFunction = int (*)();
 
@@ -21,4 +21,4 @@ std::size_t lessonCount();
 const LessonEntry* findLesson(std::string_view id);
 std::string_view defaultLessonId();
 
-} // namespace learnopengl::lessons
+} // namespace engineeringlab::lessons

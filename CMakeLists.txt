@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.21)
 # LANGUAGES C CXX 表示项目同时启用 C 和 C++ 两种语言
 # C   用来编译 glad.c
 # CXX 用来编译项目中的 C++ 源文件和入口文件
-project(LearnOpenGL_Window LANGUAGES C CXX)
+project(EngineeringLab LANGUAGES C CXX)
 
 # 提供标准 BUILD_TESTING 开关并在启用时注册 CTest。
 include(CTest)
@@ -15,14 +15,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 option(
-    LEARNOPENGL_ENABLE_ASAN
+    ENGINEERINGLAB_ENABLE_ASAN
     "Enable AddressSanitizer for memory error diagnostics"
     OFF
 )
 
-if(LEARNOPENGL_ENABLE_ASAN)
+if(ENGINEERINGLAB_ENABLE_ASAN)
     if(NOT MSVC)
-        message(FATAL_ERROR "LEARNOPENGL_ENABLE_ASAN currently supports the MSVC toolchain only.")
+        message(FATAL_ERROR "ENGINEERINGLAB_ENABLE_ASAN currently supports the MSVC toolchain only.")
     endif()
 
     if(NOT CMAKE_SIZEOF_VOID_P EQUAL 8)
@@ -69,8 +69,7 @@ add_subdirectory(application)
 
 add_subdirectory(infrastructure)
 
-# LearnOpenGL示例代码
-# lessons依赖infrastructure，因此要放在add_subdirectory(infrastructure)后面
+# OpenGL 课程代码依赖独立的 OpenGL 基础设施 target。
 add_subdirectory(lessons)
 
 add_subdirectory(ui)

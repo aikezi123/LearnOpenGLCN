@@ -16,22 +16,22 @@ file(GLOB DOMAIN_INCLUDE_DIRS CONFIGURE_DEPENDS
 )
 
 # 创建 domain 静态库
-add_library(learnopengl_domain STATIC
+add_library(engineeringlab_domain STATIC
     ${DOMAIN_SOURCES}
     #${DOMAIN_HEADERS}不是必须加进去，主要编译的是源文件
 )
 
 # 为 domain 库创建命名空间别名
-add_library(learnopengl::domain ALIAS learnopengl_domain)
+add_library(englab::domain ALIAS engineeringlab_domain)
 
 # 将各模块 include 目录暴露给本库及依赖本库的 target
-target_include_directories(learnopengl_domain
+target_include_directories(engineeringlab_domain
     PUBLIC
         ${DOMAIN_INCLUDE_DIRS}
 )
 
 # 要求本库及依赖本库的 target 至少使用 C++17
-target_compile_features(learnopengl_domain
+target_compile_features(engineeringlab_domain
     PUBLIC
         cxx_std_17
 )

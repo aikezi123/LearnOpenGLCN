@@ -5,7 +5,7 @@
 #include<iostream>
 #include<sstream>
 
-namespace learnopengl::infrastructure {
+namespace engineeringlab::infrastructure {
     Shader::Shader(const char *vertexPath, const char *fragmentPath) {
         // 1. 从文件路径中读取顶点着色器和片段着色器源码
         std::string vertexCode;

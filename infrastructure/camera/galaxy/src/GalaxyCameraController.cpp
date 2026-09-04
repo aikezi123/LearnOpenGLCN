@@ -10,7 +10,7 @@
 #include <mutex>
 #include <utility>
 
-namespace learnopengl::infrastructure::camera::galaxy {
+namespace engineeringlab::infrastructure::camera::galaxy {
 namespace {
 
 std::string makeGalaxyError(const char* operation, CGalaxyException& error)
@@ -729,4 +729,4 @@ void GalaxyCameraController::setFrameCallback(FrameCallback callback)
     m_impl->setFrameCallback(std::move(callback));
 }
 
-} // namespace learnopengl::infrastructure::camera::galaxy
+} // namespace engineeringlab::infrastructure::camera::galaxy

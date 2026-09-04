@@ -7,7 +7,7 @@ find_package(Qt6 6.9 CONFIG REQUIRED COMPONENTS
 )
 
 # Qt/OpenGL 工程原型入口
-add_executable(LearnOpenGLCN_Qt
+add_executable(EngineeringWorkbench
     qt_main.cpp
     AppComposition.h
     AppComposition.cpp
@@ -17,66 +17,66 @@ add_executable(LearnOpenGLCN_Qt
     modules/TrajectoryComposition.cpp
 )
 
-target_include_directories(LearnOpenGLCN_Qt
+target_include_directories(EngineeringWorkbench
     PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}
         ${CMAKE_CURRENT_SOURCE_DIR}/modules
 )
 
-target_link_libraries(LearnOpenGLCN_Qt
+target_link_libraries(EngineeringWorkbench
     PRIVATE
-        learnopengl::application
-        learnopengl::infrastructure
-        learnopengl::ui
+        englab::application
+        englab::camera_galaxy
+        englab::ui
         Qt6::Widgets
 )
 
-target_compile_features(LearnOpenGLCN_Qt PRIVATE
+target_compile_features(EngineeringWorkbench PRIVATE
     cxx_std_17
 )
 
 # LearnOpenGL 课程代码入口
-add_executable(LearnOpenGLCN_Lessons
+add_executable(OpenGLLessons
     lesson_main.cpp
     lesson_launcher/include/LessonLauncherWindow.h
     lesson_launcher/src/LessonLauncherWindow.cpp
 )
 
-target_include_directories(LearnOpenGLCN_Lessons PRIVATE
+target_include_directories(OpenGLLessons PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/lesson_launcher/include
 )
 
-target_link_libraries(LearnOpenGLCN_Lessons PRIVATE
-    lessons
+target_link_libraries(OpenGLLessons PRIVATE
+    englab::opengl_lessons
     Qt6::Widgets
 )
 
-target_compile_features(LearnOpenGLCN_Lessons PRIVATE
+target_compile_features(OpenGLLessons PRIVATE
     cxx_std_17
 )
 
 # 统一 exe 输出目录
 set_target_properties(
-    LearnOpenGLCN_Qt
-    LearnOpenGLCN_Lessons
+    EngineeringWorkbench
+    OpenGLLessons
     PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
 )
 
 foreach(galaxy_runtime_file IN LISTS GALAXY_RUNTIME_FILES)
     add_custom_command(
-        TARGET LearnOpenGLCN_Qt
+        TARGET EngineeringWorkbench
         POST_BUILD
         COMMAND
             ${CMAKE_COMMAND} -E copy_if_different
             "${galaxy_runtime_file}"
-            "$<TARGET_FILE_DIR:LearnOpenGLCN_Qt>"
+            "$<TARGET_FILE_DIR:EngineeringWorkbench>"
         COMMENT "Deploying ${galaxy_runtime_file}"
         VERBATIM
     )
 endforeach()
 
-if(LEARNOPENGL_ENABLE_ASAN)
+if(ENGINEERINGLAB_ENABLE_ASAN)
     get_filename_component(MSVC_COMPILER_DIRECTORY "${CMAKE_CXX_COMPILER}" DIRECTORY)
     set(
         MSVC_ASAN_RUNTIME_DLL
@@ -87,7 +87,7 @@ if(LEARNOPENGL_ENABLE_ASAN)
         message(FATAL_ERROR "MSVC AddressSanitizer runtime was not found: ${MSVC_ASAN_RUNTIME_DLL}")
     endif()
 
-    foreach(target_name IN ITEMS LearnOpenGLCN_Qt LearnOpenGLCN_Lessons)
+    foreach(target_name IN ITEMS EngineeringWorkbench OpenGLLessons)
         add_custom_command(
             TARGET ${target_name}
             POST_BUILD

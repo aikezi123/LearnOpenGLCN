@@ -11,7 +11,7 @@ class QPushButton;
 class QTreeWidget;
 class QTreeWidgetItem;
 
-namespace learnopengl::app {
+namespace engineeringlab::app {
 
 class LessonLauncherWindow final : public QMainWindow {
 public:
@@ -45,4 +45,4 @@ private:
     QString m_currentLessonId;
 };
 
-} // namespace learnopengl::app
+} // namespace engineeringlab::app

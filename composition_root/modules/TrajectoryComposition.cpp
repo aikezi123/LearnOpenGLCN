@@ -2,11 +2,11 @@
 
 #include <TrajectoryExportView.h>
 
-namespace learnopengl::composition {
+namespace engineeringlab::composition {
 
 QWidget* TrajectoryComposition::createPage(QWidget* parent)
 {
     return new ui::TrajectoryExportView(parent);
 }
 
-} // namespace learnopengl::composition
+} // namespace engineeringlab::composition

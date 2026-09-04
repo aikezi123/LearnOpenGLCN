@@ -89,7 +89,7 @@ class $ClassName;
 }
 QT_END_NAMESPACE
 
-namespace learnopengl::ui {
+namespace engineeringlab::ui {
 
 class $ClassName final : public $BaseClass {
     Q_OBJECT
@@ -102,7 +102,7 @@ private:
     Ui::$ClassName* m_ui;
 };
 
-} // namespace learnopengl::ui
+} // namespace engineeringlab::ui
 "@
 }
 
@@ -129,7 +129,7 @@ function Get-SourceContent($ClassName, $BaseClass, $GeneratedUiInclude) {
 
 #include "$GeneratedUiInclude"
 
-namespace learnopengl::ui {
+namespace engineeringlab::ui {
 
 $ClassName::$ClassName(QWidget* parent)
     : $BaseClass(parent)
@@ -143,7 +143,7 @@ $ClassName::~$ClassName()
     delete m_ui;
 }
 
-} // namespace learnopengl::ui
+} // namespace engineeringlab::ui
 "@
 }
 

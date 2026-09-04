@@ -9,7 +9,7 @@
 #include <string>
 #include <vector>
 
-using learnopengl::domain::trajectory::ArchimedeanSpiral2DGenerator;
+using engineeringlab::domain::trajectory::ArchimedeanSpiral2DGenerator;
 
 namespace {
 

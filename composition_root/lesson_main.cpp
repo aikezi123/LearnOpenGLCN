@@ -15,12 +15,12 @@ void printUsage(const char* executableName)
               << "  " << executableName << "                Open lesson navigator\n"
               << "  " << executableName << " [lesson-id]    Run a lesson directly\n\n"
               << "Default navigator lesson: "
-              << learnopengl::lessons::defaultLessonId()
+              << engineeringlab::lessons::defaultLessonId()
               << "\n\n"
               << "Available lessons:\n";
 
-    for (const auto* lesson = learnopengl::lessons::lessonsBegin();
-         lesson != learnopengl::lessons::lessonsEnd();
+    for (const auto* lesson = engineeringlab::lessons::lessonsBegin();
+         lesson != engineeringlab::lessons::lessonsEnd();
          ++lesson) {
         std::cout << "  " << lesson->id << " - " << lesson->description << '\n';
     }
@@ -30,7 +30,7 @@ void printUsage(const char* executableName)
 
 int runLessonById(std::string_view id)
 {
-    const learnopengl::lessons::LessonEntry* lesson = learnopengl::lessons::findLesson(id);
+    const engineeringlab::lessons::LessonEntry* lesson = engineeringlab::lessons::findLesson(id);
     if (lesson == nullptr) {
         return -1;
     }
@@ -63,7 +63,7 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
 
-    learnopengl::app::LessonLauncherWindow window;
+    engineeringlab::app::LessonLauncherWindow window;
     window.show();
 
     return app.exec();

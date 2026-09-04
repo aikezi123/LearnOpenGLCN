@@ -25,13 +25,13 @@
 
 | 对象 | 规则 | 示例 |
 | --- | --- | --- |
-| 命名空间 | 小写 | `learnopengl::infrastructure` |
+| 命名空间 | 小写 | `engineeringlab::infrastructure` |
 | 类型、枚举 | PascalCase | `ShaderProgram` |
 | 函数、局部变量 | camelCase | `loadTexture()`、`vertexCount` |
 | 成员变量 | `m_` + camelCase | `m_programId` |
 | 常量 | `k` + PascalCase | `kDefaultWidth` |
-| CMake target | 小写下划线 | `learnopengl_application` |
-| CMake target alias | 命名空间形式 | `learnopengl::application` |
+| CMake target | 小写下划线 | `engineeringlab_application` |
+| CMake target alias | 命名空间形式 | `englab::application` |
 | Shader uniform | camelCase | `modelMatrix` |
 
 application 层中负责编排流程的对象统一使用 `Service` 后缀，例如 `CameraCaptureService`。application 层端口接口使用 `I` 前缀，例如 `ICameraDevice`；端口接口和使用它的 service 放在 application，不放 domain。domain 层只放稳定概念、值对象和纯规则，例如 `ImageFrame`、`PixelFormat`。
@@ -42,10 +42,10 @@ application 层中负责编排流程的对象统一使用 `Service` 后缀，例
 
 ## 4. 命名空间与头文件
 
-项目代码放在 `learnopengl` 根命名空间下，并按层和功能继续划分：
+项目代码放在 `engineeringlab` 根命名空间下，并按层和功能继续划分：
 
 ```cpp
-namespace learnopengl::infrastructure::opengl {
+namespace engineeringlab::infrastructure::opengl {
     class ShaderProgram final {
         // ...
     };
@@ -71,7 +71,7 @@ infrastructure/shader/include/shader/Shader.hpp
 infrastructure/shader/src/Shader.cpp
 ```
 
-公共头文件路径不要重复项目名或当前层名。项目根目录已经叫 LearnOpenGLCN，文件也已经位于某个层和模块之下，因此不要再嵌套 `learnopengl/application`、`learnopengl/domain`、`learnopengl/infrastructure` 这类目录。优先用功能目录表达含义。
+公共头文件路径不要重复项目名或当前层名。项目根目录已经叫 EngineeringLab，文件也已经位于某个层和模块之下，因此不要再嵌套 `engineeringlab/application`、`engineeringlab/domain`、`engineeringlab/infrastructure` 这类目录。优先用功能目录表达含义。
 
 禁止依赖偶然被加入搜索路径的无归属 include：
 
@@ -79,7 +79,7 @@ infrastructure/shader/src/Shader.cpp
 // 不推荐
 #include "Shader.hpp"
 // 不推荐
-#include <learnopengl/application/camera/ICameraDevice.h>
+#include <engineeringlab/application/camera/ICameraDevice.h>
 ```
 
 头文件规则：
@@ -216,7 +216,7 @@ private:
 - 公共 include 路径只暴露模块的 `include` 根目录。
 - 第三方依赖尽可能包装为稳定 target，不在多个模块重复硬编码库路径。
 - 不为第三方 target 添加当前没有调用点的编译宏或 CMake option；等代码确实需要区分构建能力时再添加。
-- 新增 target 后提供 `learnopengl::name` 别名。
+- 新增 target 后提供 `englab::name` 别名。
 - 平台相关链接放在对应适配器或 third_party target 中。
 - 不把生成文件写入源码目录，统一放在 `out/`。
 
@@ -250,7 +250,7 @@ private:
 ## 14. 单元测试约定
 
 - 测试源码统一放在根目录 `tests/`，并镜像被测模块组织，不放入生产模块的 `src/`。
-- 测试 target 通过 `learnopengl_add_gtest()` 注册，只链接被测 target 和必要的 GoogleTest/GoogleMock 入口。
+- 测试 target 通过 `engineeringlab_add_gtest()` 注册，只链接被测 target 和必要的 GoogleTest/GoogleMock 入口。
 - 测试名称描述可观察行为和场景，不依赖测试之间的执行顺序。
 - 浮点计算使用带明确容限的断言，不直接比较计算结果的二进制相等。
 - 并发测试使用 `future`、条件变量或有上限的等待同步，不使用无条件长时间 `sleep` 猜测时序。

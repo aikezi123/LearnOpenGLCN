@@ -10,7 +10,7 @@
 
 #include <memory>
 
-namespace learnopengl::composition {
+namespace engineeringlab::composition {
 
 std::unique_ptr<QMainWindow> AppComposition::createMainWindow() const
 {
@@ -31,4 +31,4 @@ std::unique_ptr<QMainWindow> AppComposition::createMainWindow() const
     return mainWindow;
 }
 
-} // namespace learnopengl::composition
+} // namespace engineeringlab::composition

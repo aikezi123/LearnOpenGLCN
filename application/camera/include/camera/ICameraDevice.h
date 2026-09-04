@@ -5,7 +5,7 @@
 #include <functional>
 #include <string>
 
-namespace learnopengl::application {
+namespace engineeringlab::application {
 
 // 描述一次相机设备操作的执行结果。
 struct CameraResult final {
@@ -52,4 +52,4 @@ public:
     virtual void setFrameCallback(FrameCallback callback) = 0;
 };
 
-} // namespace learnopengl::application
+} // namespace engineeringlab::application

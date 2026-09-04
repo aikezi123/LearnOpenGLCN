@@ -11,40 +11,40 @@ find_package(Qt6 6.9 CONFIG REQUIRED COMPONENTS
     OpenGLWidgets
 )
 
-file(GLOB_RECURSE LEARNOPENGL_UI_SOURCES CONFIGURE_DEPENDS
+file(GLOB_RECURSE ENGINEERINGLAB_UI_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp"
 )
 
-file(GLOB_RECURSE LEARNOPENGL_UI_HEADERS CONFIGURE_DEPENDS
+file(GLOB_RECURSE ENGINEERINGLAB_UI_HEADERS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.h"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
 )
 
-file(GLOB_RECURSE LEARNOPENGL_UI_FORMS CONFIGURE_DEPENDS
+file(GLOB_RECURSE ENGINEERINGLAB_UI_FORMS CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*.ui"
 )
 
 
-add_library(learnopengl_ui STATIC)
+add_library(engineeringlab_ui STATIC)
 
-add_library(learnopengl::ui ALIAS learnopengl_ui)
+add_library(englab::ui ALIAS engineeringlab_ui)
 
-target_sources(learnopengl_ui
+target_sources(engineeringlab_ui
     PRIVATE
-        ${LEARNOPENGL_UI_SOURCES}
-        ${LEARNOPENGL_UI_HEADERS}
-        ${LEARNOPENGL_UI_FORMS}
+        ${ENGINEERINGLAB_UI_SOURCES}
+        ${ENGINEERINGLAB_UI_HEADERS}
+        ${ENGINEERINGLAB_UI_FORMS}
 )
 
-target_include_directories(learnopengl_ui
+target_include_directories(engineeringlab_ui
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_link_libraries(learnopengl_ui
+target_link_libraries(engineeringlab_ui
     PUBLIC
-        learnopengl::application
-        learnopengl::domain
+        englab::application
+        englab::domain
         Qt6::Widgets
         Qt6::OpenGLWidgets
     PRIVATE
@@ -55,12 +55,12 @@ target_link_libraries(learnopengl_ui
         OpenGL::GL
 )
 
-target_compile_features(learnopengl_ui
+target_compile_features(engineeringlab_ui
     PUBLIC
         cxx_std_17
 )
 
-set_target_properties(learnopengl_ui PROPERTIES
+set_target_properties(engineeringlab_ui PROPERTIES
     AUTOMOC ON
     AUTOUIC ON
     AUTORCC OFF

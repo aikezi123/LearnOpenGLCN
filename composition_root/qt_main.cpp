@@ -16,7 +16,7 @@ int main(int argc, char* argv[])
 
     QApplication app(argc, argv);
 
-    learnopengl::composition::AppComposition composition;
+    engineeringlab::composition::AppComposition composition;
     std::unique_ptr<QMainWindow> window = composition.createMainWindow();
     window->show();
 

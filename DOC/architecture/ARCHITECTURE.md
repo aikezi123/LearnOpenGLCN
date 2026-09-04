@@ -2,15 +2,11 @@
 
 ## 0. 长期目标与阶段策略
 
-LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的全部内容。课程代码首先要保持可运行、可对照教程、可逐步实验。
+EngineeringLab 是个人 C++ 工程技术持续学习与实验平台。LearnOpenGL 课程是当前学习主线之一，但不再代表整个工程的范围。项目可以逐步纳入图形学、工业相机、轨迹与几何算法、CAD、机器人、CUDA、IPC 和其他工程主题。
 
-在学习过程中，项目会选择部分分支能力扩展为更接近工程应用的功能模块，例如：
+这些主题是可以交叉组合的学习方向，不直接映射为互相独立的顶层模块。代码首先按照职责进入 domain、application、infrastructure、ui、composition_root、lessons 或 tools；只有真实的依赖隔离、复用或构建需求出现时，才拆出更细的 CMake target。
 
-- 工业相机图像显示：大恒、海康等相机 SDK 获取实时图像，使用 OpenGL 纹理上传与 Qt 窗口显示，目标帧率至少满足 30 FPS 以上。
-- 三维轨迹与点云显示：将轨迹点、点云或空间测量数据转换为 OpenGL 可绘制数据，并通过 Qt 界面进行交互展示。
-- 教程知识点复用：把 Shader、Texture、Buffer、VAO/VBO/EBO、Camera、Transform 等教程内容逐步沉淀成可复用能力。
-
-长期方向采用整洁架构，但前期允许先在 `ui` 层完成 Qt/OpenGL 原型。原型跑通后再把稳定业务规则、用例编排和技术适配分别迁移到 domain、application、infrastructure、ui 和 app 层。文档必须区分“当前原型做法”和“目标分层做法”。
+课程代码应保持可运行、可对照教程、可逐步实验。准备长期复用的模型、流程和技术实现再按稳定边界进入正式分层。前期允许在 `ui` 层完成 Qt/OpenGL 原型，但文档必须区分当前原型和目标边界。
 
 ## 1. 架构目标
 
@@ -54,46 +50,29 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 
 ### 2.1 构建结构
 
-顶层 `CMakeLists.txt` 按以下顺序加载子目录：
+顶层 `CMakeLists.txt` 依次加载第三方依赖、domain、application、infrastructure、lessons、ui、composition_root 和 tests。目录表达代码职责，CMake target 表达真实的编译与第三方依赖边界。
 
-1. `third_party/glad`
-2. `third_party/glfw`
-3. `third_party/stb`
-4. `third_party/glm`
-5. `third_party/Galaxy`
-6. `domain`
-7. `application`
-8. `infrastructure`
-9. `lessons`
-10. `ui`
-11. `composition_root`
-12. 当 `BUILD_TESTING=ON` 时加载 `tests`
-
-当前目标及依赖为：
+当前主要 target：
 
 | Target | 类型 | 主要职责 | 直接依赖 |
 | --- | --- | --- | --- |
-| `LearnOpenGLCN_Lessons` | Executable | LearnOpenGL 课程导航器与课程代码入口 | `lessons`、Qt6 Widgets |
-| `LearnOpenGLCN_Qt` | Executable | Qt/OpenGL 工程原型入口与对象装配 | `learnopengl_ui`、`infrastructure` |
-| `lessons` | Static | 收集并编译所有课程示例 | `infrastructure`、`stb_image` |
-| `learnopengl_ui` | Static | 当前 Qt/OpenGL 显示原型、相机页面与轨迹导出页面 | `learnopengl_application`、`learnopengl_domain`、Qt6 Widgets/OpenGLWidgets、Qt6 Concurrent、Qt6 OpenGL、GLAD、OpenGL、stb_image |
-| `infrastructure` | Static | 提供 Shader、OpenGL 公共技术能力和大恒相机适配器 | `learnopengl_application`、`learnopengl_concurrency`、GLAD、GLFW、OpenGL、GLM；实现私有依赖 Galaxy::SDK |
-| `learnopengl_concurrency` | Static | 提供不依赖 GUI/OpenGL 的线程池并发工具 | `Threads::Threads` |
-| `learnopengl_application` | Static | 相机预览 service 与相机端口接口 | `learnopengl_domain` |
-| `learnopengl_domain` | Static | 与外部技术无关的图像帧模型和二维轨迹纯算法 | 无项目内依赖 |
-| `glad` | Static | 加载 OpenGL 函数地址 | 无项目内依赖 |
-| `glfw3` | Imported Static | 窗口、上下文和输入 | Windows 系统库 |
-| `stb_image` | Static | 图片解码 | 无项目内依赖 |
-| `glm::glm` | Interface | 数学类型和矩阵运算 | 无项目内依赖 |
-| `Galaxy::SDK` | Interface | 大恒 Galaxy SDK 的 CMake 包装 target | `GxIAPI.lib`、`DxImageProc.lib`、`GxIAPICPPEx.lib` |
-| `GTest::gtest_main` / `GTest::gmock_main` | Static | 后续测试 executable 的测试入口与 Mock 支持 | GoogleTest 1.17.0；只允许测试 target 依赖 |
-| `learnopengl_infrastructure_concurrency_tests` | Executable | `ThreadPool` 单元测试 | `learnopengl_concurrency`、`GTest::gtest_main` |
+| `EngineeringWorkbench` | Executable | Qt 综合学习工作台与对象装配 | `englab::ui`、`englab::application`、`englab::camera_galaxy`、Qt6 Widgets |
+| `OpenGLLessons` | Executable | LearnOpenGL 课程导航器与课程入口 | `englab::opengl_lessons`、Qt6 Widgets |
+| `engineeringlab_opengl_lessons` | Static | 收集并编译当前 OpenGL 课程 | `englab::graphics_opengl`、GLAD、GLFW、OpenGL、GLM、stb_image |
+| `engineeringlab_ui` | Static | Qt/OpenGL 显示原型、相机与轨迹页面 | `englab::application`、`englab::domain`、Qt/OpenGL UI 依赖 |
+| `engineeringlab_graphics_opengl` | Static | 当前课程使用的 OpenGL Shader 技术能力 | GLAD、OpenGL |
+| `engineeringlab_camera_galaxy` | Static | 大恒相机适配器 | `englab::application`、`Galaxy::SDK` |
+| `engineeringlab_concurrency` | Static | 不依赖 GUI/OpenGL 的线程池 | `Threads::Threads` |
+| `engineeringlab_application` | Static | 相机预览 service 与相机端口 | `englab::domain`、`Threads::Threads` |
+| `engineeringlab_domain` | Static | 图像帧模型和二维轨迹纯算法 | 无项目内依赖 |
 
-`tests/` 位于所有生产模块之外，并在生产 target 全部定义完成后加载。当前已建立 domain、application 和 infrastructure 三个测试 executable；其中 `learnopengl_infrastructure_concurrency_tests` 包含 20 个 `ThreadPool` 用例，另外两个 target 暂为可编译占位框架。测试只允许单向依赖被测生产 target；`domain`、`application`、`infrastructure`、`ui`、`lessons` 和组合根均不得反向依赖 GoogleTest 或 `tests/`。完整使用方式见[自动化测试](../guides/TESTING.md)。
+`tests/` 位于生产模块之外，只允许单向依赖被测 target。测试 target 使用 `engineeringlab_` 前缀，并通过 `engineeringlab_add_gtest()` 注册。
 
-#### 2.1.1 线程池并发模块边界
+OpenGL、Galaxy 相机和线程池不再被聚合进单一 `infrastructure` 静态库。拆分的目的只是隔离技术依赖，不表示图形学、视觉、CAD 或机器人被定义为互相独立的业务模块。
 
-`ThreadPool` 位于 `infrastructure/concurrency`，是固定工作线程和共享 FIFO 队列的具体技术实现。它形成独立 `learnopengl_concurrency` 静态库，仅依赖 `Threads::Threads`，不依赖 GUI、OpenGL、相机 SDK、application 或 domain。当前完整 `infrastructure` target 链接它，但生产代码尚未创建或调用线程池；直接消费者只有测试 target。
+#### 2.1.1 线程池并发能力边界
+
+`ThreadPool` 位于 `infrastructure/concurrency`，是固定工作线程和共享 FIFO 队列的具体技术实现。它形成独立 `engineeringlab_concurrency` 静态库，仅依赖 `Threads::Threads`，不依赖 GUI、OpenGL、相机 SDK、application 或 domain。当前生产代码尚未创建或调用线程池；直接消费者只有测试 target。线程池保持独立，不由聚合 infrastructure target 向其他消费者传播。
 
 application 当前没有 `ITaskExecutor`。只有实际 application service 出现后台执行需求时，才根据用例定义最小执行器端口；线程池适配器或其他执行策略在外层实现该端口，组合根负责选择具体实现、创建实例并注入。业务模块不继承具体 `ThreadPool`，相机的串行设备控制线程也继续保持专用执行模型。
 
@@ -101,15 +80,15 @@ application 当前没有 `ITaskExecutor`。只有实际 application service 出�
 
 `third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。大恒运行时 DLL 不再由 CMake 查找或复制，而是直接放在 `out/build/<preset>/bin`，随 exe、pdb 等运行产物一起提交。
 
-`composition_root/qt_main.cpp` 只负责初始化 Qt/OpenGL、调用 `AppComposition` 创建窗口并进入事件循环。`AppComposition` 负责组织模块页面，`modules/CameraComposition` 和 `modules/TrajectoryComposition` 分别装配相机与轨迹功能。`composition_root/lesson_main.cpp` 负责解析命令行参数、直接运行课程或启动 LearnOpenGL 课程导航器；导航窗口实现放在 `composition_root/lesson_launcher`。课程清单集中在 `lessons/catalog` 的 `LessonRegistry` 中。所有课程源码仍被编入同一个 `lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
+`composition_root/qt_main.cpp` 只负责初始化 Qt/OpenGL、调用 `AppComposition` 创建窗口并进入事件循环。`AppComposition` 负责组织模块页面，`modules/CameraComposition` 和 `modules/TrajectoryComposition` 分别装配相机与轨迹功能。`composition_root/lesson_main.cpp` 负责解析命令行参数、直接运行课程或启动 LearnOpenGL 课程导航器；导航窗口实现放在 `composition_root/lesson_launcher`。课程清单集中在 `lessons/catalog` 的 `LessonRegistry` 中。所有课程源码仍被编入同一个 `engineeringlab_opengl_lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
 
-当前已经拆成两个 executable：`LearnOpenGLCN_Lessons` 和 `LearnOpenGLCN_Qt`。教程入口和 Qt 工程入口不再共享同一个 `main.cpp`，避免手动改入口来切换运行内容。
+当前已经拆成两个 executable：`OpenGLLessons` 和 `EngineeringWorkbench`。教程入口和 Qt 工程入口不再共享同一个 `main.cpp`，避免手动改入口来切换运行内容。
 
 `ui/` 目前包含 Qt Widgets 与 `QOpenGLWidget` 原型。`MainWindow` 提供左侧 `QTreeWidget` 导航和右侧 `QStackedWidget` 页面容器，并接收装配层创建好的页面，不再创建具体功能实现。相机 SDK 控制已经从 UI 拆到 `infrastructure/camera/galaxy`，通过 `application` 中的 `ICameraDevice` 和 `CameraCaptureService` 注入到相机页面。相机页面的翻转、旋转、缩放、平移按钮属于 UI 交互，具体显示变换暂时由 `DisplayOpenGLImage` 通过 shader uniform 矩阵完成。纹理加载、Shader 编译和绘制流程仍暂时集中在 UI 类中，以便继续稳定 Qt OpenGL 显示路径；后续应再拆出 OpenGL 资源和图像加载能力，避免长期把渲染细节堆在 UI 层。
 
 ### 2.2 当前运行流程
 
-当前 `LearnOpenGLCN_Qt` 的运行流程是 Qt 原型入口：
+当前 `EngineeringWorkbench` 的运行流程是 Qt 原型入口：
 
 ```text
 main()
@@ -124,7 +103,7 @@ main()
   └── 进入 Qt 事件循环 app.exec()
 ```
 
-当前 `LearnOpenGLCN_Lessons` 未传参数时打开 Qt 课程导航器；左侧按 LearnOpenGL 入门章节顺序列出已实现课程，右侧显示课程信息、运行按钮和子进程输出。点击运行时，导航器用子进程启动同一个 exe 并传入课程 ID；带课程 ID 参数时仍直接运行对应课程。以坐标变换课程为例，典型 GLFW 课程流程是：
+当前 `OpenGLLessons` 未传参数时打开 Qt 课程导航器；左侧按 LearnOpenGL 入门章节顺序列出已实现课程，右侧显示课程信息、运行按钮和子进程输出。点击运行时，导航器用子进程启动同一个 exe 并传入课程 ID；带课程 ID 参数时仍直接运行对应课程。以坐标变换课程为例，典型 GLFW 课程流程是：
 
 ```text
 main()
@@ -149,8 +128,8 @@ Qt 导航器和 GLFW 课程使用不同的事件循环和窗口/context 管理�
 
 | Executable | 职责 | 建议依赖 | 说明 |
 | --- | --- | --- | --- |
-| `LearnOpenGLCN_Lessons` | 显示课程导航器或直接运行 LearnOpenGL 教程代码 | `lessons`、Qt6 Widgets | 面向课程学习；导航器使用 Qt，课程仍允许使用 GLFW 教学式完整流程。 |
-| `LearnOpenGLCN_Qt` | 运行 Qt/OpenGL 工程原型 | `learnopengl_ui` | 面向相机图像、点云、轨迹等 Qt 显示模块。 |
+| `OpenGLLessons` | 显示课程导航器或直接运行 LearnOpenGL 教程代码 | `englab::opengl_lessons`、Qt6 Widgets | 面向课程学习；导航器使用 Qt，课程仍允许使用 GLFW 教学式完整流程。 |
+| `EngineeringWorkbench` | 运行 Qt/OpenGL 工程原型 | `engineeringlab_ui` | 面向相机图像、点云、轨迹等 Qt 显示模块。 |
 
 拆分后不再需要为了切换运行内容频繁修改同一个 `main.cpp`。两个入口都属于 `composition_root` 层，并保持很薄：
 
@@ -161,9 +140,9 @@ Qt 导航器和 GLFW 课程使用不同的事件循环和窗口/context 管理�
 当前 lesson 入口已支持 Qt 导航和命令行选择：
 
 ```powershell
-LearnOpenGLCN_Lessons.exe
-LearnOpenGLCN_Lessons.exe transform
-LearnOpenGLCN_Lessons.exe --list
+OpenGLLessons.exe
+OpenGLLessons.exe transform
+OpenGLLessons.exe --list
 ```
 
 不带参数会打开 Qt 课程导航器；传入课程 ID 会直接运行课程；`--list` 只打印课程清单。
@@ -505,60 +484,61 @@ composition_root/
 - 不允许 application/domain 直接链接平台型第三方库。
 - GLFW 当前使用 VS2022 预编译库，因此现阶段构建具有 Windows/MSVC 平台约束。
 
-## 4. 目标 CMake 结构
+## 4. 当前 CMake 结构
 
-每一层应该由独立 target 表达，而不是只依靠目录名：
+项目使用 `engineeringlab_` 作为真实 target 前缀，使用 `englab::` 作为 CMake alias 前缀：
 
 ```text
-learnopengl::domain
-learnopengl::application
-learnopengl::opengl
-learnopengl::image
-learnopengl::ui_glfw
-learnopengl::ui
-learnopengl::lessons
-LearnOpenGLCN_Lessons
-LearnOpenGLCN_Qt
+englab::domain
+englab::application
+englab::graphics_opengl
+englab::camera_galaxy
+englab::concurrency
+englab::ui
+englab::opengl_lessons
+EngineeringWorkbench
+OpenGLLessons
 ```
 
-建议依赖关系：
+当前关键依赖：
 
 ```cmake
-target_link_libraries(learnopengl_application
-    PUBLIC learnopengl::domain
+target_link_libraries(engineeringlab_application
+    PUBLIC englab::domain
+    PRIVATE Threads::Threads
 )
 
-target_link_libraries(learnopengl_opengl
-    PUBLIC learnopengl::application
-    PRIVATE glad OpenGL::GL glm::glm
+target_link_libraries(engineeringlab_graphics_opengl
+    PRIVATE glad OpenGL::GL
 )
 
-target_link_libraries(learnopengl_image
-    PUBLIC learnopengl::application
-    PRIVATE stb::image
+target_link_libraries(engineeringlab_camera_galaxy
+    PUBLIC englab::application
+    PRIVATE Galaxy::SDK
 )
 
-target_link_libraries(learnopengl_ui_glfw
-    PUBLIC learnopengl::application
-    PRIVATE glfw3
+target_link_libraries(engineeringlab_opengl_lessons
+    PUBLIC
+        englab::graphics_opengl
+        glad
+        glfw3
+        OpenGL::GL
+        glm::glm
+        stb_image
 )
 
-target_link_libraries(LearnOpenGLCN_Lessons PRIVATE
-    learnopengl::lessons
-    learnopengl::opengl
-    learnopengl::image
-    learnopengl::ui_glfw
+target_link_libraries(EngineeringWorkbench PRIVATE
+    englab::ui
+    englab::application
+    englab::camera_galaxy
 )
 
-target_link_libraries(LearnOpenGLCN_Qt PRIVATE
-    learnopengl::ui
+target_link_libraries(OpenGLLessons PRIVATE
+    englab::opengl_lessons
 )
 ```
 
-实际使用 `PUBLIC` 还是 `PRIVATE` 必须根据公共头文件是否暴露依赖决定，不能机械照抄示例。
-
-当前工程已经完成入口拆分。`composition_root/qt_main.cpp` 生成 `LearnOpenGLCN_Qt`，`composition_root/lesson_main.cpp` 生成 `LearnOpenGLCN_Lessons`，两个 executable 都输出到同一个 `bin` 目录。
-
+实际使用 `PUBLIC` 还是 `PRIVATE` 必须根据公共头文件和最终链接需求决定。当前入口拆分保持不变：`composition_root/qt_main.cpp` 生成 `EngineeringWorkbench`，`composition_root/lesson_main.cpp` 生成 `OpenGLLessons`。
 ## 5. CMake 边界规则
 
 - 分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构，例如 `application/camera/include`、`domain/video/include`、`infrastructure/camera/galaxy/include`。
@@ -569,8 +549,8 @@ target_link_libraries(LearnOpenGLCN_Qt PRIVATE
 - 外部依赖尽量使用带命名空间的 target，例如 `glm::glm`、`stb::image`。
 - 只有公共头文件需要的依赖才使用 `PUBLIC`；实现细节使用 `PRIVATE`。
 - 不通过全局 `include_directories()`、`link_libraries()` 或全局宏传播依赖。
-- 为项目 target 建立 `learnopengl::` 别名，减少调用方与真实 target 名称耦合。
-- `LEARNOPENGL_ASSET_DIR` 等环境配置应由 app 或资源适配器持有，不向所有模块公开传播。
+- 为项目 target 建立 `englab::` 别名，减少调用方与真实 target 名称耦合。
+- `ENGINEERINGLAB_ASSET_DIR` 等环境配置应由 app 或资源适配器持有，不向所有模块公开传播。
 
 ## 6. 当前阶段完成总结
 
@@ -602,12 +582,12 @@ target_link_libraries(LearnOpenGLCN_Qt PRIVATE
 
 - `domain`、`application` 已形成相机预览所需的最小 target，但还只覆盖图像帧模型、相机端口和预览 service。
 - `ui` 中的相机 SDK 依赖已拆到 `infrastructure/camera/galaxy`；OpenGL Shader、VAO/VBO/EBO、Texture 管理仍在 `DisplayOpenGLImage` 中，尚未迁移为 infrastructure RAII 资源。
-- 所有课程被收集进单一 `lessons` 静态库。
+- 所有课程被收集进单一 `engineeringlab_opengl_lessons` 静态库。
 - 当前已形成 `lessons/catalog` 课程注册表，但还没有拆成每个课程或章节独立 target。
-- lessons 和 infrastructure 的 include 目录由递归扫描产生，边界过宽。
+- lessons 的 include 目录仍由递归扫描产生，边界偏宽；infrastructure 已改为按技术能力显式列出源文件。
 - 公共 include 路径已要求避免重复项目名和层名；历史或新增模块应使用 `camera/...`、`video/...`、`shader/...` 这类功能路径。
 - Shader 的 OpenGL Program ID 对外公开，且尚未完整实现 RAII 和移动语义。
 - GLFW 初始化、窗口创建和渲染循环在课程间重复。
 - 资源路径目前通过编译期绝对路径宏传入，不利于产物搬迁。
 
-这些问题应采用纵向切片逐步迁移，不建议一次性重写全部课程。
+这些问题应按真实调用点逐步处理，不为尚未出现的学习方向预建空模块或接口。

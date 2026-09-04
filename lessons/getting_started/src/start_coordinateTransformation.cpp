@@ -20,7 +20,7 @@ int transform() {
     glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
     glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
     glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-    GLFWwindow * window = glfwCreateWindow(800, 600, "LearnOpenGLCN", nullptr, nullptr);
+    GLFWwindow * window = glfwCreateWindow(800, 600, "EngineeringLab", nullptr, nullptr);
 
     if (window == nullptr) {
         std::cout << "faile to create GLFW window" << std::endl;
@@ -128,7 +128,7 @@ int transform() {
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     //加载并生成纹理
     int width, height, nrChannels;
-    std::string texPath = LEARNOPENGL_ASSET_DIR + std::string("/textures/getting_started/texture_texture/container.jpg");
+    std::string texPath = ENGINEERINGLAB_ASSET_DIR + std::string("/textures/getting_started/texture_texture/container.jpg");
     unsigned char *data = stbi_load(texPath.c_str(), &width, &height, &nrChannels, 0);
 
     if (data) {

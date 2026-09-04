@@ -34,10 +34,10 @@
 #include <utility>
 #include <vector>
 
-namespace learnopengl::ui {
+namespace engineeringlab::ui {
 namespace {
 
-using learnopengl::domain::trajectory::ArchimedeanSpiral2DGenerator;
+using engineeringlab::domain::trajectory::ArchimedeanSpiral2DGenerator;
 using ExportCompletion = std::pair<bool, QString>;
 
 QDoubleSpinBox* createDistanceSpinBox(QWidget* parent,
@@ -647,4 +647,4 @@ void TrajectoryExportView::setStatusText(const QString& text, bool isError)
                                      : QStringLiteral("color: #28745d;"));
 }
 
-} // namespace learnopengl::ui
+} // namespace engineeringlab::ui

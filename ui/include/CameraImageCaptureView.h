@@ -15,7 +15,7 @@ class CameraImageCaptureView;
 
 class QString;
 
-namespace learnopengl::ui {
+namespace engineeringlab::ui {
 
 class CameraImageCaptureView final : public QWidget {
     Q_OBJECT
@@ -48,4 +48,4 @@ private:
     bool m_frameDisplayPending{false};
 };
 
-} // namespace learnopengl::ui
+} // namespace engineeringlab::ui

@@ -3,7 +3,7 @@
 
 #include<string>
 
-namespace learnopengl::infrastructure {
+namespace engineeringlab::infrastructure {
     class Shader {
     public:
         // 程序ID

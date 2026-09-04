@@ -11,14 +11,14 @@
 #include <QTreeWidgetItem>
 #include <QVBoxLayout>
 
-namespace learnopengl::ui {
+namespace engineeringlab::ui {
 
 MainWindow::MainWindow(QWidget* parent)
     : QMainWindow(parent)
     , m_ui(new Ui::MainWindow)
 {
     m_ui->setupUi(this);
-    setWindowTitle(QStringLiteral("LearnOpenGLCN"));
+    setWindowTitle(QStringLiteral("EngineeringLab"));
     resize(1280, 800);
 
     initUIStyle();
@@ -250,7 +250,7 @@ QWidget* MainWindow::createHomePage()
     auto* eyebrow = new QLabel(QStringLiteral("Qt / OpenGL Workspace"), page);
     eyebrow->setObjectName(QStringLiteral("homeEyebrow"));
 
-    auto* title = new QLabel(QStringLiteral("LearnOpenGLCN"), page);
+    auto* title = new QLabel(QStringLiteral("EngineeringLab"), page);
     title->setObjectName(QStringLiteral("homeTitle"));
 
     auto* subtitle = new QLabel(QStringLiteral("工业相机图像采集与 OpenGL 显示实验台"), page);
@@ -319,4 +319,4 @@ void MainWindow::decorateChildNodeUI(QTreeWidgetItem* item)
     item->setSizeHint(0, QSize(-1, 36));
 }
 
-} // namespace learnopengl::ui
+} // namespace engineeringlab::ui

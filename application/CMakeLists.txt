@@ -19,37 +19,37 @@ file(GLOB APPLICATION_INCLUDE_DIRS CONFIGURE_DEPENDS
 )
 
 # 创建 application 静态库，头文件同时加入 target 便于 IDE 展示
-add_library(learnopengl_application STATIC
+add_library(engineeringlab_application STATIC
     ${APPLICATION_SOURCES}
     ${APPLICATION_HEADERS}
 )
 
 # 为 application 库创建命名空间别名
-add_library(learnopengl::application ALIAS learnopengl_application)
+add_library(englab::application ALIAS engineeringlab_application)
 
 # 将各模块 include 目录暴露给本库及依赖本库的 target
-target_include_directories(learnopengl_application
+target_include_directories(engineeringlab_application
     PUBLIC
         ${APPLICATION_INCLUDE_DIRS}
 )
 
 # domain 类型会出现在公共接口中；标准线程只属于 application 内部实现
-target_link_libraries(learnopengl_application
+target_link_libraries(engineeringlab_application
     PUBLIC
-        learnopengl::domain
+        englab::domain
     PRIVATE
         Threads::Threads
 )
 
 # 要求本库及依赖本库的 target 至少使用 C++17
-target_compile_features(learnopengl_application
+target_compile_features(engineeringlab_application
     PUBLIC
         cxx_std_17
 )
 
 # promise/future 命令执行会捕获标准 C++ 异常，MSVC 需要启用栈展开语义。
 if(MSVC)
-    target_compile_options(learnopengl_application
+    target_compile_options(engineeringlab_application
         PRIVATE
             /EHsc
     )

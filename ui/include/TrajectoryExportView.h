@@ -15,7 +15,7 @@ class QSpinBox;
 class QLabel;
 class QTableWidget;
 
-namespace learnopengl::ui {
+namespace engineeringlab::ui {
 
 class TrajectoryExportView final : public QWidget {
 public:
@@ -50,4 +50,4 @@ private:
     std::shared_ptr<std::atomic_bool> m_cancelExport;
 };
 
-} // namespace learnopengl::ui
+} // namespace engineeringlab::ui
