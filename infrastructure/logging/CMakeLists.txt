@@ -20,3 +20,11 @@ target_compile_features(engineeringlab_logging
     PUBLIC
         cxx_std_17
 )
+
+# 日志初始化会报告配置异常，运行期边界会捕获 spdlog 异常；MSVC 需要完整栈展开语义。
+if(MSVC)
+    target_compile_options(engineeringlab_logging
+        PRIVATE
+            /EHsc
+    )
+endif()

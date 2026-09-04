@@ -12,6 +12,11 @@
 
 namespace engineeringlab::composition {
 
+AppComposition::AppComposition(application::diagnostics::ILogger& logger) noexcept
+    : m_logger(logger)
+{
+}
+
 std::unique_ptr<QMainWindow> AppComposition::createMainWindow() const
 {
     auto mainWindow = std::make_unique<ui::MainWindow>();
@@ -19,7 +24,7 @@ std::unique_ptr<QMainWindow> AppComposition::createMainWindow() const
     mainWindow->addBusinessPage(
         QStringLiteral("相机模块"),
         QStringLiteral("大恒相机预览"),
-        CameraComposition::createPage(mainWindow.get())
+        CameraComposition::createPage(m_logger, mainWindow.get())
     );
 
     mainWindow->addBusinessPage(

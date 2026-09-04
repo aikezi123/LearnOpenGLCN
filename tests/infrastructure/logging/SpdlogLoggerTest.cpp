@@ -1,5 +1,7 @@
 #include <logging/SpdlogLogger.h>
 
+#include <diagnostics/ModuleLogger.h>
+
 #include <gtest/gtest.h>
 
 #include <chrono>
@@ -87,6 +89,7 @@ TEST(SpdlogLoggerTest, WritesUtf8RecordAndFiltersByMinimumLevel)
     EXPECT_EQ(contents.find("filtered-info"), std::string::npos);
     EXPECT_NE(contents.find("[logging-test] 相机打开失败"), std::string::npos);
     EXPECT_NE(contents.find("[warning]"), std::string::npos);
+    EXPECT_NE(contents.find("(SpdlogLoggerTest.cpp:"), std::string::npos);
 }
 
 TEST(SpdlogLoggerTest, AsyncLoggerDrainsQueueDuringDestruction)
@@ -115,6 +118,25 @@ TEST(SpdlogLoggerTest, RejectsEmptyLogFilePath)
 {
     SpdlogLoggerOptions options;
     EXPECT_THROW(SpdlogLogger logger(options), std::invalid_argument);
+}
+
+TEST(SpdlogLoggerTest, ModuleLoggerWritesFormattedMessageWithoutEmptySourceMarker)
+{
+    TemporaryLogDirectory directory;
+    const std::filesystem::path logFile = directory.path() / "module.log";
+
+    SpdlogLoggerOptions options;
+    options.logFile = logFile;
+    options.asynchronous = false;
+
+    SpdlogLogger backend(options);
+    application::diagnostics::ModuleLogger logger(backend, "camera");
+    logger.info("Camera {} opened at {} fps.", 7, 30);
+    backend.flush();
+
+    const std::string contents = readFile(logFile);
+    EXPECT_NE(contents.find("[camera] Camera 7 opened at 30 fps."), std::string::npos);
+    EXPECT_EQ(contents.find("(:)"), std::string::npos);
 }
 
 } // namespace

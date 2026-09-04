@@ -15,7 +15,7 @@
 
 `ThreadPool` 用例覆盖构造参数和类型所有权约束；`post()`执行、只执行一次、异常隔离和空任务拒绝；`submit()`返回值、多参数、`void`、移动专用 callable/参数、只执行一次和异常传播；空 `std::function`的延迟异常；关闭排空、析构排空、重复/外部并发关闭、关闭后拒绝；以及多生产者和多 worker 并发行为。
 
-2026-09-04 spdlog 和 GoogleTest/GoogleMock 切换为 vcpkg manifest 管理后，使用 `ninja-msvc-debug` 和 `ninja-msvc-release` 完成重新配置与全量构建；两个配置的 CTest 均实际发现并通过 23/23 个用例：线程池 20 个、日志模块 3 个。日志测试覆盖 UTF-8 写入和级别过滤、异步析构排空以及空文件路径拒绝。该结果不代表 AddressSanitizer 或尚未编写的极端竞争场景已经验证。
+2026-09-04 fmt、spdlog 和 GoogleTest/GoogleMock 切换为 vcpkg manifest 管理后，使用 `ninja-msvc-debug` 和 `ninja-msvc-release` 完成重新配置与构建；两个配置的 CTest 均实际发现并通过 27/27 个用例：线程池 20 个、`ModuleLogger` 3 个、spdlog 后端 4 个。日志测试覆盖模块名绑定、`{}` 格式化、所有日志级别、UTF-8 写入和级别过滤、异步析构排空、无效配置以及便利门面到文件后端的完整链路。该结果不代表 AddressSanitizer 或尚未编写的极端竞争场景已经验证。
 
 ## 2. 目录和依赖边界
 

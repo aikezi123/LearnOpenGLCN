@@ -28,7 +28,7 @@ OpenGL 课程只链接实际使用的 OpenGL、GLFW、GLAD、GLM 和 stb_image �
 - `GalaxyCameraController` 实现相机端口，并通过 Pimpl 隐藏大恒 SDK。
 - Qt 相机页面通过最新帧单槽邮箱切回 UI 线程；`DisplayOpenGLImage` 仍负责当前 OpenGL 纹理和观察变换。
 - `englab::concurrency` 提供固定线程池，当前生产代码尚未使用，直接消费者只有测试。
-- `englab::diagnostics` 提供项目日志端口，`englab::logging` 用私有 spdlog 1.17.0 后端实现；当前生产代码尚未使用，直接消费者只有测试。
+- `englab::diagnostics` 提供日志端口和支持 fmt `{}` 格式化的 `ModuleLogger`，`englab::logging` 用私有 spdlog 1.17.0 后端实现；`EngineeringWorkbench` 已创建唯一后端并注入 `CameraCaptureService`，当前尚未写业务日志。
 - `OpenGLLessons` 无参数时打开 Qt 课程导航器，带课程 ID 时运行对应 GLFW 课程。
 
 ## 4. 构建与验证
@@ -46,4 +46,4 @@ ctest --preset ninja-msvc-debug --output-on-failure
 .\out\build\ninja-msvc-debug\bin\OpenGLLessons.exe --list
 ```
 
-2026-09-04 spdlog 1.17.0 和 GoogleTest/GoogleMock 1.17.0 已改由根目录 vcpkg manifest 管理，固定 baseline 为 `26283ac5e8a068561a718ce18b169bfad84c7dab`；仓库不再保存这两项依赖的源码、头文件或二进制库。Windows preset 使用 `x64-windows-static-md`，保持静态依赖与动态 CRT。`ninja-msvc-debug` 和 `ninja-msvc-release` 均完成重新配置与全量构建，两个配置的 CTest 均发现并通过 23/23 个用例，其中日志模块 3/3；AddressSanitizer 尚未验证。日志尚未接入两个可执行程序或任何生产调用点；此前 `OpenGLLessons.exe --list` 和 `EngineeringWorkbench.exe` 启动冒烟结论保持不变，正常交互关闭流程仍未验证。
+2026-09-04 fmt 12.1.0、spdlog 1.17.0 和 GoogleTest/GoogleMock 1.17.0 已改由根目录 vcpkg manifest 管理，固定 baseline 为 `26283ac5e8a068561a718ce18b169bfad84c7dab`；仓库不再保存 spdlog 和 GoogleTest 的源码、头文件或二进制库。Windows preset 使用 `x64-windows-static-md`，保持静态依赖与动态 CRT。`ninja-msvc-debug` 和 `ninja-msvc-release` 均完成重新配置与构建，两个配置的 CTest 均发现并通过 27/27 个用例，其中日志相关测试 7/7；AddressSanitizer 尚未验证。本次已将日志接入 `EngineeringWorkbench` 组合根并注入 `CameraCaptureService`，Debug 重新配置与构建成功，CTest 通过 27/27；启动冒烟已创建 0 字节的 `logs/engineeringlab.log`，符合当前没有业务日志调用的状态。隐藏窗口无法通过 `CloseMainWindow()` 正常退出并被终止，正常交互关闭流程仍未验证；Release 和 AddressSanitizer 尚未针对本次接入重新验证。

@@ -56,7 +56,7 @@ EngineeringLab 是个人 C++ 工程技术持续学习与实验平台。LearnOpen
 
 | Target | 类型 | 主要职责 | 直接依赖 |
 | --- | --- | --- | --- |
-| `EngineeringWorkbench` | Executable | Qt 综合学习工作台与对象装配 | `englab::ui`、`englab::application`、`englab::camera_galaxy`、Qt6 Widgets |
+| `EngineeringWorkbench` | Executable | Qt 综合学习工作台与对象装配 | `englab::ui`、`englab::application`、`englab::camera_galaxy`、`englab::logging`、Qt6 Widgets |
 | `OpenGLLessons` | Executable | LearnOpenGL 课程导航器与课程入口 | `englab::opengl_lessons`、Qt6 Widgets |
 | `engineeringlab_opengl_lessons` | Static | 收集并编译当前 OpenGL 课程 | `englab::graphics_opengl`、GLAD、GLFW、OpenGL、GLM、stb_image |
 | `engineeringlab_ui` | Static | Qt/OpenGL 显示原型、相机与轨迹页面 | `englab::application`、`englab::domain`、Qt/OpenGL UI 依赖 |
@@ -64,8 +64,8 @@ EngineeringLab 是个人 C++ 工程技术持续学习与实验平台。LearnOpen
 | `engineeringlab_camera_galaxy` | Static | 大恒相机适配器 | `englab::application`、`Galaxy::SDK` |
 | `engineeringlab_concurrency` | Static | 不依赖 GUI/OpenGL 的线程池 | `Threads::Threads` |
 | `engineeringlab_logging` | Static | spdlog 日志后端 | `englab::diagnostics`、vcpkg `spdlog::spdlog`（PRIVATE） |
-| `engineeringlab_diagnostics` | Interface | 不含第三方类型的日志端口 | 无 |
-| `engineeringlab_application` | Static | 相机预览 service 与相机端口 | `englab::domain`、`Threads::Threads` |
+| `engineeringlab_diagnostics` | Interface | 日志端口和模块日志门面 | vcpkg `fmt::fmt`（INTERFACE） |
+| `engineeringlab_application` | Static | 相机预览 service 与相机端口 | `englab::domain`、`englab::diagnostics`、`Threads::Threads` |
 | `engineeringlab_domain` | Static | 图像帧模型和二维轨迹纯算法 | 无项目内依赖 |
 
 `tests/` 位于生产模块之外，只允许单向依赖被测 target。测试 target 使用 `engineeringlab_` 前缀，并通过 `engineeringlab_add_gtest()` 注册。
@@ -82,15 +82,15 @@ application 当前没有 `ITaskExecutor`。只有实际 application service 出�
 
 #### 2.1.2 日志能力边界
 
-`application/diagnostics` 定义 `ILogger`、日志级别、记录和源码位置等项目类型，形成无第三方依赖的 `englab::diagnostics` 接口 target。`infrastructure/logging` 用 spdlog 实现该端口，形成 `englab::logging` 静态库；spdlog 仅为其 PRIVATE 依赖，并通过 Pimpl 隐藏在实现文件中。
+`application/diagnostics` 定义 `ILogger`、日志级别、记录和源码位置等项目类型，形成不暴露具体日志后端类型的 `englab::diagnostics` 接口 target；`ModuleLogger` 通过 fmt 提供 C++17 格式化。`infrastructure/logging` 用 spdlog 实现该端口，形成 `englab::logging` 静态库；spdlog 仅为其 PRIVATE 依赖，并通过 Pimpl 隐藏在实现文件中。
 
-当前生产 target、可执行程序和组合根均未依赖或创建日志对象，原有 `std::cout`、`std::cerr`、`std::clog` 输出保持不变。只有日志模块测试直接消费 `englab::logging`。后续启用时由组合根创建具体 logger 并按 `ILogger` 注入外层组件，domain 继续保持无日志依赖。详细配置和验证状态见[日志模块](../modules/LOGGING.md)。
+`EngineeringWorkbench` 已在 `qt_main` 创建唯一的 `SpdlogLogger`，并通过 `AppComposition`、`CameraComposition` 将 `ILogger&` 注入 `CameraCaptureService`；服务持有 `ModuleLogger("camera")`，当前还没有业务日志调用。`OpenGLLessons` 和其他模块未接入，原有标准输出保持不变；domain 继续保持无日志依赖。详细配置和验证状态见[日志模块](../modules/LOGGING.md)。
 
 `third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。大恒运行时 DLL 不再由 CMake 查找或复制，而是直接放在 `out/build/<preset>/bin`，随 exe、pdb 等运行产物一起提交。
 
-spdlog 1.17.0 和 GoogleTest/GoogleMock 1.17.0 由根目录的 vcpkg manifest 统一管理，依赖图通过固定的 `builtin-baseline` 复现。仓库不保存这两项依赖的源码、头文件或二进制库；CMake 分别通过 `find_package(spdlog CONFIG REQUIRED)` 和 `find_package(GTest CONFIG REQUIRED)` 获取标准 target。GoogleTest 只在 `BUILD_TESTING=ON` 时由 CMake 消费，生产 target 不得链接它。不同平台和架构由 vcpkg triplet 处理，首次构建结果可进入二进制缓存，不再维护仓库内的平台选择分支。
+fmt 12.1.0、spdlog 1.17.0 和 GoogleTest/GoogleMock 1.17.0 由根目录的 vcpkg manifest 统一管理，依赖图通过固定的 `builtin-baseline` 复现。仓库不保存 spdlog 和 GoogleTest 的源码、头文件或二进制库；CMake 分别通过 `find_package(fmt CONFIG REQUIRED)`、`find_package(spdlog CONFIG REQUIRED)` 和 `find_package(GTest CONFIG REQUIRED)` 获取标准 target。`englab::diagnostics` 使用 fmt 提供 C++17 类型安全格式化，但不依赖具体日志后端；GoogleTest 只在 `BUILD_TESTING=ON` 时由 CMake 消费，生产 target 不得链接它。不同平台和架构由 vcpkg triplet 处理，首次构建结果可进入二进制缓存，不再维护仓库内的平台选择分支。
 
-`composition_root/qt_main.cpp` 只负责初始化 Qt/OpenGL、调用 `AppComposition` 创建窗口并进入事件循环。`AppComposition` 负责组织模块页面，`modules/CameraComposition` 和 `modules/TrajectoryComposition` 分别装配相机与轨迹功能。`composition_root/lesson_main.cpp` 负责解析命令行参数、直接运行课程或启动 LearnOpenGL 课程导航器；导航窗口实现放在 `composition_root/lesson_launcher`。课程清单集中在 `lessons/catalog` 的 `LessonRegistry` 中。所有课程源码仍被编入同一个 `engineeringlab_opengl_lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
+`composition_root/qt_main.cpp` 负责初始化 Qt/OpenGL、创建进程级日志后端、把 `ILogger&` 交给 `AppComposition`，然后创建窗口并进入事件循环。`AppComposition` 负责组织模块页面，`modules/CameraComposition` 和 `modules/TrajectoryComposition` 分别装配相机与轨迹功能。`composition_root/lesson_main.cpp` 负责解析命令行参数、直接运行课程或启动 LearnOpenGL 课程导航器；导航窗口实现放在 `composition_root/lesson_launcher`。课程清单集中在 `lessons/catalog` 的 `LessonRegistry` 中。所有课程源码仍被编入同一个 `engineeringlab_opengl_lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
 
 当前已经拆成两个 executable：`OpenGLLessons` 和 `EngineeringWorkbench`。教程入口和 Qt 工程入口不再共享同一个 `main.cpp`，避免手动改入口来切换运行内容。
 
@@ -104,9 +104,10 @@ spdlog 1.17.0 和 GoogleTest/GoogleMock 1.17.0 由根目录的 vcpkg manifest �
 main()
   ├── 设置 QSurfaceFormat，要求 OpenGL 3.3 Core Profile
   ├── 创建 QApplication
-  ├── AppComposition 创建 MainWindow
-  │   ├── CameraComposition 装配 GalaxyCameraController
-  │   │   → ICameraDevice → CameraCaptureService → CameraImageCaptureView
+  ├── 创建 SpdlogLogger（logs/engineeringlab.log）
+  ├── AppComposition(logger) 创建 MainWindow
+  │   ├── CameraComposition 装配 GalaxyCameraController 和 ILogger
+  │   │   → ICameraDevice + ModuleLogger("camera") → CameraCaptureService → CameraImageCaptureView
   │   ├── TrajectoryComposition 创建 TrajectoryExportView
   │   └── 将两个页面注册到 MainWindow
   ├── 显示主窗口
@@ -139,7 +140,7 @@ Qt 导航器和 GLFW 课程使用不同的事件循环和窗口/context 管理�
 | Executable | 职责 | 建议依赖 | 说明 |
 | --- | --- | --- | --- |
 | `OpenGLLessons` | 显示课程导航器或直接运行 LearnOpenGL 教程代码 | `englab::opengl_lessons`、Qt6 Widgets | 面向课程学习；导航器使用 Qt，课程仍允许使用 GLFW 教学式完整流程。 |
-| `EngineeringWorkbench` | 运行 Qt/OpenGL 工程原型 | `engineeringlab_ui` | 面向相机图像、点云、轨迹等 Qt 显示模块。 |
+| `EngineeringWorkbench` | 运行 Qt/OpenGL 工程原型 | `englab::ui`、`englab::camera_galaxy`、`englab::logging` | 面向相机图像、点云、轨迹等 Qt 显示模块。 |
 
 拆分后不再需要为了切换运行内容频繁修改同一个 `main.cpp`。两个入口都属于 `composition_root` 层，并保持很薄：
 
@@ -500,7 +501,9 @@ composition_root/
 
 ```text
 englab::domain
+englab::diagnostics
 englab::application
+englab::logging
 englab::graphics_opengl
 englab::camera_galaxy
 englab::concurrency
@@ -513,8 +516,12 @@ OpenGLLessons
 当前关键依赖：
 
 ```cmake
+target_link_libraries(engineeringlab_diagnostics
+    INTERFACE fmt::fmt
+)
+
 target_link_libraries(engineeringlab_application
-    PUBLIC englab::domain
+    PUBLIC englab::domain englab::diagnostics
     PRIVATE Threads::Threads
 )
 
@@ -541,6 +548,7 @@ target_link_libraries(EngineeringWorkbench PRIVATE
     englab::ui
     englab::application
     englab::camera_galaxy
+    englab::logging
 )
 
 target_link_libraries(OpenGLLessons PRIVATE

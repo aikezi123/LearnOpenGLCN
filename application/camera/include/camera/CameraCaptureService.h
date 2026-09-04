@@ -1,5 +1,6 @@
 #pragma once
 #include <camera/ICameraDevice.h>
+#include <diagnostics/ModuleLogger.h>
 #include <future>
 #include <atomic>
 #include <thread>
@@ -13,7 +14,10 @@ namespace engineeringlab::application {
 
 class CameraCaptureService final {
 public:
-    explicit CameraCaptureService(std::unique_ptr<ICameraDevice> cameraDevice);
+    CameraCaptureService(
+        std::unique_ptr<ICameraDevice> cameraDevice,
+        diagnostics::ILogger& logger
+    );
     ~CameraCaptureService();
 
     CameraCaptureService(const CameraCaptureService &) = delete;
@@ -67,6 +71,9 @@ private:
     // 设备状态用原子量，CameraCaptureService也可以知道当前设备状态
     std::atomic<State> m_state{State::Closed};
     std::thread m_thread;
+
+    // 绑定相机模块名；日志后端由组合根拥有，本服务只保存非拥有引用。
+    diagnostics::ModuleLogger m_log;
 
 
 };

@@ -27,6 +27,7 @@ target_link_libraries(EngineeringWorkbench
     PRIVATE
         englab::application
         englab::camera_galaxy
+        englab::logging
         englab::ui
         Qt6::Widgets
 )

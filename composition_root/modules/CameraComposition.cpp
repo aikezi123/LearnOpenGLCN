@@ -9,13 +9,17 @@
 
 namespace engineeringlab::composition {
 
-QWidget* CameraComposition::createPage(QWidget* parent)
+QWidget* CameraComposition::createPage(
+    application::diagnostics::ILogger& logger,
+    QWidget* parent
+)
 {
     auto cameraDevice = std::make_unique<infrastructure::camera::galaxy::GalaxyCameraController>();
 
     auto cameraCaptureService =
         std::make_unique<application::CameraCaptureService>(
-            std::move(cameraDevice)
+            std::move(cameraDevice),
+            logger
         );
 
     return new ui::CameraImageCaptureView(

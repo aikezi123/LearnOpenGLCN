@@ -8,12 +8,16 @@
   "builtin-baseline": "26283ac5e8a068561a718ce18b169bfad84c7dab",
   "dependencies": [
     {
+      "name": "fmt",
+      "$comment": "ModuleLogger 在 C++17 下使用 fmt 提供类型安全的 {} 格式化。"
+    },
+    {
       "name": "gtest",
       "$comment": "GoogleTest 测试框架；仅在 BUILD_TESTING 开启时由 CMake target 使用。"
     },
     {
       "name": "spdlog",
-      "$comment": "日志模块的底层实现；fmt 会作为 spdlog 的传递依赖自动安装。"
+      "$comment": "日志模块的底层文件和控制台后端；业务代码不直接依赖 spdlog。"
     }
   ],
   "default-features": [

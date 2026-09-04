@@ -1,5 +1,6 @@
 {
     "cmake.useCMakePresets": "always",
     "cmake.useVsDeveloperEnvironment": "auto",
-    "cmake.ctest.testExplorerIntegrationEnabled": true
+    "cmake.ctest.testExplorerIntegrationEnabled": true,
+    "C_Cpp.default.configurationProvider": "ms-vscode.cmake-tools"
 }

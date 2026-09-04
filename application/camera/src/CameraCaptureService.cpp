@@ -24,7 +24,12 @@ CameraResult failure(std::string errorMsg) {
 
 } // namespace
 
-CameraCaptureService::CameraCaptureService(std::unique_ptr<ICameraDevice> cameraDevice) {
+CameraCaptureService::CameraCaptureService(
+    std::unique_ptr<ICameraDevice> cameraDevice,
+    diagnostics::ILogger& logger
+)
+    : m_log(logger, "camera")
+{
     if (cameraDevice == nullptr) {
         throw std::invalid_argument("构造函数无有效传递的相机设备对象");
     }

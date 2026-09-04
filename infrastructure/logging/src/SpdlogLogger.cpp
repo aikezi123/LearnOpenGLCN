@@ -37,11 +37,23 @@ spdlog::level::level_enum toSpdlogLevel(application::diagnostics::LogLevel level
 
 spdlog::filename_t toSpdlogFilename(const std::filesystem::path& path)
 {
+    // Windows 使用宽字符原生路径，避免中文日志目录在窄字符代码页下丢失信息。
 #if defined(_WIN32) && defined(SPDLOG_WCHAR_FILENAMES)
     return path.native();
 #else
     return path.string();
 #endif
+}
+
+std::string_view sourceFileName(const char* file) noexcept
+{
+    if (file == nullptr || *file == '\0') {
+        return {};
+    }
+
+    const std::string_view path(file);
+    const std::size_t separator = path.find_last_of("/\\");
+    return separator == std::string_view::npos ? path : path.substr(separator + 1U);
 }
 
 void validateOptions(const SpdlogLoggerOptions& options)
@@ -71,6 +83,7 @@ public:
     {
         validateOptions(options);
 
+        // 所有 component 共用该滚动文件；component 会在 write() 中写入消息前缀。
         std::vector<spdlog::sink_ptr> sinks;
         sinks.push_back(std::make_shared<spdlog::sinks::rotating_file_sink_mt>(
             toSpdlogFilename(options.logFile),
@@ -83,6 +96,7 @@ public:
         }
 
         if (options.asynchronous) {
+            // 使用实例私有线程池，避免依赖或修改 spdlog 的进程级全局线程池。
             m_threadPool = std::make_shared<spdlog::details::thread_pool>(
                 options.asyncQueueCapacity,
                 1U
@@ -92,6 +106,7 @@ public:
                 sinks.begin(),
                 sinks.end(),
                 m_threadPool,
+                // 队列满时阻塞生产者，优先保证诊断记录完整性。
                 spdlog::async_overflow_policy::block
             );
         }
@@ -104,9 +119,10 @@ public:
         }
 
         m_logger->set_level(toSpdlogLevel(options.minimumLevel));
+        // Warning 及以上级别立即刷新；其他级别由正常缓冲和析构流程写出。
         m_logger->flush_on(spdlog::level::warn);
         m_logger->set_pattern(
-            "%Y-%m-%d %H:%M:%S.%e [%l] [tid %t] [%n] %v (%s:%#)"
+            "%Y-%m-%d %H:%M:%S.%e [%l] [tid %t] [%n] %v"
         );
     }
 
@@ -118,8 +134,7 @@ public:
         catch (...) {
         }
 
-        // Destroy the logger before its private async thread pool. The pool
-        // drains queued messages and joins its worker during destruction.
+        // 必须先销毁 logger，再销毁其私有线程池；线程池析构会排空队列并回收工作线程。
         m_logger.reset();
         m_threadPool.reset();
     }
@@ -130,16 +145,30 @@ public:
             const char* file = record.source.file == nullptr ? "" : record.source.file;
             const char* function =
                 record.source.function == nullptr ? "" : record.source.function;
+            const std::string_view shortFile = sourceFileName(file);
 
-            m_logger->log(
-                spdlog::source_loc(file, record.source.line, function),
-                toSpdlogLevel(record.level),
-                "[{}] {}",
-                record.component,
-                record.message
-            );
+            if (!shortFile.empty() && record.source.line > 0) {
+                m_logger->log(
+                    spdlog::source_loc(file, record.source.line, function),
+                    toSpdlogLevel(record.level),
+                    "[{}] {} ({}:{})",
+                    record.component,
+                    record.message,
+                    shortFile,
+                    record.source.line
+                );
+            }
+            else {
+                m_logger->log(
+                    toSpdlogLevel(record.level),
+                    "[{}] {}",
+                    record.component,
+                    record.message
+                );
+            }
         }
         catch (...) {
+            // 日志失败不能改变业务控制流，遵守 ILogger 的 noexcept 边界。
         }
     }
 
@@ -149,6 +178,7 @@ public:
             m_logger->flush();
         }
         catch (...) {
+            // flush 失败同样只影响诊断输出，不传播到调用方。
         }
     }
 

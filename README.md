@@ -59,7 +59,8 @@ CAD、机器人、视觉和图形学可以同时使用多个层与能力目录�
 EngineeringWorkbench (executable)
     ├── englab::ui
     ├── englab::application
-    └── englab::camera_galaxy
+    ├── englab::camera_galaxy
+    └── englab::logging
 
 OpenGLLessons (executable)
     └── englab::opengl_lessons
@@ -80,7 +81,11 @@ englab::camera_galaxy
     └── Galaxy::SDK
 
 englab::application
-    └── englab::domain
+    ├── englab::domain
+    └── englab::diagnostics
+
+englab::diagnostics
+    └── fmt::fmt（vcpkg，INTERFACE）
 
 englab::concurrency
     └── Threads::Threads
@@ -90,7 +95,7 @@ englab::logging
     └── spdlog::spdlog（vcpkg，PRIVATE）
 ```
 
-OpenGL 课程不再链接包含相机 SDK 和并发实现的聚合 infrastructure target。OpenGL、Galaxy 相机、线程池和日志分别由 `englab::graphics_opengl`、`englab::camera_galaxy`、`englab::concurrency`、`englab::logging` 表达技术依赖。日志 target 当前尚未接入生产代码。
+OpenGL 课程不再链接包含相机 SDK 和并发实现的聚合 infrastructure target。OpenGL、Galaxy 相机、线程池和日志分别由 `englab::graphics_opengl`、`englab::camera_galaxy`、`englab::concurrency`、`englab::logging` 表达技术依赖。综合工作台已创建进程级日志后端并注入相机应用服务，当前尚未写业务日志。
 
 C++ 项目代码统一使用 `engineeringlab` 根命名空间；CMake alias 使用较短的 `englab::` 前缀。
 
@@ -101,14 +106,14 @@ C++ 项目代码统一使用 `engineeringlab` 根命名空间；CMake alias 使�
 - `application/camera` 提供 `ICameraDevice` 和 `CameraCaptureService`。
 - `infrastructure/camera/galaxy` 提供大恒相机适配器。
 - `infrastructure/concurrency` 提供固定线程池。
-- `application/diagnostics` 提供不含第三方类型的日志端口；`infrastructure/logging` 提供 spdlog 实现，当前生产代码尚未使用。
+- `application/diagnostics` 提供日志端口和 `ModuleLogger`；`infrastructure/logging` 提供 spdlog 实现；综合工作台已将唯一后端注入 `CameraCaptureService`，当前尚未写业务日志。
 - `infrastructure/shader` 提供当前课程使用的 OpenGL Shader 封装。
 - `ui` 提供相机预览、图像观察变换、轨迹生成与导出页面。
 - `lessons` 保留 LearnOpenGL 课程注册和 GLFW 课程实现。
 
 ## 构建入口
 
-spdlog 1.17.0 和 GoogleTest/GoogleMock 1.17.0 由根目录 `vcpkg.json` 统一管理，版本通过 `builtin-baseline` 固定。构建前需安装 vcpkg 并设置 `VCPKG_ROOT` 环境变量；CMake preset 会使用其 toolchain 自动恢复依赖。Windows preset 使用 `x64-windows-static-md`，即静态第三方库和动态 MSVC CRT。`vcpkg_installed/` 与依赖构建缓存不提交仓库。
+fmt 12.1.0、spdlog 1.17.0 和 GoogleTest/GoogleMock 1.17.0 由根目录 `vcpkg.json` 统一管理，版本通过 `builtin-baseline` 固定。构建前需安装 vcpkg 并设置 `VCPKG_ROOT` 环境变量；CMake preset 会使用其 toolchain 自动恢复依赖。Windows preset 使用 `x64-windows-static-md`，即静态第三方库和动态 MSVC CRT。`vcpkg_installed/` 与依赖构建缓存不提交仓库。
 
 Debug：
 

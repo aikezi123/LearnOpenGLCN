@@ -57,6 +57,7 @@ add_subdirectory(third_party/glm)
 add_subdirectory(third_party/Galaxy)
 
 # 开源依赖由 vcpkg manifest 提供，项目只消费标准 CMake target。
+find_package(fmt CONFIG REQUIRED)
 find_package(spdlog CONFIG REQUIRED)
 
 if(BUILD_TESTING)

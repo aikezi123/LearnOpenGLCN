@@ -1,7 +1,7 @@
 # 查找 C++ 标准线程库，供相机控制线程使用
 find_package(Threads REQUIRED)
 
-# 日志端口是独立、无第三方依赖的 application API。本阶段尚未被业务模块使用。
+# 日志端口不依赖具体日志后端；ModuleLogger 只使用 fmt 提供 C++17 格式化。
 add_library(engineeringlab_diagnostics INTERFACE)
 add_library(englab::diagnostics ALIAS engineeringlab_diagnostics)
 
@@ -14,6 +14,19 @@ target_compile_features(engineeringlab_diagnostics
     INTERFACE
         cxx_std_17
 )
+
+target_link_libraries(engineeringlab_diagnostics
+    INTERFACE
+        fmt::fmt
+)
+
+# ModuleLogger 的公共模板会捕获格式化异常，MSVC 消费者需要完整栈展开语义。
+if(MSVC)
+    target_compile_options(engineeringlab_diagnostics
+        INTERFACE
+            /EHsc
+    )
+endif()
 
 # 递归收集各子模块 src 目录下的源文件
 file(GLOB_RECURSE APPLICATION_SOURCES CONFIGURE_DEPENDS
@@ -51,6 +64,7 @@ target_include_directories(engineeringlab_application
 target_link_libraries(engineeringlab_application
     PUBLIC
         englab::domain
+        englab::diagnostics
     PRIVATE
         Threads::Threads
 )

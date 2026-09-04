@@ -38,6 +38,17 @@ engineeringlab_add_gtest(engineeringlab_application_camera_tests
         application
 )
 
+engineeringlab_add_gtest(engineeringlab_application_diagnostics_tests
+    SOURCES
+        application/diagnostics/ModuleLoggerTest.cpp
+    LIBRARIES
+        englab::diagnostics
+    LABELS
+        unit
+        application
+        diagnostics
+)
+
 engineeringlab_add_gtest(engineeringlab_infrastructure_concurrency_tests
     SOURCES
         infrastructure/concurrency/ThreadPoolTest.cpp

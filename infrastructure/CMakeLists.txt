@@ -3,6 +3,7 @@ find_package(OpenGL REQUIRED)
 # 各基础设施能力保持独立，避免课程或工具被迫链接无关的 SDK。
 add_subdirectory(concurrency)
 add_subdirectory(logging)
+add_subdirectory(memory)
 
 add_library(engineeringlab_graphics_opengl STATIC
     shader/include/shader/Shader.hpp
