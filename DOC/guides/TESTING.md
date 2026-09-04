@@ -2,7 +2,7 @@
 
 ## 1. 当前状态
 
-工程已接入 GoogleTest 1.17.0 和 CTest，测试由标准 `BUILD_TESTING` 开关控制。GoogleTest 源码固定保存在 `third_party/googletest`，配置和构建过程不需要联网下载依赖；Windows 下沿用父工程的动态 CRT 设置。
+工程已接入 GoogleTest/GoogleMock 1.17.0 和 CTest，测试由标准 `BUILD_TESTING` 开关控制。测试框架由根目录 `vcpkg.json` 声明并通过固定 baseline 锁定，仓库不保存其源码、头文件或二进制库。CMake 使用 `find_package(GTest CONFIG REQUIRED)` 获取标准 target；不同平台和架构由 vcpkg triplet 选择。
 
 当前测试目标如下：
 
@@ -11,10 +11,11 @@
 | `engineeringlab_domain_trajectory_tests` | 已建立可编译占位文件，暂无用例 | `englab::domain` |
 | `engineeringlab_application_camera_tests` | 已建立可编译占位文件和 `FakeCameraDevice`，暂无用例 | `englab::application` |
 | `engineeringlab_infrastructure_concurrency_tests` | 已包含 20 个 `ThreadPool` 单元测试 | `englab::concurrency` |
+| `engineeringlab_infrastructure_logging_tests` | 已包含 3 个日志模块单元测试 | `englab::logging` |
 
 `ThreadPool` 用例覆盖构造参数和类型所有权约束；`post()`执行、只执行一次、异常隔离和空任务拒绝；`submit()`返回值、多参数、`void`、移动专用 callable/参数、只执行一次和异常传播；空 `std::function`的延迟异常；关闭排空、析构排空、重复/外部并发关闭、关闭后拒绝；以及多生产者和多 worker 并发行为。
 
-2026-09-04 在 EngineeringLab 命名统一和基础设施 target 拆分后，使用 `ninja-msvc-debug` 完成重新配置与全量构建，随后执行 `ctest --preset ninja-msvc-debug --output-on-failure`，实际发现并通过 20/20 个用例。该结果是当前 Debug 基线，不代表 Release、AddressSanitizer 或尚未编写的极端竞争场景已经验证。
+2026-09-04 spdlog 和 GoogleTest/GoogleMock 切换为 vcpkg manifest 管理后，使用 `ninja-msvc-debug` 和 `ninja-msvc-release` 完成重新配置与全量构建；两个配置的 CTest 均实际发现并通过 23/23 个用例：线程池 20 个、日志模块 3 个。日志测试覆盖 UTF-8 写入和级别过滤、异步析构排空以及空文件路径拒绝。该结果不代表 AddressSanitizer 或尚未编写的极端竞争场景已经验证。
 
 ## 2. 目录和依赖边界
 
@@ -76,7 +77,7 @@ engineeringlab_add_gtest(engineeringlab_domain_trajectory_tests
 
 ## 4. 配置、构建和运行
 
-`BUILD_TESTING` 默认值为 `ON`。仓库的 `CMakePresets.json` 为 Debug、Release 和 AddressSanitizer 分别定义了 configure、build 和 test preset；VS Code 工作区固定使用这些 presets，并由 CMake Tools 自动尝试加载 MSVC Developer Environment。
+`BUILD_TESTING` 默认值为 `ON`。仓库的 `CMakePresets.json` 为 Debug、Release 和 AddressSanitizer 分别定义了 configure、build 和 test preset；Windows preset 通过 `VCPKG_ROOT` 加载 vcpkg toolchain，并使用 `x64-windows-static-md` triplet。VS Code 工作区固定使用这些 presets，并由 CMake Tools 自动尝试加载 MSVC Developer Environment。
 
 日常开发推荐在 VS Code 命令面板中依次选择：
 

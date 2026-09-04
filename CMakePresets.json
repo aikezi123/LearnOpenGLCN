@@ -7,8 +7,19 @@
   },
   "configurePresets": [
     {
+      "name": "vcpkg-msvc-x64",
+      "description": "MSVC x64 共享配置：启用 vcpkg 工具链，并选用动态 MSVC 运行库配合静态第三方库的 triplet。",
+      "hidden": true,
+      "cacheVariables": {
+        "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+        "VCPKG_TARGET_TRIPLET": "x64-windows-static-md"
+      }
+    },
+    {
       "name": "ninja-msvc-debug",
       "displayName": "Ninja + MSVC Debug",
+      "description": "使用 Ninja 和 MSVC 生成 Debug 构建目录，同时导出 compile_commands.json。",
+      "inherits": "vcpkg-msvc-x64",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "cacheVariables": {
@@ -21,6 +32,8 @@
     {
       "name": "ninja-msvc-release",
       "displayName": "Ninja + MSVC Release",
+      "description": "使用 Ninja 和 MSVC 生成启用优化的 Release 构建目录。",
+      "inherits": "vcpkg-msvc-x64",
       "generator": "Ninja",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "cacheVariables": {
@@ -33,6 +46,7 @@
     {
       "name": "ninja-msvc-asan",
       "displayName": "Ninja + MSVC AddressSanitizer",
+      "description": "继承 Debug 配置并启用 AddressSanitizer，用于检查内存错误。",
       "inherits": "ninja-msvc-debug",
       "binaryDir": "${sourceDir}/out/build/${presetName}",
       "cacheVariables": {
@@ -43,14 +57,17 @@
   "buildPresets": [
     {
       "name": "ninja-msvc-debug",
+      "description": "构建 ninja-msvc-debug 配置。",
       "configurePreset": "ninja-msvc-debug"
     },
     {
       "name": "ninja-msvc-release",
+      "description": "构建 ninja-msvc-release 配置。",
       "configurePreset": "ninja-msvc-release"
     },
     {
       "name": "ninja-msvc-asan",
+      "description": "构建 ninja-msvc-asan 配置。",
       "configurePreset": "ninja-msvc-asan"
     }
   ],
@@ -58,6 +75,7 @@
     {
       "name": "ninja-msvc-debug",
       "displayName": "Ninja + MSVC Debug Tests",
+      "description": "运行 Debug 构建目录中由 CTest 注册的全部测试。",
       "configurePreset": "ninja-msvc-debug",
       "output": {
         "outputOnFailure": true
@@ -69,6 +87,7 @@
     {
       "name": "ninja-msvc-release",
       "displayName": "Ninja + MSVC Release Tests",
+      "description": "运行 Release 构建目录中由 CTest 注册的全部测试。",
       "configurePreset": "ninja-msvc-release",
       "output": {
         "outputOnFailure": true
@@ -80,6 +99,7 @@
     {
       "name": "ninja-msvc-asan",
       "displayName": "Ninja + MSVC AddressSanitizer Tests",
+      "description": "在 AddressSanitizer 配置下运行全部测试。",
       "configurePreset": "ninja-msvc-asan",
       "output": {
         "outputOnFailure": true

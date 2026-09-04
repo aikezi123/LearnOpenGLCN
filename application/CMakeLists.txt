@@ -1,6 +1,20 @@
 # 查找 C++ 标准线程库，供相机控制线程使用
 find_package(Threads REQUIRED)
 
+# 日志端口是独立、无第三方依赖的 application API。本阶段尚未被业务模块使用。
+add_library(engineeringlab_diagnostics INTERFACE)
+add_library(englab::diagnostics ALIAS engineeringlab_diagnostics)
+
+target_include_directories(engineeringlab_diagnostics
+    INTERFACE
+        ${CMAKE_CURRENT_SOURCE_DIR}/diagnostics/include
+)
+
+target_compile_features(engineeringlab_diagnostics
+    INTERFACE
+        cxx_std_17
+)
+
 # 递归收集各子模块 src 目录下的源文件
 file(GLOB_RECURSE APPLICATION_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/*/src/*.cpp"

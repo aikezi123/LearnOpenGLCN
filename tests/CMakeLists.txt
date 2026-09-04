@@ -48,3 +48,14 @@ engineeringlab_add_gtest(engineeringlab_infrastructure_concurrency_tests
         infrastructure
         concurrency
 )
+
+engineeringlab_add_gtest(engineeringlab_infrastructure_logging_tests
+    SOURCES
+        infrastructure/logging/SpdlogLoggerTest.cpp
+    LIBRARIES
+        englab::logging
+    LABELS
+        unit
+        infrastructure
+        logging
+)

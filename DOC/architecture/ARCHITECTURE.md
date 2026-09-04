@@ -63,6 +63,8 @@ EngineeringLab 是个人 C++ 工程技术持续学习与实验平台。LearnOpen
 | `engineeringlab_graphics_opengl` | Static | 当前课程使用的 OpenGL Shader 技术能力 | GLAD、OpenGL |
 | `engineeringlab_camera_galaxy` | Static | 大恒相机适配器 | `englab::application`、`Galaxy::SDK` |
 | `engineeringlab_concurrency` | Static | 不依赖 GUI/OpenGL 的线程池 | `Threads::Threads` |
+| `engineeringlab_logging` | Static | spdlog 日志后端 | `englab::diagnostics`、vcpkg `spdlog::spdlog`（PRIVATE） |
+| `engineeringlab_diagnostics` | Interface | 不含第三方类型的日志端口 | 无 |
 | `engineeringlab_application` | Static | 相机预览 service 与相机端口 | `englab::domain`、`Threads::Threads` |
 | `engineeringlab_domain` | Static | 图像帧模型和二维轨迹纯算法 | 无项目内依赖 |
 
@@ -78,7 +80,15 @@ application 当前没有 `ITaskExecutor`。只有实际 application service 出�
 
 当前线程池提供 `post()`、通用 `submit()`和排空式 `shutdown()`。本轮基线完成八阶段路线中的阶段1–5；阶段6只完成外部并发/重复关闭、排空与关闭后拒绝等当前范围，阶段7–8留待后续。详细行为和已知边界见[线程池并发模块](../modules/THREAD_POOL.md)。
 
+#### 2.1.2 日志能力边界
+
+`application/diagnostics` 定义 `ILogger`、日志级别、记录和源码位置等项目类型，形成无第三方依赖的 `englab::diagnostics` 接口 target。`infrastructure/logging` 用 spdlog 实现该端口，形成 `englab::logging` 静态库；spdlog 仅为其 PRIVATE 依赖，并通过 Pimpl 隐藏在实现文件中。
+
+当前生产 target、可执行程序和组合根均未依赖或创建日志对象，原有 `std::cout`、`std::cerr`、`std::clog` 输出保持不变。只有日志模块测试直接消费 `englab::logging`。后续启用时由组合根创建具体 logger 并按 `ILogger` 注入外层组件，domain 继续保持无日志依赖。详细配置和验证状态见[日志模块](../modules/LOGGING.md)。
+
 `third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。大恒运行时 DLL 不再由 CMake 查找或复制，而是直接放在 `out/build/<preset>/bin`，随 exe、pdb 等运行产物一起提交。
+
+spdlog 1.17.0 和 GoogleTest/GoogleMock 1.17.0 由根目录的 vcpkg manifest 统一管理，依赖图通过固定的 `builtin-baseline` 复现。仓库不保存这两项依赖的源码、头文件或二进制库；CMake 分别通过 `find_package(spdlog CONFIG REQUIRED)` 和 `find_package(GTest CONFIG REQUIRED)` 获取标准 target。GoogleTest 只在 `BUILD_TESTING=ON` 时由 CMake 消费，生产 target 不得链接它。不同平台和架构由 vcpkg triplet 处理，首次构建结果可进入二进制缓存，不再维护仓库内的平台选择分支。
 
 `composition_root/qt_main.cpp` 只负责初始化 Qt/OpenGL、调用 `AppComposition` 创建窗口并进入事件循环。`AppComposition` 负责组织模块页面，`modules/CameraComposition` 和 `modules/TrajectoryComposition` 分别装配相机与轨迹功能。`composition_root/lesson_main.cpp` 负责解析命令行参数、直接运行课程或启动 LearnOpenGL 课程导航器；导航窗口实现放在 `composition_root/lesson_launcher`。课程清单集中在 `lessons/catalog` 的 `LessonRegistry` 中。所有课程源码仍被编入同一个 `engineeringlab_opengl_lessons` 静态库，因此即使某课程没有运行，它仍必须成功编译。
 

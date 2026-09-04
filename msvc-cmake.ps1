@@ -1,4 +1,4 @@
-param(
+﻿param(
     [ValidateSet("Debug", "Release")]
     [string]$Config = "Debug",
 
@@ -29,11 +29,25 @@ function Fail($Message) {
 
 try {
     # 当前脚本放在项目根目录
-    $RepoRoot = $PSScriptRoot
+    if ([string]::IsNullOrWhiteSpace($PSScriptRoot)) {
+        $RepoRoot = (Get-Location).Path
+    } else {
+        $RepoRoot = $PSScriptRoot
+    }
+
+    if ([string]::IsNullOrWhiteSpace($env:VCPKG_ROOT)) {
+        Fail "VCPKG_ROOT is not set. Point it to your vcpkg installation directory."
+    }
+
+    $VcpkgToolchain = Join-Path $env:VCPKG_ROOT "scripts\buildsystems\vcpkg.cmake"
+    if (-not (Test-Path -LiteralPath $VcpkgToolchain -PathType Leaf)) {
+        Fail "Cannot find the vcpkg CMake toolchain: $VcpkgToolchain"
+    }
 
     Write-Host ""
     Write-Host "Repo root: $RepoRoot"
     Write-Host "Config   : $Config"
+    Write-Host "vcpkg    : $env:VCPKG_ROOT"
     Write-Host ""
 
     # 1. 查找 vswhere

@@ -232,9 +232,9 @@ infrastructure/
 
 接入规则：
 
-- 在 `third_party/<name>/CMakeLists.txt` 中建立 target，或使用 `find_package()` 导入官方 target。
-- Header-only 库使用 `INTERFACE` target。
-- 预编译库使用 `IMPORTED` target，并显式记录平台和工具链约束。
+- 通用开源依赖优先加入根目录 `vcpkg.json`，通过固定 `builtin-baseline` 管理版本，并使用 `find_package(... CONFIG REQUIRED)` 导入其 CMake target。
+- 不把 vcpkg 管理依赖的源码、头文件、库文件或 `vcpkg_installed/` 提交到仓库；需要减少重复编译时使用 vcpkg 二进制缓存。
+- 只有无法通过包管理器获得的厂商 SDK 才放入 `third_party/<name>`，通过 `IMPORTED` target 封装，并显式记录平台、架构、运行库和许可证约束。
 - 项目模块链接 target，不直接引用 `.lib`、`.dll` 或 include 绝对路径。
 - 提供命名空间别名，例如 `vendor::name`。
 - 不为第三方依赖添加当前没有源码消费点的编译宏或配置开关。

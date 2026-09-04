@@ -56,12 +56,11 @@ add_subdirectory(third_party/glm)
 # 这个子目录负责把大恒 Galaxy SDK 的头文件和 .lib 包装成 CMake target
 add_subdirectory(third_party/Galaxy)
 
+# 开源依赖由 vcpkg manifest 提供，项目只消费标准 CMake target。
+find_package(spdlog CONFIG REQUIRED)
+
 if(BUILD_TESTING)
-    # GoogleTest 1.17.0 随仓库固定版本保存，避免配置阶段依赖网络。
-    # Windows 下沿用父工程的动态 CRT 设置，避免测试与生产库的 CRT 不一致。
-    set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
-    set(INSTALL_GTEST OFF CACHE BOOL "" FORCE)
-    add_subdirectory(third_party/googletest EXCLUDE_FROM_ALL)
+    find_package(GTest CONFIG REQUIRED)
 endif()
 
 add_subdirectory(domain)
