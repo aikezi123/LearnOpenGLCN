@@ -10,9 +10,11 @@
 | --- | --- | --- |
 | `learnopengl_domain_trajectory_tests` | 已建立可编译占位文件，暂无用例 | `learnopengl::domain` |
 | `learnopengl_application_camera_tests` | 已建立可编译占位文件和 `FakeCameraDevice`，暂无用例 | `learnopengl::application` |
-| `learnopengl_infrastructure_concurrency_tests` | 已包含 9 个 `ThreadPool` 单元测试 | `learnopengl::concurrency` |
+| `learnopengl_infrastructure_concurrency_tests` | 已包含 20 个 `ThreadPool` 单元测试 | `learnopengl::concurrency` |
 
-`ThreadPool` 用例覆盖构造参数、任务投递、`submit()` 返回值与异常传播、任务异常隔离、关闭时排空队列、重复关闭、关闭后拒绝任务以及空任务校验。
+`ThreadPool` 用例覆盖构造参数和类型所有权约束；`post()`执行、只执行一次、异常隔离和空任务拒绝；`submit()`返回值、多参数、`void`、移动专用 callable/参数、只执行一次和异常传播；空 `std::function`的延迟异常；关闭排空、析构排空、重复/外部并发关闭、关闭后拒绝；以及多生产者和多 worker 并发行为。
+
+2026-09-03 使用 `ninja-msvc-debug`重新配置并构建 `learnopengl_infrastructure_concurrency_tests`，随后执行 `ctest --preset ninja-msvc-debug -R ThreadPoolTest --output-on-failure`，实际发现并通过 20/20 个用例。该结果是本轮线程池结束时的 Debug 基线，不代表 Release、AddressSanitizer 或尚未编写的极端竞争场景已经验证。
 
 ## 2. 目录和依赖边界
 
@@ -47,6 +49,8 @@ tests -> GoogleTest / GoogleMock
 生产 target 不得依赖 `tests/`、GoogleTest 或 GoogleMock。测试只能通过模块公开接口验证行为，不能通过全局 include 路径访问生产模块私有实现。
 
 线程池已从包含 OpenGL、GLFW 和 Galaxy SDK 的完整 `infrastructure` 中拆为独立的 `learnopengl::concurrency` 静态库。线程池测试只链接该 target 和 GoogleTest，因而不需要 GUI、OpenGL Context 或真实相机 SDK。
+
+线程池当前行为、八阶段进度和未覆盖边界统一记录在[线程池并发模块](../modules/THREAD_POOL.md)。新增并发能力时应同步更新该文档和本页的实际测试数量，不能只根据测试源文件存在就声称行为已验证。
 
 ## 3. 新增测试
 

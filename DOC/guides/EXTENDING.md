@@ -142,6 +142,20 @@ application/
 
 拆分过程中保持每一步可构建、可运行，不一次性重写全部原型。
 
+## 4.2 新增后台执行器
+
+通用线程池的具体实现位于 `infrastructure/concurrency`。不要因为多个模块可能需要后台工作，就预先让 application 直接依赖 `ThreadPool`，也不要让业务 service 继承具体线程池。
+
+当真实用例需要可替换的后台执行能力时，按以下顺序扩展：
+
+1. 在 application 中根据 service 的实际需求定义最小端口，例如只表达“提交任务”和所需的失败语义。
+2. 在 infrastructure 中用适配器实现该端口；适配器可以组合持有 `ThreadPool`，也可以使用完全不同的执行机制。
+3. 如果不同模块需要不同隔离级别、线程数量或执行策略，由组合根分别创建多个执行器实例，并注入到对应 service。
+4. application 和 ui 只依赖端口，不根据 `ThreadPool`、Qt Concurrent 或其他具体实现类型做分支。
+5. 对线程数、队列容量、关闭顺序和所有权做集中装配，避免各模块临时创建无法统一关闭的后台线程。
+
+相机设备控制是要求严格串行、维护设备状态并在固定线程销毁 SDK 对象的专用执行模型，不应直接替换为通用线程池。线程池当前基线、关闭语义和八阶段路线见[线程池并发模块](../modules/THREAD_POOL.md)。
+
 ## 5. 新增 infrastructure 适配器
 
 适用场景：接入 OpenGL、图片库、文件系统或其他外部技术。
@@ -188,7 +202,7 @@ infrastructure/
 - 帧格式、宽高、stride、通道顺序、线程和缓冲区所有权必须明确。
 - 目标帧率至少满足 30 FPS，避免每帧重复创建纹理或 Program。
 
-当前大恒实现为 `learnopengl::infrastructure::camera::galaxy::GalaxyCameraController`，实现 `application::ICameraDevice`。它负责大恒 SDK 初始化、开关相机和输出 `domain::ImageFrame`，SDK 头文件只出现在 infrastructure 的 `.cpp` 中。`CameraImageCaptureView` 通过 `CameraCaptureService` 接收帧，并用单槽最新帧邮箱与 Qt queued invoke 投递到 UI 线程；OpenGL 上传仍放在 `QOpenGLWidget` 的有效 context 中完成，不在相机 SDK 回调线程中直接调用 `glXXX`。当前图像翻转、旋转、缩放和平移属于 UI 原型交互，由 `CameraImageCaptureView` 控件发起，由 `DisplayOpenGLImage` 在绘制前上传 shader uniform 矩阵完成。线程与同步机制详见[相机采集与 OpenGL 显示链路](./CAMERA_ARCHITECTURE.md)。
+当前大恒实现为 `learnopengl::infrastructure::camera::galaxy::GalaxyCameraController`，实现 `application::ICameraDevice`。它负责大恒 SDK 初始化、开关相机和输出 `domain::ImageFrame`，SDK 头文件只出现在 infrastructure 的 `.cpp` 中。`CameraImageCaptureView` 通过 `CameraCaptureService` 接收帧，并用单槽最新帧邮箱与 Qt queued invoke 投递到 UI 线程；OpenGL 上传仍放在 `QOpenGLWidget` 的有效 context 中完成，不在相机 SDK 回调线程中直接调用 `glXXX`。当前图像翻转、旋转、缩放和平移属于 UI 原型交互，由 `CameraImageCaptureView` 控件发起，由 `DisplayOpenGLImage` 在绘制前上传 shader uniform 矩阵完成。线程与同步机制详见[相机采集与 OpenGL 显示链路](../modules/CAMERA_ARCHITECTURE.md)。
 
 ## 5.2 三维轨迹与点云显示模块
 
@@ -202,7 +216,7 @@ infrastructure/
 
 不要让 domain 保存 OpenGL Buffer ID，也不要让 application 创建 QWidget 或调用 `glXXX`。
 
-当前 `domain/trajectory` 已包含 `ArchimedeanSpiral2DGenerator`。它只负责固定阿基米德螺旋 `r = A + Bθ` 的二维采样点生成：线间距全局固定并计算 `B`，半径范围只配置该段目标点间距。当前用局部弧长微分估算 `dtheta` 初值，再通过实际二维点距的带符号残差进行二分求解；多段结果保存在统一点序列中，并用 `rangeIndex` 保留来源。完整行为见 [二维阿基米德螺旋轨迹](./TRAJECTORY_2D.md)。
+当前 `domain/trajectory` 已包含 `ArchimedeanSpiral2DGenerator`。它只负责固定阿基米德螺旋 `r = A + Bθ` 的二维采样点生成：线间距全局固定并计算 `B`，半径范围只配置该段目标点间距。当前用局部弧长微分估算 `dtheta` 初值，再通过实际二维点距的带符号残差进行二分求解；多段结果保存在统一点序列中，并用 `rangeIndex` 保留来源。完整行为见 [二维阿基米德螺旋轨迹](../modules/TRAJECTORY_2D.md)。
 
 当前 UI 已提供参数与分段配置、后台 txt 导出、每段与总结果导出以及生成/写入耗时日志。它是外层原型实现，domain 不依赖 Qt Concurrent、文件系统或 UI。
 
@@ -224,7 +238,7 @@ infrastructure/
 - 项目模块链接 target，不直接引用 `.lib`、`.dll` 或 include 绝对路径。
 - 提供命名空间别名，例如 `vendor::name`。
 - 不为第三方依赖添加当前没有源码消费点的编译宏或配置开关。
-- 更新 `DOC/ARCHITECTURE.md` 中的依赖说明。
+- 更新 `DOC/architecture/ARCHITECTURE.md` 中的依赖说明。
 - 检查许可证及再分发要求。
 
 当前大恒 Galaxy SDK 采用 `third_party/Galaxy/CMakeLists.txt` 包装为 `Galaxy::SDK`。推荐目录为：

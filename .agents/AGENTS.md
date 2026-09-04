@@ -1,351 +1,118 @@
 # LearnOpenGLCN 项目协作规则
 
-本文件适用于仓库根目录及所有子目录。Codex 在本项目中分析、修改、构建或验证代码时必须遵守这些规则。若用户当前请求与本文件冲突，先指出冲突并请求确认；不要静默突破架构边界或扩大修改范围。
+本文件适用于仓库根目录及所有子目录，只记录 Agent 在本项目中分析、修改和验证工作时必须遵守的执行规则。正式架构和模块知识统一维护在 `DOC/`。
 
-## 1. 项目背景
+## 1. 开始工作前
 
-LearnOpenGLCN 是一个使用 C++17、CMake 3.21+、Ninja、MSVC、OpenGL 和 Qt 学习并整理 LearnOpenGLCN 网站内容的工程。
-
-长期目标：
-
-- 学习完 LearnOpenGLCN 网站中的全部章节、示例和练习。
-- 保持教程代码可运行、可对照、可实验。
-- 在部分学习分支上扩展工程功能模块，例如：
-  - 大恒/海康工业相机实时图像采集，并使用 Qt + OpenGL 显示。
-  - 三维轨迹数据、点云数据的 OpenGL 绘制与 Qt 交互显示。
-  - Shader、Texture、Buffer、VAO/VBO/EBO、Camera、Transform 等能力的复用封装。
-
-当前工程已经接入 Qt UI 层。`ui/` 形成 `learnopengl_ui` target，使用 Qt Widgets、Qt OpenGLWidgets、GLAD、OpenGL 和 stb_image。当前仍处于学习和原型阶段，允许先在 UI 层跑通 Qt/OpenGL 功能闭环，再逐步拆分到整洁架构各层。
-
-当前主要 target 关系：
-
-```text
-LearnOpenGLCN_Lessons (executable)
-    └── lessons (STATIC)
-        ├── infrastructure (STATIC)
-        │   ├── glad
-        │   ├── glfw3
-        │   ├── OpenGL::GL
-        │   └── glm::glm
-        └── stb_image
-
-LearnOpenGLCN_Qt (executable)
-    └── learnopengl_ui (STATIC)
-        ├── Qt6::Widgets
-        ├── Qt6::OpenGLWidgets
-        ├── Qt6::OpenGL
-        ├── glad
-        ├── OpenGL::GL
-        └── stb_image
-```
-
-`domain/` 和 `application/` 已有目录，但当前尚未形成稳定 target。不要把目标分层描述成已经全部完成。
-
-## 2. 修改前优先阅读
-
-较大修改前按顺序阅读：
+按任务范围读取：
 
 1. 根目录 `AGENTS.md`
 2. `.agents/AGENTS.md`
 3. `.agents/CODEX_CONTEXT.md`
 4. `DOC/README.md`
-5. `DOC/ARCHITECTURE.md`
-6. `DOC/CODING_STYLE.md`
-7. `DOC/EXTENDING.md`
-8. 顶层 `CMakeLists.txt` 和 `CMakePresets.json`
-9. 被修改模块及其直接依赖模块的 `CMakeLists.txt`
-10. 被修改模块的公开头文件、实现文件、Shader、纹理和资源文件
+5. 与任务相关的架构、模块或开发指南
+6. 顶层及相关模块的 `CMakeLists.txt`、公共头文件和实现文件
 
-修改前还必须：
+同时必须：
 
-- 运行 `git status --short`，识别用户已有改动。
-- 不覆盖、不删除、不还原用户已有修改。
-- 搜索现有同类实现和命名，避免重复抽象。
-- 明确本次修改属于教程学习、UI 原型、基础设施适配还是架构迁移。
-- 采用最小必要实现：不添加与当前任务、当前业务路径或当前调用点无关的预留代码。
-- 只有在收益明确且后续使用概率很高时，才添加提前设计的扩展点、编译宏、CMake option、接口或抽象；否则等真实需求出现后再补。
-- 多文件、跨层、CMake 或公共接口变更前先给出简短计划。
+- 先运行 `git status --short`，识别并保留用户已有改动。
+- 使用 `rg` 搜索现有实现、命名和调用点，避免重复抽象。
+- 采用完成当前需求所需的最小修改，不增加没有真实调用点的预留接口、宏、开关或包装层。
+- 多文件、跨层、CMake target、公共接口或生命周期变更前给出简短计划。
+- 不对无关文件做格式化、重命名、注释清理或顺手重构。
 
-## 3. 整洁架构分层规则
+如果文档与代码或 CMake 不一致，以当前实现为事实依据，并在本次任务范围内同步修正文档。
+
+## 2. 架构边界
 
 长期依赖方向必须指向内层：
 
 ```text
-composition_root/app
-    -> ui
-    -> infrastructure
-    -> application
-    -> domain
+composition_root -> ui
+composition_root -> infrastructure
+composition_root -> application
+ui             -> application -> domain
+infrastructure -> application -> domain
 ```
 
-基本规则：
+各层职责：
 
-- `domain` 不依赖任何外层模块或外部技术。
-- `application` 定义用例和端口，不依赖 Qt、OpenGL、GLFW、stb_image、相机 SDK。
-- `infrastructure` 实现外部技术细节，例如 OpenGL、图片加载、文件系统、相机 SDK。
-- `ui` 管理窗口、控件、事件和可视化交互。
-- `composition_root` 负责创建对象、注入依赖、启动程序。
-- 第三方类型、Qt 类型、OpenGL ID、相机 SDK 类型不得泄漏到 `domain` 或 `application`。
-- 术语区分：外层类继承并重写 application 端口叫“实现端口”；组合根创建具体实现并按端口类型传给 service 才叫“依赖注入”。依赖注入不是消除依赖，而是让 service 依赖抽象端口，不直接依赖具体实现。
+- `domain`：稳定模型、值对象和纯算法；不得依赖 Qt、OpenGL、GLAD、GLFW、GLM、stb_image、相机 SDK 或外层模块。
+- `application`：用例、流程和外部能力端口；可依赖 domain，不得创建 Qt 对象、调用 `glXXX` 或认识具体 infrastructure/ui 类型。
+- `infrastructure`：实现 application 端口并封装 OpenGL、文件系统、并发工具和厂商 SDK 等技术细节；第三方类型不得泄漏到内层公共接口。
+- `ui`：Qt 窗口、控件、事件、跨线程界面切换和可视化交互；业务规则应逐步下沉，不得让 Qt 类型进入 domain/application。
+- `composition_root`：选择具体实现、创建对象并注入依赖，只承载启动与装配。
+- `lessons`：保留可运行、可对照的 LearnOpenGL 教程示例；不要为了单个课程无关地重写其他课程。
 
-阶段策略：
+外层类继承 application 接口叫“实现端口”；组合根创建具体对象并以端口类型传给 service 叫“依赖注入”。不要把具体实现或对象工厂提前放进 application。
 
-- 当前前期可以在 `ui` 层先完整实现 Qt/OpenGL 原型。
-- UI 原型跑通后，稳定流程再迁移到 application/infrastructure/domain。
-- 不要把“临时 UI 大杂烩”写成长期架构建议。
+原型阶段允许在 `QOpenGLWidget` 内先跑通 Qt/OpenGL 显示闭环，但必须在文档中明确它是当前原型，而不是最终资源边界。
 
-## 4. 各层职责与禁止事项
-
-### 4.1 domain
-
-允许：
-
-- 表达与图形 API 无关的数据模型和规则。
-- 表达颜色、变换、网格描述、点云点、轨迹段、图像帧元数据等稳定概念。
-- 表达“是什么”的稳定概念和值对象，例如 `VideoFrame`、`PixelFormat`、相机参数。
-- 使用 C++ 标准库和 domain 内部代码。
-
-禁止：
-
-- 依赖 Qt、OpenGL、GLAD、GLFW、GLM、stb_image、大恒/海康 SDK。
-- 保存 QWidget、QOpenGLWidget、OpenGL ID、相机 SDK 句柄、文件系统适配器。
-- 调用 `glXXX` 或任何 UI/API 相关函数。
-- 放置需要驱动外部系统干活的端口接口，例如 `ICameraDevice`。
-
-### 4.2 application
-
-允许：
-
-- 编排用例和流程；本项目应用层流程对象统一使用 `Service` 后缀命名。
-- 定义端口，例如图像帧源、渲染提交、时钟、资源定位、点云数据输入。
-- 使用 domain 类型描述输入、输出和状态。
-- 放置 service 所需的外部能力端口，例如 `ICameraDevice`，由 infrastructure 具体实现。
-
-禁止：
-
-- 创建 QWidget、QOpenGLWidget、QApplication。
-- 调用 `glXXX`、GLFW、Qt API、stb_image 或相机 SDK。
-- include Qt、GLAD、GLFW、stb_image、相机 SDK 头文件。
-- 知道 infrastructure/ui 的具体类。
-
-### 4.3 infrastructure
-
-允许：
-
-- 实现 application 定义的技术端口。
-- 封装 OpenGL Shader、Texture、Buffer、VertexArray、Program。
-- 使用 stb_image 加载图片。
-- 接入大恒、海康等相机 SDK。
-- 处理文件系统、资源路径和底层错误转换。
-- 对相机 SDK、平台 API 等重型第三方适配器，优先使用 Pimpl 把 SDK 类型、句柄和回调类隐藏在 `.cpp` 中。
-
-禁止：
-
-- 把第三方类型、OpenGL ID、SDK 句柄泄漏到 domain/application 公共接口。
-- 在没有有效 OpenGL Context 时创建、使用或销毁 GPU 对象。
-- 决定 UI 布局、课程选择或业务用例流程。
-
-### 4.4 ui
-
-允许：
-
-- 使用 Qt Widgets、QOpenGLWidget、Qt Designer `.ui`、信号槽和 Qt 事件循环。
-- 管理窗口、控件、输入事件、交互和可视化展示。
-- 当前原型阶段可直接创建 Shader、VAO/VBO/EBO、Texture，跑通 OpenGL 显示流程。
-- 将 UI 事件转换为 application 能理解的输入。
-
-禁止：
-
-- 让 Qt 类型进入 domain/application。
-- 让 application 直接依赖 QWidget、QOpenGLWidget 或具体窗口类。
-- 长期在 UI 层堆积相机采集、点云处理、业务规则和资源管理。
-- 同时维护互相竞争的 Qt 和 GLFW 主事件循环。
-
-### 4.5 composition_root / app
-
-允许：
-
-- 创建 QApplication。
-- 设置必要的 OpenGL 默认格式。
-- 创建顶层窗口。
-- 装配 ui、infrastructure、application 对象。
-- 进入事件循环。
-
-禁止：
-
-- 在 `main.cpp` 中塞业务逻辑、Shader 编译、纹理加载、相机采集或大段渲染代码。
-- 让其他层依赖 composition_root。
-
-### 4.6 lessons
-
-允许：
-
-- 按 LearnOpenGLCN 章节组织可运行课程示例。
-- 教学型课程直接展示 OpenGL 调用。
-- 保留适合学习的完整初始化、渲染和清理流程。
-
-禁止：
-
-- 为修改一个课程顺手重写全部课程。
-- 长期复制稳定的资源所有权逻辑；出现重复后应提出小步抽取方案。
-- 新增含义过宽的全局入口名。
-
-## 5. CMake 修改规则
-
-- 保持 CMake 3.21+ 和 C++17，除非用户明确要求升级。
-- 使用 target-based CMake。
-- 分层代码目录统一采用“层 / 模块 / include + src”的模块优先结构，例如 `application/camera/include`、`domain/video/include`、`infrastructure/camera/galaxy/include`。
-- 公共 include 目录下不要重复项目名或当前层名，不要创建 `learnopengl/application`、`learnopengl/domain`、`learnopengl/infrastructure` 这类套娃目录。
-- 不新增全局 `include_directories()`、`link_libraries()` 或无关全局宏。
-- 不新增未被当前源码消费的编译宏、CMake option、feature flag 或预留开关；确有必要时必须说明当前收益和预计使用位置。
-- 只有公共头文件需要的依赖才能设为 `PUBLIC`；实现细节使用 `PRIVATE`。
-- domain/application target 不得链接 Qt、GLAD、GLFW、OpenGL、stb_image 或相机 SDK。
-- Qt 依赖只允许放在 ui 或明确的外层适配器 target。
-- OpenGL/stb_image/相机 SDK 依赖只允许放在 infrastructure/ui 等外层实现。
-- 不硬编码本机路径、Visual Studio 安装路径或 Qt 安装路径。
-- 不新增与任务无关的工具链、包管理器、preset 或外部依赖。
-- 修改 target 关系后同步检查顶层 `add_subdirectory()` 顺序。
-
-当前构建入口以 `CMakePresets.json` 和 `msvc-cmake.ps1` 为准。
-
-## 6. C++ 编码规则
+## 3. C++、Qt 与 OpenGL
 
 - 使用 C++17 和 UTF-8。
-- 项目代码优先放入 `learnopengl` 根命名空间；当前原型遗留代码可逐步迁移。
-- 类型和枚举使用 PascalCase。
-- 函数和局部变量使用 camelCase。
-- 成员变量使用 `m_` + camelCase。
-- 头文件使用 `#pragma once` 或唯一 include guard。
-- 头文件禁止 `using namespace`。
-- include 顺序：对应头文件、项目头文件、第三方头文件、标准库头文件。
-- 函数保持单一职责。
-- 错误信息应包含操作、资源路径或对象类型。
-- 不对无关文件做批量格式化、重命名或注释清理。
+- 类型、枚举用 PascalCase；函数和局部变量用 camelCase；成员变量用 `m_` + camelCase。
+- 头文件使用唯一 include guard 或 `#pragma once`，禁止 `using namespace`。
+- include 顺序为：对应头文件、项目头文件、第三方头文件、标准库头文件。
+- 明确对象所有权、线程归属、回调注销和析构顺序；重型 SDK 适配器优先用 Pimpl 隐藏实现。
+- Qt 只属于 UI 或明确的外层适配器。`QWidget`、`QOpenGLWidget`、`QString`、`QImage` 等类型不得进入 domain/application。
+- 所有 `glXXX` 调用以及 GPU 对象创建、使用和销毁必须发生在有效 OpenGL Context 所在线程。
+- OpenGL Program、Shader、Texture、VAO、VBO、EBO 必须有明确所有者和释放时机；拥有 OpenGL ID 的类型最终应使用 RAII 且禁止无意复制。
+- Shader 编译、Program 链接、图片加载和纹理上传失败必须检查；修改 attribute、uniform、纹理格式或纹理单元时同步检查 C++ 绑定。
+- 相机实时纹理应初始化时用 `glTexImage2D` 分配存储、每帧用 `glTexSubImage2D` 更新，避免逐帧重建 GPU 资源。该决策的背景记录在 `DOC/modules/CAMERA_ARCHITECTURE.md`。
 
-## 7. Qt 使用规则
+## 4. CMake、目录与资源
 
-- Qt 只属于 UI 层或明确外层适配器。
-- QWidget、QOpenGLWidget、QApplication、QString、QImage 等 Qt 类型不得进入 domain/application。
-- application 不创建 QWidget/QOpenGLWidget，不返回 Qt 类型。
-- Qt Designer 生成的 `.ui` 文件属于 UI 层。
-- `QOpenGLWidget` 的 OpenGL 调用必须发生在有效 context 生命周期内。
-- 原型阶段可以在 `QOpenGLWidget` 内直接实现绘制；稳定后再拆分资源和用例。
-- `composition_root/qt_main.cpp` 只做 QApplication、窗口创建、依赖装配和事件循环。
-- `composition_root/lesson_main.cpp` 只做课程选择、课程入口调用和进程返回码处理。
+- 保持 CMake 3.21+ 和 C++17，除非用户明确要求升级。
+- 使用 target-based CMake；不要新增全局 `include_directories()`、`link_libraries()` 或无关全局宏。
+- 分层代码采用“层 / 模块 / include + src”的模块优先结构。公开 include 目录不要重复嵌套项目名或当前层名。
+- 只有公共头文件所需依赖才使用 `PUBLIC`，实现细节使用 `PRIVATE`。
+- domain/application target 不得链接 Qt、OpenGL、GLAD、GLFW、stb_image 或相机 SDK。
+- 修改 target 关系时同步检查顶层 `add_subdirectory()` 顺序和所有消费者。
+- 不硬编码用户机器、Visual Studio、Qt 或资源的绝对路径。
+- `assets/` 按章节、课程或明确模块组织；不要无故重新编码或替换现有二进制资源。
+- `third_party/` 默认只读。除非用户明确授权，不修改、下载、升级或替换第三方依赖；确需变更时说明版本、许可证、平台、ABI、CMake target 和影响。
+- 不提交 `out/`、IDE 缓存、临时文件或本机构建产物。
 
-## 8. OpenGL、Shader、Texture 与资源规则
+## 5. 文档维护
 
-- 所有 `glXXX` 调用必须发生在有效 OpenGL Context 所在线程。
-- Shader 编译、Program 链接、图片加载、纹理上传失败必须检查。
-- OpenGL Program、Shader、Texture、VAO、VBO、EBO 必须有明确所有者和释放时机。
-- 拥有 OpenGL ID 的类型最终应走 RAII，禁止无意复制。
-- 修改 Shader attribute/uniform 时同步检查 C++ 端绑定。
-- 纹理上传时根据通道数选择格式；必要时设置并恢复 `GL_UNPACK_ALIGNMENT`。
-- CPU 像素数据上传后及时释放。
-- 相机实时图像显示应优先使用：
-  - 初始化时 `glTexImage2D` 分配纹理存储。
-  - 每帧用 `glTexSubImage2D` 更新内容。
-  - 避免每帧重新创建 Texture、Shader、VAO/VBO/EBO。
-- 当前已验证更稳定的图片显示路径是 `stb_image + 原生 OpenGL Texture`，不要无故切回 `QImage/QOpenGLTexture`。
+`DOC/README.md` 是正式文档入口。新增文档先按职责归类：
 
-## 9. third_party 规则
+- 总体结构和依赖：`DOC/architecture/`
+- 具体功能设计、阶段与边界：`DOC/modules/`
+- 编码、扩展、构建和测试方法：`DOC/guides/`
 
-- `third_party/` 默认只读。
-- 不修改 GLAD、GLFW、GLM、stb 源码来规避上层问题。
-- 不在 third_party 中放项目业务逻辑。
-- 不自行联网下载、升级或替换依赖，除非用户明确授权。
-- 新增或更新第三方依赖前说明版本、许可证、平台、ABI、CMake target 和影响。
+同步原则：
 
-## 10. assets、shaders、textures 规则
+- 架构、依赖方向、target、构建入口变化时更新架构文档和必要的 README。
+- 模块行为、生命周期、阶段进度或已知边界变化时更新对应模块文档。
+- 编码、CMake、Qt/OpenGL 或资源约定变化时更新相应指南。
+- 只把跨对话继续工作需要的当前快照写入 `.agents/CODEX_CONTEXT.md`，不要复制完整设计说明、调试日志或 TODO 清单。
+- 文档必须区分“当前实现”“已验证结论”“未来候选”，不得把计划描述成已完成。
 
-- 教程资源按章节和课程组织：
+## 6. 构建与验证
 
-```text
-assets/shaders/<chapter>/<lesson>/
-assets/textures/<chapter>/<lesson>/
-assets/models/<chapter>/<lesson>/
-```
-
-- UI 原型资源可暂放：
-
-```text
-assets/textures/ui/
-```
-
-- 不硬编码用户本机绝对路径。
-- 修改 Shader 时同步检查 attribute、uniform、纹理单元和输入输出。
-- 新增纹理时验证格式、通道数、垂直翻转策略和加载失败信息。
-- 不随意重新编码、压缩或替换现有二进制资源。
-
-## 11. 文档同步规则
-
-- 架构层次、依赖方向、target、构建命令或平台支持变化时，同步更新 `DOC/ARCHITECTURE.md` 和必要的 `DOC/README.md`。
-- 编码、命名、资源所有权、Qt/OpenGL 约定或 CMake 规则变化时，同步更新 `DOC/CODING_STYLE.md`。
-- 新增课程方式、功能模块、相机/点云扩展、迁移策略变化时，同步更新 `DOC/EXTENDING.md`。
-- 长期目标、阶段性决策、最近重要上下文变化时，同步更新 `.agents/CODEX_CONTEXT.md`。
-- 文档必须区分当前实现、临时原型和目标架构。
-
-## 12. 修改前计划要求
-
-以下任务修改前必须给出简短计划：
-
-- 多文件修改。
-- 跨层依赖变化。
-- CMake target 或依赖变化。
-- 公共接口变化。
-- Qt/OpenGL Context 生命周期变化。
-- 相机 SDK、点云、轨迹等功能模块扩展。
-
-小型单文件修复可以用一句话说明修改范围，但仍需先检查相关文件和边界。
-
-## 13. 构建、测试和运行
-
-执行命令前先读取当前 `CMakePresets.json`，以文件中的 preset 为准。
-
-当前 Windows PowerShell 推荐构建入口：
+执行前读取当前 `CMakePresets.json`，以仓库实际 preset 为准。Windows PowerShell 推荐入口：
 
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Debug -NoPause
 powershell -ExecutionPolicy Bypass -File .\msvc-cmake.ps1 -Config Release -NoPause
 ```
 
-已初始化 MSVC x64 环境时可直接使用：
-
-```powershell
-cmake --preset ninja-msvc-debug
-cmake --build --preset ninja-msvc-debug
-
-cmake --preset ninja-msvc-release
-cmake --build --preset ninja-msvc-release
-```
-
-Debug 运行：
-
-```powershell
-.\out\build\ninja-msvc-debug\bin\LearnOpenGLCN_Qt.exe
-.\out\build\ninja-msvc-debug\bin\LearnOpenGLCN_Lessons.exe
-.\out\build\ninja-msvc-debug\bin\LearnOpenGLCN_Lessons.exe --list
-```
-
 验证要求：
 
-- 修改 C++、CMake、公共头文件或 target 关系后，至少完成 Debug configure/build。
-- 修改 Shader、纹理、窗口或渲染行为后，应在支持 GUI/OpenGL 的环境中运行验证；无法运行时明确说明。
-- 当前已接入 GoogleTest/CTest 测试框架，`learnopengl_infrastructure_concurrency_tests` 包含线程池单元测试；应运行 `ctest` 并如实报告实际发现、执行和通过的用例数量。轨迹与相机测试目前仍是可编译占位框架，不得声称已覆盖其业务行为。
-- 验证结束后运行 `git status --short` 和 `git diff --check`。
+- 修改 C++、公共头文件、CMake 或 target 关系后，至少完成 Debug configure/build。
+- 修改已有测试覆盖的行为后运行对应 CTest；报告实际发现、执行和通过的用例数量，不把占位测试描述为行为覆盖。
+- 修改 Shader、纹理、窗口、相机或渲染行为后，在条件允许时运行 GUI/OpenGL 验证；无法运行时明确说明。
+- 纯文档调整至少检查 Markdown 相对链接、过期引用、`git diff --check` 和 `git status --short`。
+- 完成后说明实际修改、实际验证和仍未验证的部分，禁止伪造构建、测试或运行结果。
 
-## 14. 明确禁止事项
+## 7. 禁止事项
 
-- 禁止让 domain 依赖 Qt、OpenGL、GLAD、GLFW、GLM、stb_image、相机 SDK 或外层模块。
-- 禁止让 application 创建 QWidget/QOpenGLWidget、调用 `glXXX` 或依赖具体 UI/基础设施。
-- 禁止在 `main.cpp` 堆积业务逻辑、渲染实现、相机采集或资源加载。
-- 禁止修改 third_party，除非用户明确授权。
-- 禁止硬编码本机绝对路径、Qt 安装路径或 Visual Studio 安装路径。
-- 禁止新增与当前任务无关的依赖、包管理器、工具链、preset 或代码生成器。
-- 禁止添加“以后可能会用”但当前没有调用点、没有业务价值的宏、接口、配置项、包装层或抽象。
-- 禁止用全局 include/link 配置掩盖模块边界错误。
-- 禁止未经请求进行全工程重构、批量重命名或格式化。
-- 禁止覆盖、删除、还原用户已有改动。
-- 禁止提交 `out/`、IDE 缓存、临时文件或本地构建产物。
-- 禁止伪造构建、测试或运行结果。
-- 禁止把临时 UI 原型描述成最终架构。
+- 不覆盖、删除或还原用户已有修改。
+- 不运行破坏性 Git 命令，不未经请求提交或推送。
+- 不修改 `.git/` 或生成文件来掩盖源代码问题。
+- 不把业务逻辑、渲染实现、相机采集或资源加载堆入 `main.cpp`。
+- 不用全局 include/link 配置掩盖模块边界错误。
+- 不新增与当前任务无关的依赖、包管理器、工具链、preset、代码生成器或抽象。
+- 不把临时 UI 原型、计划事项或未经运行验证的行为描述为正式完成状态。

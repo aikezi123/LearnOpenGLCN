@@ -424,6 +424,12 @@ bool m_frameDisplayPending{false};
 
 ## 11. 当前实现与后续边界
 
+### 已验证的图片显示路径
+
+早期使用 `QImage / QOpenGLTexture` 显示图片时，曾在关闭窗口后触发 Debug CRT heap corruption。当前稳定路径改为 `stb_image + 原生 OpenGL Texture`，因此在没有新的可复现证据和完整生命周期验证前，不应无故切回旧路径。
+
+实时图像纹理采用“首次分配、后续更新”的方式：首次创建时使用 `glTexImage2D` 分配存储，每帧使用 `glTexSubImage2D` 更新像素内容，避免逐帧重建 Texture、Shader、VAO、VBO 或 EBO。所有创建、更新和销毁操作都必须发生在有效 OpenGL Context 所在线程。
+
 本阶段已经完成：
 
 - 相机模型、Application 端口、Galaxy adapter、UI 和组合根的最小分层；

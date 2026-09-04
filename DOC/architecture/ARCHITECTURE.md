@@ -89,7 +89,15 @@ LearnOpenGLCN 的最终目标是系统学习并整理 LearnOpenGLCN 网站中的
 | `GTest::gtest_main` / `GTest::gmock_main` | Static | 后续测试 executable 的测试入口与 Mock 支持 | GoogleTest 1.17.0；只允许测试 target 依赖 |
 | `learnopengl_infrastructure_concurrency_tests` | Executable | `ThreadPool` 单元测试 | `learnopengl_concurrency`、`GTest::gtest_main` |
 
-`tests/` 位于所有生产模块之外，并在生产 target 全部定义完成后加载。当前已建立 domain、application 和 infrastructure 三个测试 executable；其中 `learnopengl_infrastructure_concurrency_tests` 包含 9 个 `ThreadPool` 用例，另外两个 target 暂为可编译占位框架。测试只允许单向依赖被测生产 target；`domain`、`application`、`infrastructure`、`ui`、`lessons` 和组合根均不得反向依赖 GoogleTest 或 `tests/`。完整使用方式见[自动化测试](./TESTING.md)。
+`tests/` 位于所有生产模块之外，并在生产 target 全部定义完成后加载。当前已建立 domain、application 和 infrastructure 三个测试 executable；其中 `learnopengl_infrastructure_concurrency_tests` 包含 20 个 `ThreadPool` 用例，另外两个 target 暂为可编译占位框架。测试只允许单向依赖被测生产 target；`domain`、`application`、`infrastructure`、`ui`、`lessons` 和组合根均不得反向依赖 GoogleTest 或 `tests/`。完整使用方式见[自动化测试](../guides/TESTING.md)。
+
+#### 2.1.1 线程池并发模块边界
+
+`ThreadPool` 位于 `infrastructure/concurrency`，是固定工作线程和共享 FIFO 队列的具体技术实现。它形成独立 `learnopengl_concurrency` 静态库，仅依赖 `Threads::Threads`，不依赖 GUI、OpenGL、相机 SDK、application 或 domain。当前完整 `infrastructure` target 链接它，但生产代码尚未创建或调用线程池；直接消费者只有测试 target。
+
+application 当前没有 `ITaskExecutor`。只有实际 application service 出现后台执行需求时，才根据用例定义最小执行器端口；线程池适配器或其他执行策略在外层实现该端口，组合根负责选择具体实现、创建实例并注入。业务模块不继承具体 `ThreadPool`，相机的串行设备控制线程也继续保持专用执行模型。
+
+当前线程池提供 `post()`、通用 `submit()`和排空式 `shutdown()`。本轮基线完成八阶段路线中的阶段1–5；阶段6只完成外部并发/重复关闭、排空与关闭后拒绝等当前范围，阶段7–8留待后续。详细行为和已知边界见[线程池并发模块](../modules/THREAD_POOL.md)。
 
 `third_party/Galaxy` 当前保存大恒 VC/C API、C++ SDK 头文件和 MSVC x64 import library。大恒运行时 DLL 不再由 CMake 查找或复制，而是直接放在 `out/build/<preset>/bin`，随 exe、pdb 等运行产物一起提交。
 
@@ -171,7 +179,7 @@ LearnOpenGLCN_Lessons.exe --list
 - 执行不需要系统资源的纯计算。
 - 表达“是什么”的概念，例如 `ImageFrame`、`PixelFormat`、相机设备描述、相机参数值对象等。
 
-当前 `domain/trajectory` 包含 `ArchimedeanSpiral2DGenerator`，用于生成固定阿基米德螺旋 `r = A + Bθ` 上的二维采样点。该算法只使用标准库，只控制 XOY 平面点距；线间距全局固定并用于计算 `B`，不同半径段只改变目标点间距。详见 [二维阿基米德螺旋轨迹](./TRAJECTORY_2D.md)。
+当前 `domain/trajectory` 包含 `ArchimedeanSpiral2DGenerator`，用于生成固定阿基米德螺旋 `r = A + Bθ` 上的二维采样点。该算法只使用标准库，只控制 XOY 平面点距；线间距全局固定并用于计算 `B`，不同半径段只改变目标点间距。详见 [二维阿基米德螺旋轨迹](../modules/TRAJECTORY_2D.md)。
 
 允许依赖：
 
@@ -581,7 +589,7 @@ target_link_libraries(LearnOpenGLCN_Qt PRIVATE
 - Qt 组合根负责装配：`CameraComposition` 创建大恒适配器，将其作为 `ICameraDevice` 注入 `CameraCaptureService`，再把 service 注入 `CameraImageCaptureView`；`AppComposition` 负责把相机与轨迹页面注册到 `MainWindow`。
 - Qt 主窗口已改为左侧导航树和右侧页面栈，后续功能页面优先独立成 QWidget 后注册到导航中。
 - 相机图像显示控件支持水平翻转、垂直翻转、左右 90 度旋转、缩放、平移和重置；这些仍属于 UI 原型交互，由 `DisplayOpenGLImage` 通过 shader uniform 矩阵完成。控件显示形状可在默认矩形与圆形之间切换；圆形外观只通过 QWidget mask 裁剪并露出圆外父窗口背景。圆形模式在渲染前从原始纹理中心裁取最大正方形，并输出到居中的正方形 viewport，再对该 1:1 图像执行观察变换，避免 90 度旋转后因宽高比变化而拉伸。
-- 相机控制线程、任务队列、条件变量、各把锁、原子状态、promise/future、shutdown 和最新帧机制的详细设计见[相机采集与 OpenGL 显示链路](./CAMERA_ARCHITECTURE.md)。本阶段明确不继续拆分 `DisplayOpenGLImage`。
+- 相机控制线程、任务队列、条件变量、各把锁、原子状态、promise/future、shutdown 和最新帧机制的详细设计见[相机采集与 OpenGL 显示链路](../modules/CAMERA_ARCHITECTURE.md)。本阶段明确不继续拆分 `DisplayOpenGLImage`。
 - LearnOpenGL 课程入口已形成 `LessonRegistry` 和 Qt 课程导航器；`lesson_main.cpp` 只保留命令行选择和启动导航窗口，导航窗口实现放在 `composition_root/lesson_launcher`。
 
 本阶段仍然保留的阶段性做法：

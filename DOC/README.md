@@ -8,19 +8,36 @@
 
 ## 文档索引
 
-- [代码架构与依赖关系](./ARCHITECTURE.md)：当前结构、目标分层、依赖规则及各模块职责。
-- [相机采集与 OpenGL 显示链路](./CAMERA_ARCHITECTURE.md)：相机分层、控制线程、FIFO 任务队列、条件变量、锁、原子状态、promise/future 和最新帧投递机制。
-- [编码规范](./CODING_STYLE.md)：C++、OpenGL、CMake、资源和注释约定。
-- [扩展指南](./EXTENDING.md)：新增课程、基础设施适配器和架构演进的推荐步骤。
-- [自动化测试](./TESTING.md)：GoogleTest/CTest 框架、测试边界、target 注册和运行方式。
-- [二维阿基米德螺旋轨迹](./TRAJECTORY_2D.md)：当前二维轨迹模型、分段生成、点距求解、导出和后续扩展边界。
-- [Codex 上下文](../.agents/CODEX_CONTEXT.md)：记录当前长期目标、阶段性决策和最近上下文，避免后续对话过长后丢失背景。
+### 架构
+
+- [代码架构与依赖关系](./architecture/ARCHITECTURE.md)：当前结构、目标分层、依赖规则及各模块职责。
+
+### 模块专题
+
+- [相机采集与 OpenGL 显示链路](./modules/CAMERA_ARCHITECTURE.md)：相机分层、控制线程、FIFO 任务队列、条件变量、锁、原子状态、promise/future 和最新帧投递机制。
+- [线程池并发模块](./modules/THREAD_POOL.md)：当前线程池行为、架构边界、八阶段进度、测试基线和后续入口。
+- [二维阿基米德螺旋轨迹](./modules/TRAJECTORY_2D.md)：当前二维轨迹模型、分段生成、点距求解、导出和后续扩展边界。
+
+### 开发指南
+
+- [编码规范](./guides/CODING_STYLE.md)：C++、OpenGL、CMake、资源和注释约定。
+- [扩展指南](./guides/EXTENDING.md)：新增课程、基础设施适配器和架构演进的推荐步骤。
+- [自动化测试](./guides/TESTING.md)：GoogleTest/CTest 框架、测试边界、target 注册和运行方式。
+
+### Agent 协作入口
+
+- [项目协作规则](../.agents/AGENTS.md)：只记录 Agent 执行任务时必须遵守的工作规则。
+- [当前上下文](../.agents/CODEX_CONTEXT.md)：只记录跨对话继续工作所需的精简阶段快照。
+
+`DOC/` 是项目架构、模块设计、开发规范和测试说明的正式来源。新增文档时应先判断它属于总体架构、具体模块还是开发指南，再放入对应目录；`DOC/README.md` 保留为统一入口，不继续在 `DOC/` 根目录平铺专题文件。`.agents/` 不保存重复的模块正文、临时调试日志或独立 TODO 清单。
 
 ## 当前工程状态
 
 当前工程使用 CMake 3.21+、C++17、Ninja 和 MSVC 构建，主要依赖 OpenGL、GLFW、GLAD、GLM、stb_image、Qt Widgets/OpenGLWidgets，并已为大恒 Galaxy SDK 建立第三方 CMake target。
 
-工程已接入 GoogleTest 1.17.0 和 CTest 测试框架。测试由标准 `BUILD_TESTING` 开关控制，测试代码统一放在根目录 `tests/`；当前已建立 domain、application 和 infrastructure 三个测试 target，其中线程池包含 9 个单元测试，轨迹与相机测试暂为可编译占位框架。详细说明见[自动化测试](./TESTING.md)。
+工程已接入 GoogleTest 1.17.0 和 CTest 测试框架。测试由标准 `BUILD_TESTING` 开关控制，测试代码统一放在根目录 `tests/`；当前已建立 domain、application 和 infrastructure 三个测试 target，其中线程池包含 20 个单元测试，轨迹与相机测试暂为可编译占位框架。详细说明见[自动化测试](./guides/TESTING.md)。
+
+`learnopengl_concurrency` 当前提供 C++17 固定线程池，支持无返回值 `post()`、通用 `submit()`、future 返回值、异常传播、移动专用任务/参数和排空关闭。该具体实现位于 infrastructure，目前生产代码尚未创建或调用它，也没有提前在 application 定义 `ITaskExecutor`；详细边界和阶段结论见[线程池并发模块](./modules/THREAD_POOL.md)。
 
 现有主要构建链路为：
 
@@ -70,9 +87,9 @@ learnopengl_concurrency (static library)
     └── Threads::Threads
 ```
 
-`domain/` 与 `application/` 已形成相机预览所需的最小 target：`learnopengl_domain` 提供 `ImageFrame` / `PixelFormat` 等稳定模型，并包含 `domain/trajectory` 中的二维阿基米德螺旋点生成纯算法；`learnopengl_application` 提供 `ICameraDevice` 和 `CameraCaptureService`。`infrastructure/camera/galaxy` 提供大恒相机适配器，`ui/` 承载当前 Qt/OpenGL 显示原型。相机线程与帧投递的详细说明见[相机采集与 OpenGL 显示链路](./CAMERA_ARCHITECTURE.md)。
+`domain/` 与 `application/` 已形成相机预览所需的最小 target：`learnopengl_domain` 提供 `ImageFrame` / `PixelFormat` 等稳定模型，并包含 `domain/trajectory` 中的二维阿基米德螺旋点生成纯算法；`learnopengl_application` 提供 `ICameraDevice` 和 `CameraCaptureService`。`infrastructure/camera/galaxy` 提供大恒相机适配器，`ui/` 承载当前 Qt/OpenGL 显示原型。相机线程与帧投递的详细说明见[相机采集与 OpenGL 显示链路](./modules/CAMERA_ARCHITECTURE.md)。
 
-当前 Qt 主窗口还包含“轨迹算法 / 螺旋线导出”页面：它使用 domain 中的二维算法生成多段轨迹，并在后台导出合并 txt 和分段 txt。轨迹公式、分段规则、残差二分求解和边界点行为见 [二维阿基米德螺旋轨迹](./TRAJECTORY_2D.md)。
+当前 Qt 主窗口还包含“轨迹算法 / 螺旋线导出”页面：它使用 domain 中的二维算法生成多段轨迹，并在后台导出合并 txt 和分段 txt。轨迹公式、分段规则、残差二分求解和边界点行为见 [二维阿基米德螺旋轨迹](./modules/TRAJECTORY_2D.md)。
 
 `LearnOpenGLCN_Lessons.exe` 不带参数会打开 Qt 课程导航器；课程列表来自 `lessons/catalog` 的 `LessonRegistry`，导航窗口实现位于 `composition_root/lesson_launcher`。传入课程 ID 时仍可直接运行对应 GLFW 课程，例如 `LearnOpenGLCN_Lessons.exe transform`。
 
