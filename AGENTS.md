@@ -6,12 +6,13 @@
 
 1. `.agents/AGENTS.md`
 2. `.agents/CODEX_CONTEXT.md`
-3. `DOC/README.md`
+3. `README.md`
 4. 与当前任务相关的 `DOC/` 文档、CMake 文件和源码
 
 文档职责：
 
-- `DOC/` 是架构、模块设计、开发规范和测试说明的正式来源。
+- `README.md` 是项目说明与正式文档的统一入口。
+- `DOC/` 保存架构、模块设计、开发规范和测试说明正文。
 - `.agents/AGENTS.md` 只记录 Agent 执行工作时必须遵守的规则。
 - `.agents/CODEX_CONTEXT.md` 只记录当前阶段快照、重要决策和继续工作的入口。
 

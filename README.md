@@ -8,24 +8,24 @@ EngineeringLab 是个人 C++ 工程技术持续学习与实验平台。工程以
 
 ### 架构
 
-- [代码架构与依赖关系](./architecture/ARCHITECTURE.md)：项目定位、当前结构、依赖规则和目标边界。
+- [代码架构与依赖关系](./DOC/architecture/ARCHITECTURE.md)：项目定位、当前结构、依赖规则和目标边界。
 
 ### 模块专题
 
-- [相机采集与 OpenGL 显示链路](./modules/CAMERA_ARCHITECTURE.md)
-- [线程池并发能力](./modules/THREAD_POOL.md)
-- [二维阿基米德螺旋轨迹](./modules/TRAJECTORY_2D.md)
+- [相机采集与 OpenGL 显示链路](./DOC/modules/CAMERA_ARCHITECTURE.md)
+- [线程池并发能力](./DOC/modules/THREAD_POOL.md)
+- [二维阿基米德螺旋轨迹](./DOC/modules/TRAJECTORY_2D.md)
 
 ### 开发指南
 
-- [编码规范](./guides/CODING_STYLE.md)
-- [扩展指南](./guides/EXTENDING.md)
-- [自动化测试](./guides/TESTING.md)
+- [编码规范](./DOC/guides/CODING_STYLE.md)
+- [扩展指南](./DOC/guides/EXTENDING.md)
+- [自动化测试](./DOC/guides/TESTING.md)
 
 ### Agent 协作入口
 
-- [项目协作规则](../.agents/AGENTS.md)
-- [当前上下文](../.agents/CODEX_CONTEXT.md)
+- [项目协作规则](./.agents/AGENTS.md)
+- [当前上下文](./.agents/CODEX_CONTEXT.md)
 
 ## 架构定位
 

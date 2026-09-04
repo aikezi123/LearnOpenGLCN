@@ -9,7 +9,7 @@
 1. 根目录 `AGENTS.md`
 2. `.agents/AGENTS.md`
 3. `.agents/CODEX_CONTEXT.md`
-4. `DOC/README.md`
+4. `README.md`
 5. 与任务相关的架构、模块或开发指南
 6. 顶层及相关模块的 `CMakeLists.txt`、公共头文件和实现文件
 
@@ -76,7 +76,7 @@ infrastructure -> application -> domain
 
 ## 5. 文档维护
 
-`DOC/README.md` 是正式文档入口。新增文档先按职责归类：
+`README.md` 是正式文档入口，`DOC/` 保存分类后的正文。新增文档先按职责归类：
 
 - 总体结构和依赖：`DOC/architecture/`
 - 具体功能设计、阶段与边界：`DOC/modules/`
